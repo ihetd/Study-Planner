@@ -273,6 +273,10 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 #focus .fx-btns .btn{flex:1;height:50px;font-size:16px;border-radius:16px;background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(6px)}
 #focus .fx-btns .btn.main{background:#fff;color:var(--brand)}
 #sessionBar .btn.open-focus{flex:0 0 auto}
+#sessionBar .btn.lock-toggle{flex:0 0 auto;opacity:.55}
+#sessionBar .btn.lock-toggle.on{opacity:1;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+#focus .fx-lock{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;z-index:2}
+#focus .fx-lock[aria-pressed=false]{opacity:.6}
 .live-dot.off{background:#f59e0b;animation:none}
 .sess-log{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:4px 14px}
 .sess-log div{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
@@ -505,6 +509,7 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 <div id="focus" role="dialog" aria-modal="true" aria-label="Study session" hidden>
   <div class="fx-sky" aria-hidden="true"></div>
   <button class="chip fx-min" id="fxMin" type="button">⤡ Minimize</button>
+  <button class="chip fx-lock" id="fxLock" type="button" hidden></button>
   <div class="fx-box">
     <div class="fx-subj" id="fxSubj" dir="auto"></div>
     <div class="fx-flower">
@@ -785,6 +790,7 @@ function startSession(lectureId) {
   if (Sessions.live[S.me] && Sessions.live[S.me].startedAt) stopSession(false, true);
   const l = lectureId && Store.get(lectureId);
   Backend.setLive(S.me, { lectureId: l ? l.id : null, subject: l ? l.subject : '', seq: l ? seqMap.get(l.id) || 1 : null, startedAt: Date.now(), pausedAt: null, pausedMs: 0 });
+  LockTimer.play();   // inside the tap, so the browser allows it
   if (S.me === 'zhra') Focus.show();
   else toast(l ? `Studying ${l.subject} ⏱` : 'Session started ⏱');
 }
@@ -793,13 +799,73 @@ function stopSession(markDone, quiet) {
   const end = x.pausedAt || Date.now(), mins = Math.round(elapsed(x) / 60000);
   if (mins >= 1) Backend.addLog({ user: S.me, lectureId: x.lectureId || null, subject: x.seq ? `${x.subject} #${x.seq}` : x.subject || '', start: x.startedAt, end, mins, day: ymd(new Date(x.startedAt)) });
   Backend.setLive(S.me, { lectureId: null, subject: '', seq: null, startedAt: null, pausedAt: null, pausedMs: 0 });
+  LockTimer.sync();
   if (markDone && x.lectureId) { const l = Store.get(x.lectureId); if (l && !isDone(l)) toggleStudied(x.lectureId); }
   if (!quiet) toast(mins >= 1 ? `Session saved · ${fmtMins(mins)}` : 'Session cancelled (under 1 min)');
 }
+/* ---------- lock-screen / notification timer (Media Session) ----------
+   Websites can't post a live notification with buttons on iPhone, but they can
+   use the "Now Playing" card on the lock screen, Control Center, Android's
+   notification shade and desktop media controls. That card only appears while
+   media plays, so a silent 30 s track loops: nothing is audible, but the phone
+   treats it as audio (which also pauses other music, hence the on/off switch). */
+const LockTimer = {
+  supported: 'mediaSession' in navigator && 'MediaMetadata' in window,
+  on: ls.get('sp.lockTimer', true), audio: null, key: '', armed: false,
+  el() {
+    if (!this.audio) { const a = new Audio('assets/silence.m4a'); a.loop = true; a.preload = 'auto'; a.setAttribute('playsinline', ''); this.audio = a; }
+    return this.audio;
+  },
+  arm() {
+    if (this.armed || !this.supported) return; this.armed = true;
+    const ms = navigator.mediaSession, set = (a, f) => { try { ms.setActionHandler(a, f); } catch {} };
+    const live = () => liveOf(S.me);
+    set('play', () => { const x = live(); if (x && x.pausedAt) togglePause(); else this.play(); });
+    set('pause', () => { const x = live(); if (x && !x.pausedAt) togglePause(); else this.audio && this.audio.pause(); });
+    set('nexttrack', () => live() && stopSession(false));   // ⏭ on the lock screen = stop & save
+    set('stop', () => live() && stopSession(false));
+  },
+  play() { if (!this.on || !this.supported) return; this.arm(); this.el().play().catch(() => {}); },
+  // Called from every render and every second: keeps the card in step with the session.
+  sync() {
+    if (!this.supported) return;
+    const x = S.me && this.on && liveOf(S.me), ms = navigator.mediaSession;
+    if (!x) {
+      if (this.audio && !this.audio.paused) this.audio.pause();
+      if (this.key) { ms.metadata = null; ms.playbackState = 'none'; this.key = ''; }
+      return;
+    }
+    const e = elapsed(x), mins = Math.floor(e / 60000), label = x.subject ? `${x.subject} #${x.seq}` : 'Free session';
+    const key = `${label}|${mins}|${!!x.pausedAt}`;
+    if (key !== this.key) {
+      this.key = key;
+      ms.metadata = new MediaMetadata({
+        title: `${x.pausedAt ? '⏸ Paused' : '📚 Studying'} · ${label}`,
+        artist: `${e < 60000 ? 'Just started' : shortDur(e) + ' so far'} · ⏭ stop & save`,
+        album: 'Study Planner',
+        artwork: [{ src: 'assets/icon-512.png', sizes: '512x512', type: 'image/png' }, { src: 'assets/icon-192.png', sizes: '192x192', type: 'image/png' }]
+      });
+    }
+    ms.playbackState = x.pausedAt ? 'paused' : 'playing';
+    // the lock screen counts the elapsed time on its own from this position + rate
+    try { ms.setPositionState({ duration: MAX_SESSION / 1000, position: Math.min(e, MAX_SESSION) / 1000, playbackRate: 1 }); } catch {}
+    if (this.audio) { if (x.pausedAt && !this.audio.paused) this.audio.pause(); }
+  },
+  toggle() {
+    this.on = !this.on; ls.set('sp.lockTimer', this.on);
+    if (this.on) { this.play(); toast('Lock-screen timer on 🔒'); } else { this.sync(); if (this.audio) this.audio.pause(); toast('Lock-screen timer off'); }
+    renderSessionBars();
+  }
+};
+// After a reload the silent track can't start by itself (browsers need a tap),
+// so the first tap anywhere brings the lock-screen card back.
+document.addEventListener('pointerdown', () => { const x = S.me && liveOf(S.me); if (x && !x.pausedAt && LockTimer.on && (!LockTimer.audio || LockTimer.audio.paused)) LockTimer.play(); }, true);
+
 function togglePause() {
   const x = liveOf(S.me); if (!x) return;
-  if (x.pausedAt) Backend.setLive(S.me, { ...x, pausedMs: (x.pausedMs || 0) + (Date.now() - x.pausedAt), pausedAt: null });
+  if (x.pausedAt) { Backend.setLive(S.me, { ...x, pausedMs: (x.pausedMs || 0) + (Date.now() - x.pausedAt), pausedAt: null }); LockTimer.play(); }
   else Backend.setLive(S.me, { ...x, pausedAt: Date.now() });
+  LockTimer.sync();
 }
 function renderSessionBars() {
   const mineLive = S.me && liveOf(S.me), otherLive = S.me && liveOf(other(S.me));
@@ -813,6 +879,7 @@ function renderSessionBars() {
     <div class="sb-clock" data-style="clock" ${tickAttrs(mineLive)}></div>
     <div class="sb-btns">
       ${S.me === 'zhra' ? '<button class="btn open-focus" id="openFocus" type="button" aria-label="Open study mode">🌸</button>' : ''}
+      ${LockTimer.supported ? `<button class="btn lock-toggle${LockTimer.on ? ' on' : ''}" id="lockToggle" type="button" aria-pressed="${LockTimer.on}" aria-label="Lock-screen timer ${LockTimer.on ? 'on' : 'off'}" title="Show the timer on the lock screen">🔒</button>` : ''}
       <button class="btn" id="sessPause" type="button">${mineLive.pausedAt ? '▶ Resume' : '❚❚ Pause'}</button>
       ${mineLive.lectureId ? '<button class="btn main" id="sessDone" type="button">✔ Done</button>' : ''}
       <button class="btn" id="sessStop" type="button">■ Stop</button>
@@ -821,6 +888,7 @@ function renderSessionBars() {
   lb.hidden = !otherLive;
   if (otherLive) lb.innerHTML = `<span class="live-dot${otherLive.pausedAt ? ' off' : ''}"></span><span dir="auto">${esc(USERS[other(S.me)].name)} ${otherLive.pausedAt ? 'paused' : 'is studying'} ${otherLive.subject ? esc(otherLive.subject) + ' #' + otherLive.seq : '(free session)'}</span> · <b ${tickAttrs(otherLive)}></b>`;
   Focus.update();
+  LockTimer.sync();
   tick();
 }
 function tick() {
@@ -829,6 +897,7 @@ function tick() {
     if (el.dataset.style === 'clock') el.innerHTML = clockHtml(ms); else el.textContent = shortDur(ms);
   });
   Focus.tick();
+  LockTimer.sync();
 }
 setInterval(tick, 1000);
 
@@ -1333,6 +1402,7 @@ document.addEventListener('click', e => {
   const up = t.closest('[data-unplan]');
   if (up) { Backend.update(up.dataset.unplan, { planDate: null, planTime: null, planDur: null }); return toast('Back on its lecture day'); }
   if (t.closest('#openFocus')) return Focus.show();
+  if (t.closest('#lockToggle, #fxLock')) { LockTimer.toggle(); return Focus.update(); }
   if (t.closest('#fxMin')) return Focus.hide();
   if (t.closest('#fxPause')) return togglePause();
   if (t.closest('#fxDone')) return stopSession(true);
@@ -1514,6 +1584,7 @@ const Focus = {
     $('#fxSubj').textContent = x.subject ? `${x.subject} #${x.seq}` : 'Free session';
     $('#fxPause').textContent = x.pausedAt ? '▶ Resume' : '❚❚ Pause';
     $('#fxDone').hidden = !x.lectureId;
+    const fl = $('#fxLock'); fl.hidden = !LockTimer.supported; fl.setAttribute('aria-pressed', LockTimer.on); fl.textContent = `🔒 Lock screen ${LockTimer.on ? 'on' : 'off'}`;
     if (x.pausedAt) $('#fxMsg').textContent = 'Paused… I’ll wait for you 😴';
     this.tick();
   },

@@ -60,6 +60,9 @@ For private channels, type the lecture name into the lecture card.
 ## Install on iPhone (like a normal app)
 Open https://ihetd.github.io/Study-Planner/ in **Safari**, then tap **Share → Add to Home Screen → Add**. It opens full screen with the Peony icon and still opens without internet. On Android or desktop Chrome, use the **Install** button in the app.
 
+## Session timer on the lock screen
+While a study session runs, the lock screen and Control Center (iPhone), the notification shade (Android) and the media controls (desktop Chrome) show the session with a live timer: ⏯ pauses or resumes, ⏭ stops and saves. It works by looping a silent track, so nothing is audible, but the phone treats it as playing audio and pauses other music. Turn it off with 🔒 in the session bar (or "Lock screen on/off" in study mode) when you want music.
+
 ## Admin PIN (Hussein)
 The first time the Hussein profile is opened on a phone, it asks you to create an admin PIN, which also protects the ⚙ phrases page. Only a salted hash of the PIN is saved on that phone. Open the Hussein profile once on زهرة's phone too and set your PIN there, so nobody else can create one. ⇄ (switch user) locks the profile again. Once Firebase is on, your account password protects it as well, and the Firestore rules only let your account write phrases.
 
