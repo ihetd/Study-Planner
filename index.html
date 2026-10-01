@@ -509,6 +509,16 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 #peony .bubble{border-radius:16px;transform-origin:top center}
 @media (max-width:520px){.hero{padding:16px;gap:10px}.ring{width:80px;height:80px}.ring b{font-size:19px}.hero-peony{width:84px;height:98px}}
 .petal{position:fixed;z-index:55;width:12px;height:12px;border-radius:0 60% 0 60%;pointer-events:none;animation:fall var(--t,1.6s) cubic-bezier(.2,.6,.4,1) forwards}
+/* zero backlog: full bloom, falling petals, and the hero's resting state */
+#peony.full-bloom .po{transform:scale(1.28) rotate(18deg);transition-duration:1.1s}
+#peony.full-bloom .pm{transform:scale(1.2) rotate(-16deg);transition-duration:1.1s}
+#peony.full-bloom .pi{transform:scale(1.14) rotate(22deg);transition-duration:1.1s}
+.hero.zero{background:radial-gradient(circle at 85% 20%,rgba(255,255,255,.2) 0,transparent 42%),radial-gradient(circle at 10% 110%,rgba(244,163,200,.28) 0,transparent 45%),linear-gradient(135deg,#330066,#6a2bb0)}
+.hero > *{position:relative;z-index:1}
+.hero .rest-petals{position:absolute;z-index:0;left:12px;bottom:0;width:150px;height:56px;pointer-events:none}
+.rain-petal{position:absolute !important;z-index:0 !important;top:-16px;width:11px;height:11px;border-radius:0 70% 0 70%;opacity:0;pointer-events:none;animation:rain ease-in forwards}
+@keyframes rain{0%{opacity:0;transform:translate(0,0) rotate(0)}12%{opacity:.9}100%{opacity:0;transform:translate(var(--sx),var(--h)) rotate(var(--sr))}}
+.hello-av.cheers svg{transform-origin:50% 90%;animation:cheers .7s ease-in-out 2}
 @keyframes fall{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
 
 @media (prefers-reduced-motion:reduce){
@@ -1057,13 +1067,26 @@ function studyStreak(owner) {
   while (days.has(d)) { streak++; d = addDays(d, -1); }
   return streak;
 }
+// A catch-up pace that clears any backlog within a week, never more than needed.
+const catchUpPerDay = n => Math.max(2, Math.ceil(n / 7));
+// Fallen petals that rest in the hero while the backlog is at zero.
+const RESTING_PETALS = `<svg class="rest-petals" viewBox="0 0 160 60" aria-hidden="true">
+  <path d="M18 50c6-10 18-12 24-4-7 8-17 9-24 4z" fill="#e2c6f5" opacity=".55"/>
+  <path d="M52 56c3-11 14-16 22-10-4 10-14 14-22 10z" fill="#b57edc" opacity=".6"/>
+  <path d="M96 52c8-8 20-6 23 3-9 6-18 5-23-3z" fill="#f4a3c8" opacity=".45"/>
+  <path d="M132 57c2-10 12-15 20-10-3 9-12 13-20 10z" fill="#e2c6f5" opacity=".5"/>
+  <path d="M74 40c5-6 13-6 16 0-5 5-12 5-16 0z" fill="#fff" opacity=".28"/></svg>`;
+
 function stats(list = mine(), owner = S.viewing) {
   const t = todayStr();
   const today = list.filter(l => eff(l) === t);
   const overdue = list.filter(l => !isDone(l) && eff(l) < t);
   const done = list.filter(isDone);
   const streak = studyStreak(owner);
-  return { today, todayLeft: today.filter(l => !isDone(l)).length, overdue, done: done.length, total: list.length, streak };
+  // old lectures spread onto later days are still backlog, just planned backlog
+  const later = list.filter(l => !isDone(l) && l.date < t && eff(l) > t).sort((a, b) => eff(a) < eff(b) ? -1 : 1);
+  const todayLeft = today.filter(l => !isDone(l)).length;
+  return { today, todayLeft, overdue, later, backlog: overdue.length + todayLeft + later.length, done: done.length, total: list.length, streak };
 }
 
 /* ============================ RENDER ============================ */
@@ -1075,7 +1098,7 @@ function card(l, opts = {}) {
   const tags = [
     (() => { const rs = reviewsOf(l), n = rs.filter(r => r.done).length; return rs.length ? `<span class="tag rev" title="Spaced-repetition reviews done">🔁 ${n}/${rs.length}</span>` : ''; })(),
     late ? (opts.catchUp ? `<span class="tag plan">from ${esc(relDate(eff(l)))}</span>` : `<span class="tag late">overdue</span>`) : '',
-    l.planDate && l.planDate !== l.date && !opts.unplan ? `<span class="tag plan">planned ${esc(relDate(l.planDate))}</span>` : '',
+    l.planDate && l.planDate !== l.date && !opts.unplan && !late ? `<span class="tag plan">${l.planDate === t && l.date < t ? `from ${esc(relDate(l.date))}` : `planned ${esc(relDate(l.planDate))}`}</span>` : '',
     l.planTime ? `<span class="tag time"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${esc(l.planTime)}</span>` : ''
   ].join('');
   const ro = readOnly() ? 'disabled' : '';
@@ -1329,13 +1352,15 @@ function renderToday() {
   const [title, line] = live ? [`${live.pausedAt ? 'Paused' : 'Studying'} now`, `<b dir="auto">${esc(sessLabel(live))}</b>`]
     : behind ? [`${behind} to catch up`, `Start with <b dir="auto">${esc(lecLabel(next))}</b> · from ${esc(relDate(eff(next)))}`]
     : st.todayLeft ? [`${doneN} of ${st.today.length} done today`, `Next up: <b dir="auto">${esc(lecLabel(next))}</b>${next.topic ? ' · <span dir="auto">' + esc(next.topic) + '</span>' : ''}`]
+    : st.later.length ? ['Done for today', `${plural(st.later.length, 'catch-up')} planned · next ${esc(relDate(eff(st.later[0])))}`]
     : mine().length ? ['Zero backlog 🌸', st.today.length ? 'Today is done and nothing is waiting.' : 'Nothing is waiting. Revise, or plan ahead.']
     : ['A fresh start', 'Add today\'s lectures to begin.'];
   const meta = [esc(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })), st.streak ? `🔥 ${st.streak}-day streak` : '', mins ? `⏱ ${fmtMins(mins)} today` : ''].filter(Boolean).join(' · ');
   const zhraHero = S.viewing === 'zhra' && Peony.active && !ro;
   const shownOverdue = S.showAllOverdue ? overdue : overdue.slice(0, 3);
   $('#tab-today').innerHTML = `${ro ? '' : migrateCard()}
-    <section class="hero${zhraHero ? ' with-peony' : ''}">
+    <section class="hero${zhraHero ? ' with-peony' : ''}${!live && !st.backlog && mine().length ? ' zero' : ''}">
+      ${!live && !st.backlog && mine().length ? RESTING_PETALS : ''}
       <div>
         <small>${meta}</small>
         <h2>${title}</h2>
@@ -1346,7 +1371,7 @@ function renderToday() {
       ${ro || live ? '' : `<div class="hero-btns">${next ? `<button class="btn" type="button" data-sess="${esc(next.id)}">▶ ${behind ? 'Catch up' : 'Start studying'}</button>` : ''}<button class="btn ghost" type="button" data-sess="free">⏱ Free session</button></div>`}
     </section>
     ${behind ? `<h2 class="sec">Catch up <span class="count">${behind}</span><span class="sp"></span>
-      ${ro ? '' : '<button class="btn sm ghost" id="moveAll" type="button">Move all to today</button>'}</h2>
+      ${ro ? '' : `<button class="btn sm ghost" id="spreadOut" type="button" title="Plan ${catchUpPerDay(behind)} a day, starting today">Spread over ${plural(Math.ceil(behind / catchUpPerDay(behind)), 'day')}</button>`}</h2>
       ${listHtml(shownOverdue, '', { catchUp: true })}
       ${behind > 3 ? `<button class="btn sm ghost more-btn" type="button" data-more-overdue>${S.showAllOverdue ? 'Show fewer' : `Show ${behind - 3} more`}</button>` : ''}` : ''}
     <h2 class="sec">Today's plan <span class="count">${st.today.length}</span></h2>
@@ -1619,9 +1644,13 @@ function toggleStudied(id) {
   Backend.update(id, nowDone ? { status: 'studied', studiedAt: Date.now(), revDone: {} } : { status: 'pending', studiedAt: null, revDone: {} });
   if (nowDone && S.me === 'zhra') {
     // count from the pre-update state: with Firestore the snapshot may not have arrived yet
-    const st_ = stats(), left = st_.today.filter(x => x.id !== id && !isDone(x)).length + st_.overdue.filter(x => x.id !== id).length;
-    Peony.celebrate(left === 0 ? 'big' : 'small', l.subject);
-  } else if (nowDone) toast(`${l.subject} studied ✔`);
+    const st_ = stats(), left = [...st_.today.filter(x => !isDone(x)), ...st_.overdue, ...st_.later].filter(x => x.id !== id).length;
+    Peony.celebrate(left, l.subject);
+  } else if (nowDone) {
+    const st_ = stats(), left = [...st_.today.filter(x => !isDone(x)), ...st_.overdue, ...st_.later].filter(x => x.id !== id).length;
+    if (left || !st_.total) toast(`${l.subject} studied ✔${left && l.date < todayStr() ? ` · ${left} to go` : ''}`);
+    else zeroBacklog();
+  }
 }
 
 const pdfToTopic = name => name.replace(/\.pdf$/i, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -1778,9 +1807,14 @@ document.addEventListener('click', e => {
   }
   if (t.closest('#pomoToggle')) return togglePomo();
   if (t.closest('[data-more-overdue]')) { S.showAllOverdue = !S.showAllOverdue; return renderToday(); }
-  if (t.closest('#moveAll')) {
-    const tt = todayStr(); stats().overdue.forEach(l => Backend.update(l.id, { planDate: tt }));
-    return toast('Moved to today');
+  if (t.closest('#spreadOut')) {
+    // oldest first, a few a day, starting today: the backlog becomes a plan, not a pile
+    const od = stats().overdue.sort(byDateOrder), per = catchUpPerDay(od.length), tt = todayStr();
+    od.forEach((l, i) => Backend.update(l.id, { planDate: addDays(tt, Math.floor(i / per)), planTime: null, planDur: null }));
+    const days = Math.ceil(od.length / per);
+    if (S.me === 'zhra' && Peony.active) { Peony.bloom(); Peony.say(`${per} a day for ${plural(days, 'day')}. Today's ${per === 1 ? 'one is' : per + ' are'} in your plan 🌸`, 5000); }
+    else toast(`Spread over ${plural(days, 'day')}: ${per} a day`);
+    return;
   }
   if (t.closest('[data-close-pop]') || t.id === 'gcPop') closePop();
   const nav = t.closest('[data-gc-nav]');
@@ -2044,6 +2078,34 @@ const Focus = {
 };
 
 /* ============================ PEONY ============================ */
+// The one big moment the app saves up for: the last waiting lecture is studied.
+// For زهرة the Peony opens fully and petals fall through her hero; for Hussein
+// the bottle raises a toast. Then the hero rests in its "zero" state.
+function zeroBacklog() {
+  if (S.me === 'zhra') {
+    if (!Peony.active || Peony.el.hidden) toast('Zero backlog! Every lecture is studied 🌸');
+    else {
+      Peony.el.classList.add('full-bloom', 'happy');
+      setTimeout(() => Peony.el.classList.remove('full-bloom', 'happy'), 2600);
+      Peony.say(`Zero backlog, ${isoName('zhra')}! Every lecture is studied 🌸`, 6000);
+      Peony.confetti(28);
+    }
+  } else {
+    setTimeout(() => $('#hello .hello-av')?.classList.add('cheers'), 350);   // after the re-render
+    toast('Zero backlog. Cheers 🥂');
+  }
+  if (reduceMotion) return;
+  setTimeout(() => {   // the hero re-renders as "Zero backlog" a beat later; rain petals through it
+    const h = $('#tab-today .hero'); if (!h || S.tab !== 'today') return;
+    const r = h.getBoundingClientRect(), colors = ['#e2c6f5', '#b57edc', '#f4a3c8', '#ffffff'];
+    for (let i = 0; i < 16; i++) {
+      const p = document.createElement('i'); p.className = 'rain-petal';
+      p.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%;background:${colors[i % 4]};--sx:${(Math.random() * 60 - 30).toFixed(0)}px;--sr:${(Math.random() * 540 - 270).toFixed(0)}deg;--h:${Math.round(r.height + 30)}px;animation-delay:${(Math.random() * 1.4).toFixed(2)}s;animation-duration:${(2.2 + Math.random() * 1.4).toFixed(2)}s`;
+      h.append(p); setTimeout(() => p.remove(), 5200);
+    }
+  }, 350);
+}
+
 const Peony = {
   el: $('#peony'), bubble: $('#bubble'), timer: null, active: false, last: '', popTimer: null,
   show(on) {
@@ -2083,6 +2145,7 @@ const Peony = {
     if (st.overdue.length > 5) return `${st.overdue.length} lectures are waiting… just one small one? 🥺`;
     if (st.overdue.length) return `${hi} ${isoName('zhra')}! ${st.overdue.length} to catch up, one small step at a time 🌸`;
     if (st.todayLeft) return `${hi} ${isoName('zhra')}! ${plural(st.todayLeft, 'lecture')} left today 🌸`;
+    if (st.later.length) return `Today is done! ${plural(st.later.length, 'catch-up')} planned for the next days 🌸`;
     if (st.today.length) return `Zero backlog! I'm blooming 🌸`;
     return `${hi} ${isoName('zhra')}! Nothing due today. Revise something? 💜`;
   },
@@ -2109,11 +2172,12 @@ const Peony = {
     this.bloom(); this.say(this.pick(mine.length ? mine : this.lines()));
     this.confetti(6);
   },
-  celebrate(kind, subject) {
+  celebrate(left, subject) {
+    if (!left) return zeroBacklog();
     if (!this.active) return toast(`${subject} studied ✔`);
     this.bloom();
-    if (kind === 'big') { this.say('Zero backlog! Everything is studied 🎉🌸', 5000); this.confetti(40); }
-    else { this.say(`Yay! ${subject} done 🌸`); this.confetti(14); }
+    this.say(left === 1 ? `${subject} done! Just one more, then zero backlog 🌸` : left <= 5 ? `${subject} done · ${left} to go 🌸` : `Yay! ${subject} done 🌸`);
+    this.confetti(14);
   },
   confetti(n) {
     const r = this.el.getBoundingClientRect();
@@ -2138,7 +2202,10 @@ const Peony = {
     b.style.maxWidth = Math.min(240, innerWidth - 32) + 'px';
     const w = b.offsetWidth;
     if (inHead) { b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px'; b.style.top = (r.bottom + 10) + 'px'; }
-    else { b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w)) + 'px'; b.style.top = (r.bottom + 2) + 'px'; }   // under the flower, clear of the headline
+    else {   // just below the hero card, so it never sits on the headline or the buttons
+      const h = this.el.closest('.hero')?.getBoundingClientRect() || r;
+      b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w)) + 'px'; b.style.top = (h.bottom + 8) + 'px';
+    }
   }
 };
 $('#peony .pbtn').addEventListener('click', () => Peony.tap());
