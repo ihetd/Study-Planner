@@ -473,7 +473,10 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .hbar>span:first-child{text-align:left;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hbar .track{height:14px;position:relative}
 .hbar .track i{position:absolute;left:0;top:0;bottom:0;background:var(--sc);border-radius:0 4px 4px 0;min-width:3px}
-.hbar b{font-variant-numeric:tabular-nums;font-size:13px;color:var(--text)}
+.hbar b{font-variant-numeric:tabular-nums;font-size:13px;color:var(--text);text-align:right;line-height:1.2}
+.hbar b small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+.hbar.zero .track i{min-width:0;width:0!important}
+.hbar.zero>span:first-child{color:var(--muted)}
 .chart table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 .chart td,.chart th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
 .chart details summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:700;margin-top:8px}
@@ -622,7 +625,7 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
       <form class="manual" id="manualForm">
         <h2 class="sec" style="margin:0">✍️ Add a lecture by hand</h2>
         <div class="grid2">
-          <label>Subject<input class="field" id="mSubject" dir="auto" required></label>
+          <label>Subject<select class="field" id="mSubject" required><option>Ortho</option><option>Ophtho</option><option>ENT</option><option>WH</option></select></label>
           <label>Lecture name<input class="field" id="mTopic" dir="auto"></label>
         </div>
         <div><button class="btn" type="submit">Add lecture</button></div>
@@ -719,10 +722,21 @@ const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
 const SUBJ_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
 const SUBJ_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
 const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+// The batch's four main subjects. Every lecture, session, task and exam belongs to one of them;
+// Telegram spellings and Arabic names are folded in, anything else stays as typed.
+const SUBJECTS = ['Ortho', 'Ophtho', 'ENT', 'WH'];
+const SUBJ_ALIASES = [
+  [/^(ortho|orthop|orthopa?edics?|عظام|كسور)$/, 'Ortho'],
+  [/^(ophth?o?|optho|ophthalmology|eye|عيون|عين)$/, 'Ophtho'],
+  [/^(ent|e\.?n\.?t\.?|otolaryngology|انف.*|أنف.*|اذن.*)$/, 'ENT'],
+  [/^(wh|women'?s? ?health|gyn(ae|e)?|obs?|obs?\/?gyn|obstetrics|gyn(a|ae)?ecology|نسائية|نسائيه|نسائي)$/, 'WH']
+];
+const canonSubj = s => { const raw = String(s || '').trim(), k = raw.toLowerCase().replace(/\s+/g, ' '); for (const [re, name] of SUBJ_ALIASES) if (re.test(k)) return name; return raw; };
 let subjOrder = new Map();
 const subjColor = s => {
   const k = String(s || '').trim().toLowerCase(), pal = darkMQ.matches ? SUBJ_DARK : SUBJ_LIGHT;
-  let i = subjOrder.get(k);
+  const main = SUBJECTS.findIndex(x => x.toLowerCase() === k);
+  let i = main >= 0 ? main : subjOrder.has(k) ? SUBJECTS.length + subjOrder.get(k) : null;
   if (i == null) { i = 0; for (const c of k) i = (i * 31 + c.charCodeAt(0)) >>> 0; }
   return pal[i % pal.length];
 };
@@ -803,7 +817,7 @@ function parseSection(body) {
     const pm = block.match(/المكان[^:：\n]*[:：]\s*([^\n]+)/);
     const lm = block.match(/\[\[(https?:[^\]\s]+)\]\]/) || block.match(/(https?:\/\/[^\s\]]+)/);
     return {
-      order, subject, topic,
+      order, subject: canonSubj(subject), topic,
       time: tm ? `${tm[1]}-${tm[2]}` : '',
       place: pm ? stripDecor(pm[1].replace(/\[\[[^\]]*\]\]/g, '')) : '',
       link: lm ? lm[1] : ''
@@ -830,7 +844,7 @@ const Store = {
   all() { return [...this.map.values()]; },
   get(id) { return this.map.get(id); },
   onChange(f) { this.listeners.add(f); },
-  emit() { this.ready = true; this.listeners.forEach(f => f()); }
+  emit() { this.ready = true; this.map.forEach(l => { const c = canonSubj(l.subject); if (c !== l.subject) l.subject = c; }); this.listeners.forEach(f => f()); }
 };
 
 // Peony phrases written by the admin (Hussein): [{ id, text, date|null, at }].
@@ -931,7 +945,7 @@ const S = {
   me: null, viewing: null, tab: 'today',
   calSel: todayStr(),
   filter: 'pending', search: '', pick: new Set(), planTime: '', planDur: 60, calView: 'month', lastBlock: null, gcScrolled: false,
-  preview: null, wk: null, statRange: 7, showAllOverdue: false
+  preview: null, wk: null, statRange: 'week', showAllOverdue: false
 };
 const readOnly = () => S.viewing !== S.me;
 const eff = l => l.planDate || l.date;          // the day a lecture is planned for
@@ -1007,8 +1021,7 @@ function togglePomo() {
 function openFreeSheet() {
   const subs = subjectsList(), pomo = pomoPref();
   showPop(`<h3>⏱ Start a study session</h3>
-    <label class="pf">Subject<select class="field" id="fsSubj"><option value="">No subject</option>${subs.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}<option value="__other">Other…</option></select></label>
-    <input class="field" id="fsOther" dir="auto" aria-label="Subject name" placeholder="Subject" hidden>
+    <label class="pf">Subject<select class="field" id="fsSubj">${subs.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}<option value="">No subject</option></select></label>
     <div class="seg mode-seg" role="group" aria-label="Timer"><button type="button" data-fs-mode="watch" aria-pressed="${!pomo}">⏱ Stopwatch</button><button type="button" data-fs-mode="pomo" aria-pressed="${pomo}">🍅 Pomodoro 25·5</button></div>
     <div class="pop-btns"><button class="btn" type="button" data-fs-start>▶ Start</button></div>`);
 }
@@ -1070,7 +1083,7 @@ function computeSeq() {
   seqMap = new Map();
   const counters = {};
   subjOrder = new Map();
-  const slot = s => { const k = String(s || '').trim().toLowerCase(); if (k && !subjOrder.has(k)) subjOrder.set(k, subjOrder.size); };
+  const slot = s => { const k = String(s || '').trim().toLowerCase(); if (k && !SUBJECTS.some(x => x.toLowerCase() === k) && !subjOrder.has(k)) subjOrder.set(k, subjOrder.size); };
   Store.all().sort(byDateOrder).forEach(l => slot(l.subject));
   [...Extra.exams.values()].forEach(e => slot(e.subj)); [...Extra.tasks.values()].forEach(t => slot(t.subj));
   Store.all().sort(byDateOrder).forEach(l => {
@@ -1210,7 +1223,9 @@ function openRevPop(id, n) {
     <p class="meta">Review ${r.step} of 4 · ${esc(fmtDate(r.due))}${r.done ? ' · ✔ done' : ''}</p>
     ${readOnly() || r.done ? '' : `<div class="pop-btns"><button class="btn" type="button" data-review="${esc(l.id)}|${r.n}" data-close-pop>✓ Reviewed</button></div>`}`);
 }
-const subjectsList = () => [...new Set([...mine().map(l => l.subject.trim()), ...myTasks().map(k => k.subj), ...myExams().map(e => e.subj)].filter(Boolean))].sort();
+const subjectsList = () => [...new Set([...SUBJECTS, ...[...mine().map(l => l.subject), ...myTasks().map(k => k.subj), ...myExams().map(e => e.subj)].map(canonSubj).filter(Boolean).sort()])];
+// A subject picker: the four main subjects first, then any others already in use.
+const subjOptions = (sel, none) => (none ? `<option value="">${none}</option>` : '') + subjectsList().map(x => `<option value="${esc(x)}" ${canonSubj(sel) === x ? 'selected' : ''}>${esc(x)}</option>`).join('');
 
 /* ============================ EXAMS ============================ */
 const myExams = () => [...Extra.exams.values()].filter(e => e.owner === S.viewing).sort((a, b) => a.date < b.date ? -1 : 1);
@@ -1268,14 +1283,14 @@ function renderTasks() {
       ...all.filter(k => k.due === d).sort(byDue).map(k => `<button class="wk-item${k.done ? ' done' : ''}" type="button" data-task-pop="${esc(k.id)}" style="--pc:${PRIO[k.prio].c}" dir="auto">${esc(k.title)}</button>`)];
     return `<div class="wk-day${d === t ? ' today' : ''}"><h3>${DOW[dd.getDay()]} <b>${dd.getDate()}</b></h3><div>${items.join('') || '<span class="wk-empty">—</span>'}</div></div>`;
   };
-  $('#tab-tasks').innerHTML = `<datalist id="subjList">${subjectsList().map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+  $('#tab-tasks').innerHTML = `
     <h2 class="sec">🎓 Exams <span class="count">${upcoming.length}</span></h2>
     ${upcoming.map(e => examCard(e, false)).join('') || (ro ? '<div class="empty">No exams added.</div>' : '')}
     ${ro ? '' : `<details class="addbox" ${upcoming.length ? '' : 'open'}><summary><b>＋ Add an exam</b></summary>
       <form class="exam-form" id="examForm">
         <label class="pf">Exam name<input class="field" id="exName" dir="auto" required maxlength="80"></label>
         <div class="pf2"><label class="pf">Date<input class="field" id="exDate" type="date" min="${t}" required></label>
-          <label class="pf">Subject<input class="field" id="exSubj" list="subjList" dir="auto"></label></div>
+          <label class="pf">Subject<select class="field" id="exSubj">${subjOptions('', 'Choose…')}</select></label></div>
         <label class="pf">Topics, one per line<textarea class="field" id="exTopics" dir="auto"></textarea></label>
         <div class="row"><button class="btn sm ghost" type="button" data-exam-fill>Fill from this subject's lectures</button><button class="btn" type="submit">Add exam</button></div>
       </form></details>`}
@@ -1285,7 +1300,7 @@ function renderTasks() {
       <label class="pf grow">New task<input class="field" id="tkTitle" dir="auto" required maxlength="120"></label>
       <label class="pf">Due<input class="field" id="tkDue" type="date" value="${t}"></label>
       <label class="pf">Priority<select class="field" id="tkPrio"><option value="high">‼ High</option><option value="med" selected>! Medium</option><option value="low">Low</option></select></label>
-      <label class="pf">Subject<input class="field" id="tkSubj" list="subjList" dir="auto"></label>
+      <label class="pf">Subject<select class="field" id="tkSubj">${subjOptions('', 'No subject')}</select></label>
       <button class="btn" type="submit">Add</button></form></details>`}
     <h2 class="sec">${esc(ws === weekStart(t) ? 'This week' : 'Week of ' + fmtDate(ws))}<span class="sp"></span>
       <button class="btn sm ghost gc-arrow" type="button" data-wk="-1" aria-label="Previous week">‹</button>
@@ -1298,22 +1313,26 @@ function renderTasks() {
 }
 
 /* ============================ STATS ============================ */
-const logSubj = e => e.subj || String(e.subject || '').replace(/\s#\d+$/, '') || 'Free session';
+const logSubj = e => canonSubj(e.subj || String(e.subject || '').replace(/\s#\d+$/, '')) || 'Free session';
 // axis tops whose quarters are round: 15m/30m/45m/1h, 30m/1h/1.5h/2h, 1h/2h/3h/4h…
 const niceMax = v => [60, 120, 240, 360, 480, 720, 960].find(x => x >= v) || Math.ceil(v / 240) * 240;
 const shortMin = m => m < 60 ? `${m}m` : `${+(m / 60).toFixed(1)}h`;
 function renderStats() {
-  const days = S.statRange, t = todayStr(), from = addDays(t, -(days - 1));
-  const logs = Sessions.log.filter(e => e.user === S.viewing && e.day >= from && e.day <= t);
+  // Ranges: this week and last week (Sun–Sat, the calendar's week), or the last 30/90 days.
+  const R = S.statRange, t = todayStr(), wk0 = weekStart(t);
+  const [from, to, days] = R === 'week' ? [wk0, t, 7] : R === 'lastweek' ? [addDays(wk0, -7), addDays(wk0, -1), 7] : [addDays(t, -(R - 1)), t, R];
+  const isWeek = R === 'week' || R === 'lastweek', elapsedDays = daysBetween(from, to) + 1;
+  const rangeLabel = R === 'week' ? 'this week' : R === 'lastweek' ? 'last week' : `${R} days`;
+  const logs = Sessions.log.filter(e => e.user === S.viewing && e.day >= from && e.day <= to);
   const live = liveOf(S.viewing);
   const perDay = {}, perSubj = {};
   const add = (day, subj, m) => { if (m <= 0) return; perDay[day] = (perDay[day] || 0) + m; perSubj[subj] = (perSubj[subj] || 0) + m; };
   logs.forEach(e => add(e.day, logSubj(e), e.mins));
-  if (live) add(t, live.subject || 'Free session', Math.floor(elapsed(live) / 60000));
+  if (live && to === t) add(t, canonSubj(live.subject) || 'Free session', Math.floor(elapsed(live) / 60000));
   const total = Object.values(perDay).reduce((a, b) => a + b, 0);
   const activeDays = Object.keys(perDay).length;
   const pomos = logs.reduce((n, e) => n + (e.pomos || 0), 0) + (live && live.pomos || 0);
-  const inRange = ts => ts && ymd(new Date(ts)) >= from;
+  const inRange = ts => { if (!ts) return false; const d = ymd(new Date(ts)); return d >= from && d <= to; };
   const lecturesDone = mine().filter(l => inRange(l.studiedAt)).length;
   const reviewsDone = mine().reduce((n, l) => n + Object.values(l.revDone || {}).filter(inRange).length, 0);
   const tasksDone = myTasks().filter(k => k.done && inRange(k.doneAt)).length;
@@ -1331,26 +1350,29 @@ function renderStats() {
   // Backlog at the end of each day (or week): lectures whose day had come but weren't studied yet.
   const endOf = d => parseYmd(addDays(d, 1)).getTime();
   const backlogAt = d => mine().filter(l => l.date <= d && (l.createdAt || 0) < endOf(d) && !(l.studiedAt && l.studiedAt < endOf(d)) && !(l.status !== 'pending' && !l.studiedAt)).length;
-  const blVals = buckets.map(b => backlogAt(b[b.length - 1]));
-  const blMax = Math.max(4, ...blVals), blNow = blVals[blVals.length - 1];
-  const blBars = buckets.map((b, i) => `<span class="b${b.includes(t) ? ' today' : ''}" tabindex="0" data-tip="${esc(weekly ? 'End of ' + fmtDate(b[b.length - 1]) : fmtDate(b[0]))} · ${blVals[i] ? plural(blVals[i], 'lecture') + ' waiting' : 'zero backlog'}"><i style="height:${blVals[i] / blMax * 100}%"></i></span>`).join('');
+  const blVals = buckets.map(b => b[0] > t ? null : backlogAt(b[b.length - 1] > t ? t : b[b.length - 1]));   // no bars for days still to come
+  const blMax = Math.max(4, ...blVals.filter(v => v != null)), blNow = blVals.filter(v => v != null).pop() || 0;
+  const blBars = buckets.map((b, i) => `<span class="b${b.includes(t) ? ' today' : ''}" tabindex="0" data-tip="${esc(weekly ? 'End of ' + fmtDate(b[b.length - 1]) : fmtDate(b[0]))} · ${blVals[i] == null ? 'still to come' : blVals[i] ? plural(blVals[i], 'lecture') + ' waiting' : 'zero backlog'}"><i style="height:${blVals[i] / blMax * 100}%"></i></span>`).join('');
   const blGrid = [0.5, 1].map(f => `<div class="gl" style="bottom:${f * 100}%"><span>${Math.round(blMax * f)}</span></div>`).join('');
   const xAxis = `<div class="xl" aria-hidden="true">${buckets.map((b, i) => `<span>${i % step === 0 || days <= 7 ? esc(xLabel(b[0])) : ''}</span>`).join('')}</div>`;
-  const subjRows = Object.entries(perSubj).sort((a, b) => b[1] - a[1]);
-  const smax = subjRows.length ? subjRows[0][1] : 1;
+  const lecBySubj = {};
+  mine().filter(l => inRange(l.studiedAt)).forEach(l => { lecBySubj[l.subject] = (lecBySubj[l.subject] || 0) + 1; });
+  const others = Object.keys({ ...perSubj, ...lecBySubj }).filter(k => !SUBJECTS.includes(k) && k !== 'Free session').sort();
+  const subjRows = [...SUBJECTS, ...others, ...(perSubj['Free session'] ? ['Free session'] : [])].map(k => [k, perSubj[k] || 0, lecBySubj[k] || 0]);
+  const smax = Math.max(1, ...subjRows.map(r => r[1]));
   $('#tab-stats').innerHTML = `
     <div class="gc-head"><h2 style="margin:0 4px 0 0;flex:1">📊 Progress</h2>
-      <div class="seg" role="group" aria-label="Range">${[[7, '7 days'], [30, '30 days'], [90, '90 days']].map(([v, l]) => `<button type="button" data-range="${v}" aria-pressed="${days === v}">${l}</button>`).join('')}</div></div>
+      <div class="seg" role="group" aria-label="Range">${[['week', 'This week'], ['lastweek', 'Last week'], [30, '30 days'], [90, '90 days']].map(([v, l]) => `<button type="button" data-range="${v}" aria-pressed="${R === v}">${l}</button>`).join('')}</div></div>
     <div class="kpis">
-      <div><b>${fmtMins(total)}</b><small>studied · ${days} days</small></div>
-      <div><b>${fmtMins(Math.round(total / days))}</b><small>daily average</small></div>
+      <div><b>${fmtMins(total)}</b><small>studied · ${rangeLabel}</small></div>
+      <div><b>${fmtMins(Math.round(total / elapsedDays))}</b><small>daily average</small></div>
       <div><b>${studyStreak(S.viewing)} 🔥</b><small>study streak</small></div>
       <div><b>${pomos} 🍅</b><small>pomodoros</small></div>
       <div><b>${lecturesDone}</b><small>lectures studied</small></div>
       <div><b>${reviewsDone} · ${tasksDone}</b><small>reviews · tasks done</small></div>
     </div>
     <div class="chart">
-      <h3>Study time per ${weekly ? 'week' : 'day'}</h3><p class="sub">${activeDays} of ${days} days with study${total ? ` · best day ${fmtMins(Math.max(...Object.values(perDay)))}` : ''}</p>
+      <h3>Study time per ${weekly ? 'week' : 'day'}</h3><p class="sub">${activeDays} of ${elapsedDays} days with study${total ? ` · best day ${fmtMins(Math.max(...Object.values(perDay)))}` : ''}</p>
       <div class="daily" role="img" aria-label="Study minutes per ${weekly ? 'week' : 'day'}">${grid}${bars}</div>
       ${xAxis}
       <details><summary>Show as table</summary><table><tr><th>${weekly ? 'Week' : 'Day'}</th><th>Studied</th></tr>${buckets.slice().reverse().map(b => `<tr><td>${esc(bName(b))}</td><td>${bVal(b) ? fmtMins(bVal(b)) : '—'}</td></tr>`).join('')}</table></details>
@@ -1362,10 +1384,10 @@ function renderStats() {
       <details><summary>Show as table</summary><table><tr><th>${weekly ? 'Week ending' : 'Day'}</th><th>Waiting</th></tr>${buckets.slice().reverse().map((b, i) => `<tr><td>${esc(fmtDate(b[b.length - 1]))}</td><td>${blVals[buckets.length - 1 - i]}</td></tr>`).join('')}</table></details>
     </div>
     <div class="chart">
-      <h3>Hours per subject</h3><p class="sub">Last ${days} days, from study sessions</p>
-      ${subjRows.length ? subjRows.map(([name, m]) => `<div class="hbar" style="--sc:${subjColor(name === 'Free session' ? '' : name)}"><span dir="auto">${esc(name)}</span>
-        <span class="track" data-tip="${esc(name)} · ${fmtMins(m)}" tabindex="0"><i style="width:${m / smax * 100}%"></i></span><b>${fmtMins(m)}</b></div>`).join('')
-        : `<div class="empty"><span class="em">⏱</span>No study sessions in this range yet. Press ▶ on a lecture to start one.</div>`}
+      <h3>Time per subject</h3><p class="sub">${isWeek ? `${esc(fmtDate(from))} – ${esc(fmtDate(addDays(from, 6)))}` : `Last ${days} days`} · from study sessions</p>
+      ${subjRows.map(([name, m, n]) => `<div class="hbar${m ? '' : ' zero'}" style="--sc:${subjColor(name === 'Free session' ? '' : name)}"><span dir="auto">${esc(name)}</span>
+        <span class="track" data-tip="${esc(name)} · ${m ? fmtMins(m) : 'no study'}${n ? ' · ' + plural(n, 'lecture') + ' studied' : ''}" tabindex="0"><i style="width:${m / smax * 100}%"></i></span><b>${m ? fmtMins(m) : '—'}<small>${n ? plural(n, 'lecture') : ''}</small></b></div>`).join('')}
+      ${total ? '' : `<p class="meta" style="margin:8px 0 0">No study sessions ${isWeek ? rangeLabel : 'in this range'} yet. Press ▶ on a lecture to start one.</p>`}
     </div>`;
 }
 // One shared tooltip for chart marks (hover, and keyboard focus).
@@ -1739,7 +1761,7 @@ function renderPreview() {
       ${p[g].length ? p[g].map((l, i) => `<div class="pv-row" data-g="${g}" data-i="${i}">
         <span class="num">${l.order}</span>
         <div class="fs">
-          <label class="pf">Subject<input class="field" data-k="subject" value="${esc(l.subject)}" dir="auto"></label>
+          <label class="pf">Subject<select class="field" data-k="subject">${subjOptions(l.subject)}${subjectsList().includes(l.subject) ? '' : `<option selected>${esc(l.subject)}</option>`}</select></label>
           <label class="pf">Lecture name<input class="field" data-k="topic" value="${esc(l.topic)}" dir="auto"></label>
           ${l.link ? `<label class="pf">Link<input class="field" data-k="link" value="${esc(l.link)}" dir="ltr"></label>` : ''}
         </div>
@@ -1764,7 +1786,7 @@ async function savePreview() {
   ['A1', 'A2'].forEach(g => p[g].forEach(l => {
     if (!l.subject.trim()) return;
     const id = `${date}_${g}_${l.order}`, ex = Store.get(id);
-    const doc = { id, date, group: g, owner: GROUP_OWNER[g], order: l.order, subject: l.subject.trim() };
+    const doc = { id, date, group: g, owner: GROUP_OWNER[g], order: l.order, subject: canonSubj(l.subject) };
     if (safeUrl((l.link || '').trim())) doc.link = l.link.trim();
     if (l.topic.trim() && !(ex && ex.topic)) doc.topic = l.topic.trim();
     if (!ex) Object.assign(doc, { link: doc.link || '', topic: doc.topic || '', status: 'pending', studiedAt: null, planDate: null, createdAt: now });
@@ -1788,15 +1810,15 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'taskForm') {
     e.preventDefault(); if (readOnly()) return;
     const title = $('#tkTitle').value.trim(); if (!title) return;
-    Backend.put('tasks', { id: newId('t'), owner: S.me, title, due: $('#tkDue').value || null, prio: $('#tkPrio').value || 'med', subj: $('#tkSubj').value.trim(), done: false, doneAt: null, createdAt: Date.now() });
-    $('#tkTitle').value = ''; $('#tkSubj').value = ''; document.activeElement.blur();
+    Backend.put('tasks', { id: newId('t'), owner: S.me, title, due: $('#tkDue').value || null, prio: $('#tkPrio').value || 'med', subj: $('#tkSubj').value, done: false, doneAt: null, createdAt: Date.now() });
+    $('#tkTitle').value = ''; document.activeElement.blur();
     toast('Task added ☑'); renderTasks();
   }
   if (e.target.id === 'examForm') {
     e.preventDefault(); if (readOnly()) return;
     const name = $('#exName').value.trim(), date = $('#exDate').value; if (!name || !date) return;
     const topics = $('#exTopics').value.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 300).map((text, i) => ({ id: 'p' + i + Math.random().toString(36).slice(2, 6), text, done: false }));
-    Backend.put('exams', { id: newId('e'), owner: S.me, name, date, subj: $('#exSubj').value.trim(), topics, goal: null, createdAt: Date.now() });
+    Backend.put('exams', { id: newId('e'), owner: S.me, name, date, subj: $('#exSubj').value, topics, goal: null, createdAt: Date.now() });
     document.activeElement.blur();
     toast(`🎓 ${name} added · ${daysBetween(todayStr(), date)} days to go`); renderTasks();
   }
@@ -1806,13 +1828,13 @@ document.addEventListener('submit', e => {
 document.addEventListener('submit', e => {
   if (e.target.id !== 'manualForm') return;
   e.preventDefault();
-  const subject = $('#mSubject').value.trim(); if (!subject) return;
+  const subject = canonSubj($('#mSubject').value); if (!subject) return;
   if (!S.me) return;
   const owner = S.me, group = USERS[owner].group, date = todayStr();
   const order = Math.max(0, ...Store.all().filter(l => l.date === date && l.group === group).map(l => l.order)) + 1;
   Backend.upsert([{ id: `${date}_${group}_m${Date.now().toString(36)}`, date, group, owner, order, subject, topic: $('#mTopic').value.trim(),
     link: '', status: 'pending', studiedAt: null, planDate: null, planTime: null, createdAt: Date.now(), manual: true }]);
-  $('#mSubject').value = ''; $('#mTopic').value = '';
+  $('#mTopic').value = '';
   toast(`Added ${subject} ✔`);
 });
 
@@ -1841,17 +1863,17 @@ document.addEventListener('click', e => {
   const ed = t.closest('[data-exam-del]');
   if (ed) { const ex = Extra.exams.get(ed.dataset.examDel); if (ex && ex.owner === S.me && confirm(`Delete the exam "${ex.name}" and its topic list?`)) Backend.del('exams', ex.id); return; }
   if (t.closest('[data-exam-fill]')) {
-    const subj = $('#exSubj').value.trim().toLowerCase(); if (!subj) return toast('Type the subject first');
+    const subj = $('#exSubj').value.toLowerCase(); if (!subj) return toast('Choose the subject first');
     const ls_ = mine().filter(l => l.subject.trim().toLowerCase() === subj).sort(byDateOrder);
     if (!ls_.length) return toast('No lectures for that subject yet');
     $('#exTopics').value = ls_.map(l => lecLabel(l) + (l.topic ? ' — ' + l.topic : '')).join('\n'); return;
   }
   const wk = t.closest('[data-wk]');
   if (wk) { const v = +wk.dataset.wk; S.wk = v ? addDays(S.wk || weekStart(todayStr()), 7 * v) : null; return renderTasks(); }
-  const rg = t.closest('[data-range]'); if (rg) { S.statRange = +rg.dataset.range; return renderStats(); }
+  const rg = t.closest('[data-range]'); if (rg) { const v = rg.dataset.range; S.statRange = isNaN(+v) ? v : +v; return renderStats(); }
   const fm = t.closest('[data-fs-mode]'); if (fm) { $$('[data-fs-mode]').forEach(b => b.setAttribute('aria-pressed', b === fm)); return; }
   if (t.closest('[data-fs-start]')) {
-    const sel = $('#fsSubj').value, subject = sel === '__other' ? $('#fsOther').value.trim() : sel;
+    const subject = $('#fsSubj').value;
     const mode = $('[data-fs-mode][aria-pressed=true]').dataset.fsMode;
     ls.set('sp.pomo.' + S.me, mode === 'pomo'); closePop();
     return startSession(null, { subject, mode });
@@ -1936,7 +1958,6 @@ document.addEventListener('change', e => {
     const b = $('#planBtn'); if (b) { b.disabled = !S.pick.size; b.textContent = `Plan ${plural(S.pick.size, 'lecture')}`; }
     return;
   }
-  if (t.id === 'fsSubj') { $('#fsOther').hidden = t.value !== '__other'; if (t.value === '__other') $('#fsOther').focus(); return; }
   if (t.dataset.topic) { const [ex, id] = t.dataset.topic.split('|'); return toggleTopic(ex, id); }
   if (t.id === 'pvDate' && S.preview) { S.preview.date = t.value || S.preview.date; return renderPreview(); }
 });
