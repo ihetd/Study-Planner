@@ -369,6 +369,17 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 /* manual add */
 .manual{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;display:grid;gap:10px;margin-top:22px}
 .manual .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* subject picker: the four main subjects as tap targets, each in its subject colour */
+.subj-pick{border:0;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.subj-pick legend{padding:0;margin-bottom:6px;font-size:14px;font-weight:700;color:var(--muted)}
+.subj-pick label{position:relative;cursor:pointer;--sc:#2a78d6}
+.subj-pick .s2{--sc:#eb6834}.subj-pick .s3{--sc:#1baf7a}.subj-pick .s4{--sc:#eda100}
+.subj-pick input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.subj-pick span{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:15px;color:var(--text);transition:background .15s,border-color .15s}
+.subj-pick span::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--sc);flex:none}
+.subj-pick input:checked+span{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 16%,var(--surface));box-shadow:inset 0 0 0 1px var(--sc)}
+.subj-pick input:focus-visible+span{outline:3px solid var(--brand-4);outline-offset:2px}
+@media (prefers-color-scheme:dark){.subj-pick label{--sc:#3987e5}.subj-pick .s2{--sc:#d95926}.subj-pick .s3{--sc:#199e70}.subj-pick .s4{--sc:#c98500}}
 @media (max-width:520px){.manual .grid2{grid-template-columns:1fr}}
 .manual label{font-size:13px;font-weight:700;color:var(--muted);display:grid;gap:4px}
 
@@ -624,10 +635,14 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
       <div id="preview" class="preview"></div>
       <form class="manual" id="manualForm">
         <h2 class="sec" style="margin:0">✍️ Add a lecture by hand</h2>
-        <div class="grid2">
-          <label>Subject<select class="field" id="mSubject" required><option>Ortho</option><option>Ophtho</option><option>ENT</option><option>WH</option></select></label>
-          <label>Lecture name<input class="field" id="mTopic" dir="auto"></label>
-        </div>
+        <fieldset class="subj-pick">
+          <legend>Subject</legend>
+          <label class="s1"><input type="radio" name="mSubj" value="Ortho" checked><span>Ortho</span></label>
+          <label class="s2"><input type="radio" name="mSubj" value="Ophtho"><span>Ophtho</span></label>
+          <label class="s3"><input type="radio" name="mSubj" value="ENT"><span>ENT</span></label>
+          <label class="s4"><input type="radio" name="mSubj" value="WH"><span>WH</span></label>
+        </fieldset>
+        <label>Lecture name<input class="field" id="mTopic" dir="auto"></label>
         <div><button class="btn" type="submit">Add lecture</button></div>
       </form>
     </section>
@@ -1828,7 +1843,7 @@ document.addEventListener('submit', e => {
 document.addEventListener('submit', e => {
   if (e.target.id !== 'manualForm') return;
   e.preventDefault();
-  const subject = canonSubj($('#mSubject').value); if (!subject) return;
+  const subject = canonSubj(($('input[name=mSubj]:checked') || {}).value); if (!subject) return;
   if (!S.me) return;
   const owner = S.me, group = USERS[owner].group, date = todayStr();
   const order = Math.max(0, ...Store.all().filter(l => l.date === date && l.group === group).map(l => l.order)) + 1;
