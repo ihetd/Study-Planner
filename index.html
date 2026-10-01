@@ -120,7 +120,7 @@ main.wrap{padding:18px 16px 170px}
 /* ---------- today hero ---------- */
 .hero{position:relative;overflow:hidden;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;color:#fff;border-radius:22px;padding:18px;
   background:radial-gradient(circle at 85% 20%,rgba(255,255,255,.16) 0,transparent 40%),linear-gradient(135deg,#330066,#6a2bb0);box-shadow:0 12px 30px rgba(51,0,102,.3)}
-.hero small{opacity:.8;font-weight:600;letter-spacing:.3px}
+.hero small{opacity:.82;font-weight:600;letter-spacing:.3px;display:block}
 .hero h2{margin:2px 0 4px;font-size:clamp(20px,5.6vw,26px);line-height:1.2}
 .hero p{margin:0;opacity:.9;font-size:15px}
 .hero-btns{grid-column:1/-1;display:flex;gap:8px}
@@ -133,6 +133,8 @@ main.wrap{padding:18px 16px 170px}
 .ring .bg{stroke:rgba(255,255,255,.18)}
 .ring .fg{stroke:#fff;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
 .ring b{font-size:22px;font-variant-numeric:tabular-nums}
+.more-btn{display:block;margin:10px auto 0}
+.tail{margin-top:22px}
 .mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 4px}
 .mini-stats div{background:var(--surface);border-radius:var(--radius);padding:10px 8px;box-shadow:var(--shadow);text-align:center;display:grid;gap:1px}
 .mini-stats b{font-size:clamp(17px,4.8vw,21px);color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -232,7 +234,6 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .clk .sep{font-weight:700;opacity:.5;padding:0 1px;line-height:.95}
 #sessionBar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:35;max-width:540px;margin:0 auto;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px 12px;
   background:linear-gradient(135deg,#330066,#5a1f99);color:#fff;border-radius:20px;padding:12px 14px;box-shadow:0 12px 32px rgba(51,0,102,.45)}
-body.has-session #peony:not([style*="top"]){bottom:132px}
 #sessionBar .sb-info{min-width:0;display:flex;align-items:center;gap:8px}
 #sessionBar .sb-info small{display:block;font-size:12px;opacity:.75;font-weight:600;letter-spacing:.3px}
 #sessionBar .sb-info span.t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -475,9 +476,13 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 #toast.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
 
 /* ---------- peony mascot ---------- */
-#peony{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:40;width:96px;touch-action:none;user-select:none;-webkit-user-select:none}
-#peony .pbtn{background:none;border:0;padding:0;width:96px;height:120px;display:block;cursor:grab;-webkit-tap-highlight-color:transparent}
-#peony.dragging .pbtn{cursor:grabbing}
+/* docked: in زهرة's hero on Today, in the header avatar elsewhere */
+#peony{position:relative;display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none}
+#peony .pbtn{background:none;border:0;padding:0;width:100%;height:100%;display:block;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hero-peony{width:92px;height:108px;margin:-6px -4px -10px 0;align-self:center}
+.hello-av.peony-slot{background:rgba(255,255,255,.18)}
+#peony.in-head svg{filter:none}
+#peony.in-head .flower{animation-duration:6s}
 #peony svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 6px 10px rgba(51,0,102,.3))}
 #peony .flower{transform-box:view-box;transform-origin:60px 138px;animation:sway 4s ease-in-out infinite}
 #peony .po,#peony .pm,#peony .pi{transform-box:view-box;transform-origin:60px 54px;transition:transform .5s cubic-bezier(.3,1.6,.5,1)}
@@ -497,12 +502,12 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 @keyframes droop{0%,100%{transform:rotate(14deg)}50%{transform:rotate(10deg)}}
 @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
 @keyframes zz{0%{opacity:0;transform:translateY(4px)}50%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
-.bubble{position:absolute;bottom:118px;right:0;width:max-content;max-width:min(240px,calc(100vw - 40px));background:var(--surface);color:var(--text);
+.bubble{position:fixed;z-index:45;left:0;top:0;width:max-content;max-width:min(240px,calc(100vw - 32px));background:var(--surface);color:var(--text);
   border:2px solid var(--brand-4);border-radius:16px 16px 4px 16px;padding:9px 12px;font-size:14.5px;font-weight:600;box-shadow:var(--shadow);
   opacity:0;transform:translateY(6px) scale(.96);transform-origin:bottom right;transition:opacity .2s,transform .2s;pointer-events:none}
 .bubble.show{opacity:1;transform:none}
-#peony.left .bubble{right:auto;left:0;border-radius:16px 16px 16px 4px;transform-origin:bottom left}
-@media (max-width:520px){.hero{padding:16px;gap:10px}.ring{width:80px;height:80px}.ring b{font-size:19px}#peony{width:80px}#peony .pbtn{width:80px;height:100px}.bubble{bottom:100px}body.has-session #peony:not([style*="top"]){bottom:128px}}
+#peony .bubble{border-radius:16px;transform-origin:top center}
+@media (max-width:520px){.hero{padding:16px;gap:10px}.ring{width:80px;height:80px}.ring b{font-size:19px}.hero-peony{width:84px;height:98px}}
 .petal{position:fixed;z-index:55;width:12px;height:12px;border-radius:0 60% 0 60%;pointer-events:none;animation:fall var(--t,1.6s) cubic-bezier(.2,.6,.4,1) forwards}
 @keyframes fall{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
 
@@ -891,7 +896,7 @@ const S = {
   me: null, viewing: null, tab: 'today',
   calSel: todayStr(),
   filter: 'pending', search: '', pick: new Set(), planTime: '', planDur: 60, calView: 'month', lastBlock: null, gcScrolled: false,
-  preview: null, wk: null, statRange: 7
+  preview: null, wk: null, statRange: 7, showAllOverdue: false
 };
 const readOnly = () => S.viewing !== S.me;
 const eff = l => l.planDate || l.date;          // the day a lecture is planned for
@@ -1069,7 +1074,7 @@ function card(l, opts = {}) {
   const late = !done && eff(l) < t;
   const tags = [
     (() => { const rs = reviewsOf(l), n = rs.filter(r => r.done).length; return rs.length ? `<span class="tag rev" title="Spaced-repetition reviews done">🔁 ${n}/${rs.length}</span>` : ''; })(),
-    late ? `<span class="tag late">overdue</span>` : '',
+    late ? (opts.catchUp ? `<span class="tag plan">from ${esc(relDate(eff(l)))}</span>` : `<span class="tag late">overdue</span>`) : '',
     l.planDate && l.planDate !== l.date && !opts.unplan ? `<span class="tag plan">planned ${esc(relDate(l.planDate))}</span>` : '',
     l.planTime ? `<span class="tag time"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${esc(l.planTime)}</span>` : ''
   ].join('');
@@ -1226,12 +1231,12 @@ function renderTasks() {
       </form></details>`}
     ${past.length ? `<details class="addbox"><summary class="meta">Past exams (${past.length})</summary>${past.reverse().map(e => examCard(e, false)).join('')}</details>` : ''}
     <h2 class="sec">☑ Tasks <span class="count">${open.length}</span></h2>
-    ${ro ? '' : `<form class="addbox task-form" id="taskForm">
+    ${ro ? '' : `<details class="addbox" ${all.length ? '' : 'open'}><summary><b>＋ New task</b></summary><form class="task-form" id="taskForm">
       <label class="pf grow">New task<input class="field" id="tkTitle" dir="auto" required maxlength="120"></label>
       <label class="pf">Due<input class="field" id="tkDue" type="date" value="${t}"></label>
       <label class="pf">Priority<select class="field" id="tkPrio"><option value="high">‼ High</option><option value="med" selected>! Medium</option><option value="low">Low</option></select></label>
       <label class="pf">Subject<input class="field" id="tkSubj" list="subjList" dir="auto"></label>
-      <button class="btn" type="submit">Add</button></form>`}
+      <button class="btn" type="submit">Add</button></form></details>`}
     <h2 class="sec">${esc(ws === weekStart(t) ? 'This week' : 'Week of ' + fmtDate(ws))}<span class="sp"></span>
       <button class="btn sm ghost gc-arrow" type="button" data-wk="-1" aria-label="Previous week">‹</button>
       <button class="btn sm ghost" type="button" data-wk="0">Today</button>
@@ -1307,47 +1312,55 @@ document.addEventListener('focusout', () => { $('#vizTip').hidden = true; });
 const byPlanTime = (a, b) => (a.planTime || '99') < (b.planTime || '99') ? -1 : (a.planTime || '99') > (b.planTime || '99') ? 1 : byDateOrder(a, b);
 
 function renderToday() {
-  const st = stats(), t = todayStr();
-  const who = USERS[S.viewing].name;
+  Peony.park();   // the docked Peony lives inside the hero; lift it out before the rebuild
+  const st = stats(), t = todayStr(), ro = readOnly();
   const todayList = st.today.sort((a, b) => isDone(a) - isDone(b) || byPlanTime(a, b));
-  const overdue = st.overdue.sort(byDateOrder);
+  const overdue = st.overdue.sort(byDateOrder);   // oldest first: that's where catching up starts
+  const behind = overdue.length;
   const upcoming = mine().filter(l => !isDone(l) && eff(l) > t && eff(l) <= addDays(t, 7)).sort(byDateOrder);
   const todayLog = Sessions.log.filter(e => e.user === S.viewing && e.day === t).sort((a, b) => a.start - b.start);
   const live = liveOf(S.viewing);
   const mins = todayLog.reduce((n, e) => n + e.mins, 0) + (live ? Math.floor(elapsed(live) / 60000) : 0);
   const doneN = st.today.length - st.todayLeft, pct = st.today.length ? Math.round(doneN / st.today.length * 100) : 0;
-  const next = todayList.find(l => !isDone(l)) || overdue[0];
+  const next = overdue[0] || todayList.find(l => !isDone(l));
   const C = 2 * Math.PI * 40;
-  const heroLine = live ? `${live.pausedAt ? 'Paused' : 'Studying'} ${esc(live.subject || 'a free session')} right now`
-    : next ? `Next up: <b dir="auto">${esc(lecLabel(next))}</b>${next.topic ? ' · ' + esc(next.topic) : ''}`
-    : st.today.length ? 'Everything for today is done 🎉' : 'Nothing planned. Pick lectures in the Calendar.';
-  $('#tab-today').innerHTML = `${readOnly() ? '' : migrateCard() + installCard()}
-    <section class="hero">
+  // The headline answers "what now?": catching up comes before today, and the
+  // celebration waits for a truly empty backlog.
+  const [title, line] = live ? [`${live.pausedAt ? 'Paused' : 'Studying'} now`, `<b dir="auto">${esc(sessLabel(live))}</b>`]
+    : behind ? [`${behind} to catch up`, `Start with <b dir="auto">${esc(lecLabel(next))}</b> · from ${esc(relDate(eff(next)))}`]
+    : st.todayLeft ? [`${doneN} of ${st.today.length} done today`, `Next up: <b dir="auto">${esc(lecLabel(next))}</b>${next.topic ? ' · <span dir="auto">' + esc(next.topic) + '</span>' : ''}`]
+    : mine().length ? ['Zero backlog 🌸', st.today.length ? 'Today is done and nothing is waiting.' : 'Nothing is waiting. Revise, or plan ahead.']
+    : ['A fresh start', 'Add today\'s lectures to begin.'];
+  const meta = [esc(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })), st.streak ? `🔥 ${st.streak}-day streak` : '', mins ? `⏱ ${fmtMins(mins)} today` : ''].filter(Boolean).join(' · ');
+  const zhraHero = S.viewing === 'zhra' && Peony.active && !ro;
+  const shownOverdue = S.showAllOverdue ? overdue : overdue.slice(0, 3);
+  $('#tab-today').innerHTML = `${ro ? '' : migrateCard()}
+    <section class="hero${zhraHero ? ' with-peony' : ''}">
       <div>
-        <small>${esc(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))}</small>
-        <h2>${st.today.length ? `${doneN} of ${st.today.length} done today` : readOnly() ? `${esc(who)}'s day` : 'A fresh day'}</h2>
-        <p>${heroLine}</p>
+        <small>${meta}</small>
+        <h2>${title}</h2>
+        <p>${line}</p>
       </div>
-      <div class="ring" role="img" aria-label="${pct}% of today done"><svg viewBox="0 0 92 92"><circle class="bg" cx="46" cy="46" r="40"/><circle class="fg" cx="46" cy="46" r="40" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct / 100)).toFixed(1)}"/></svg><b>${pct}%</b></div>
-      ${readOnly() || live ? '' : `<div class="hero-btns">${next ? `<button class="btn" type="button" data-sess="${esc(next.id)}">▶ Start studying</button>` : ''}<button class="btn ghost" type="button" data-sess="free">⏱ Free session</button></div>`}
+      ${zhraHero ? '<div class="hero-peony" aria-label="Peony"></div>'
+        : `<div class="ring" role="img" aria-label="${pct}% of today done"><svg viewBox="0 0 92 92"><circle class="bg" cx="46" cy="46" r="40"/><circle class="fg" cx="46" cy="46" r="40" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct / 100)).toFixed(1)}"/></svg><b>${pct}%</b></div>`}
+      ${ro || live ? '' : `<div class="hero-btns">${next ? `<button class="btn" type="button" data-sess="${esc(next.id)}">▶ ${behind ? 'Catch up' : 'Start studying'}</button>` : ''}<button class="btn ghost" type="button" data-sess="free">⏱ Free session</button></div>`}
     </section>
-    <div class="mini-stats">
-      <div><b>${st.streak} 🔥</b><small>day streak</small></div>
-      <div><b>${fmtMins(mins)}</b><small>studied today</small></div>
-      <div class="${st.overdue.length ? 'warn' : ''}"><b>${st.overdue.length}</b><small>overdue</small></div>
-    </div>
-    ${myExams().filter(e => e.date >= t).slice(0, 2).map(e => examCard(e, true)).join('')}
+    ${behind ? `<h2 class="sec">Catch up <span class="count">${behind}</span><span class="sp"></span>
+      ${ro ? '' : '<button class="btn sm ghost" id="moveAll" type="button">Move all to today</button>'}</h2>
+      ${listHtml(shownOverdue, '', { catchUp: true })}
+      ${behind > 3 ? `<button class="btn sm ghost more-btn" type="button" data-more-overdue>${S.showAllOverdue ? 'Show fewer' : `Show ${behind - 3} more`}</button>` : ''}` : ''}
     <h2 class="sec">Today's plan <span class="count">${st.today.length}</span></h2>
-    ${listHtml(todayList, `<span class="em">🌤️</span>Nothing planned for today.${readOnly() ? '' : '<br><button class="btn sm" data-go="calendar" type="button">Plan in the Calendar</button> <button class="btn sm ghost" data-go="paste" type="button">Add lectures</button>'}`)}
+    ${listHtml(todayList, `<span class="em">🌤️</span>Nothing planned for today.${ro ? '' : '<br><button class="btn sm" data-go="calendar" type="button">Plan in the Calendar</button> <button class="btn sm ghost" data-go="paste" type="button">Add lectures</button>'}`)}
     ${(() => { const r = dueReviews(); return r.length ? `<h2 class="sec">🔁 Reviews due <span class="count">${r.length}</span></h2><div class="list">${r.map(revRow).join('')}</div>` : ''; })()}
     ${(() => { const k = myTasks().filter(x => !x.done && x.due && x.due <= t).sort(byDue); return k.length ? `<h2 class="sec">☑ Tasks due <span class="count">${k.length}</span><span class="sp"></span><button class="btn sm ghost" type="button" data-go="tasks">All tasks</button></h2><div class="list">${k.map(taskRow).join('')}</div>` : ''; })()}
-    ${overdue.length ? `<h2 class="sec">Not studied yet <span class="count">${overdue.length}</span><span class="sp"></span>
-      ${readOnly() ? '' : '<button class="btn sm ghost" id="moveAll" type="button">Move all to today</button>'}</h2>${listHtml(overdue, '')}` : ''}
+    ${(() => { const ex = myExams().filter(e => e.date >= t).slice(0, 2); return ex.length ? `<h2 class="sec">🎓 Exam goals</h2>${ex.map(e => examCard(e, true)).join('')}` : ''; })()}
     ${todayLog.length || live ? `<h2 class="sec">Study sessions today <span class="count">${todayLog.length + (live ? 1 : 0)}</span></h2>
       <div class="sess-log">${todayLog.map(e => `<div><span dir="auto">${esc(e.subject || 'Free session')}</span><small>${new Date(e.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</small><b>${fmtMins(e.mins)}</b></div>`).join('')}
       ${live ? `<div class="now"><span dir="auto"><span class="live-dot${live.pausedAt ? ' off' : ''}"></span>${esc(live.subject || 'Free session')}</span><small>${live.pausedAt ? 'paused' : 'now'}</small><b ${tickAttrs(live)}></b></div>` : ''}</div>` : ''}
     ${upcoming.length ? `<h2 class="sec">Coming up <span class="count">${upcoming.length}</span></h2>${listHtml(upcoming, '')}` : ''}
+    ${ro ? '' : `<div class="tail">${installCard()}</div>`}
 `;
+  Peony.dock();
 }
 
 /* ------------------- calendar (Google Calendar style) ------------------- */
@@ -1538,7 +1551,8 @@ function render() {
   if (!S.me) return;
   computeSeq();
   const u = USERS[S.viewing];
-  $('#hello').innerHTML = `${avatarHtml(S.viewing)}<span>${readOnly() ? `Progress · ${esc(u.name)}` : `Hi ${esc(u.name)}`}</span>`;
+  Peony.park();
+  $('#hello').innerHTML = `${avatarHtml(S.viewing, S.viewing === 'zhra' && Peony.active && !readOnly())}<span>${readOnly() ? `Progress · ${esc(u.name)}` : `Hi ${esc(u.name)}`}</span>`;
   $('#viewToggle').innerHTML = readOnly() ? '← My plan' : `👀 ${USERS[other(S.me)].name}`;
   $('#viewingBar').hidden = !readOnly();
   $('#viewingBar').textContent = `Viewing ${u.name} · Group ${u.group} · read-only`;
@@ -1551,6 +1565,7 @@ function render() {
   else if (S.tab === 'tasks') renderTasks();
   else if (S.tab === 'stats') renderStats();
   renderSessionBars();
+  Peony.dock();
   Peony.refresh();
 }
 
@@ -1604,8 +1619,8 @@ function toggleStudied(id) {
   Backend.update(id, nowDone ? { status: 'studied', studiedAt: Date.now(), revDone: {} } : { status: 'pending', studiedAt: null, revDone: {} });
   if (nowDone && S.me === 'zhra') {
     // count from the pre-update state: with Firestore the snapshot may not have arrived yet
-    const left = stats().today.filter(x => x.id !== id && !isDone(x)).length;
-    Peony.celebrate(left === 0 && eff(l) === todayStr() ? 'big' : 'small', l.subject);
+    const st_ = stats(), left = st_.today.filter(x => x.id !== id && !isDone(x)).length + st_.overdue.filter(x => x.id !== id).length;
+    Peony.celebrate(left === 0 ? 'big' : 'small', l.subject);
   } else if (nowDone) toast(`${l.subject} studied ✔`);
 }
 
@@ -1762,6 +1777,7 @@ document.addEventListener('click', e => {
     return startSession(null, { subject, mode });
   }
   if (t.closest('#pomoToggle')) return togglePomo();
+  if (t.closest('[data-more-overdue]')) { S.showAllOverdue = !S.showAllOverdue; return renderToday(); }
   if (t.closest('#moveAll')) {
     const tt = todayStr(); stats().overdue.forEach(l => Backend.update(l.id, { planDate: tt }));
     return toast('Moved to today');
@@ -1947,7 +1963,8 @@ function vodkaSVG() {
     <rect x="24" y="14.5" width="16" height="2.4" rx="1" fill="#c8102e"/></svg>`;
 }
 let miniPeony = null, miniVodka = null;
-function avatarHtml(user) {
+function avatarHtml(user, slot) {
+  if (slot) return '<span class="hello-av peony-slot"></span>';
   if (user === 'zhra') return `<span class="hello-av">${miniPeony || (miniPeony = peonySVG({ face: true }))}</span>`;
   return `<span class="hello-av">${miniVodka || (miniVodka = vodkaSVG())}</span>`;
 }
@@ -1979,7 +1996,7 @@ const Focus = {
   },
   hide() {
     this.open = false; $('#focus').hidden = true; document.body.style.overflow = '';
-    Peony.el.hidden = !Peony.active;
+    Peony.dock();
   },
   sky() {
     if (reduceMotion) return;
@@ -2033,8 +2050,6 @@ const Peony = {
     this.active = on; this.el.hidden = !on || Focus.open;
     clearTimeout(this.popTimer);
     if (on) {
-      const pos = ls.get('sp.peonyPos', null);
-      if (pos) this.place(pos.x, pos.y);
       setTimeout(() => this.say(this.greeting()), 900);
       this.schedulePop();
     }
@@ -2066,8 +2081,9 @@ const Peony = {
     const hi = h < 12 ? 'Good morning' : h < 18 ? 'Hi' : 'Good evening';
     if (!st.total) return `${hi} ${isoName('zhra')}! Paste the schedule and I'll keep track 💜`;
     if (st.overdue.length > 5) return `${st.overdue.length} lectures are waiting… just one small one? 🥺`;
+    if (st.overdue.length) return `${hi} ${isoName('zhra')}! ${st.overdue.length} to catch up, one small step at a time 🌸`;
     if (st.todayLeft) return `${hi} ${isoName('zhra')}! ${plural(st.todayLeft, 'lecture')} left today 🌸`;
-    if (st.today.length) return `Today is all done! I'm blooming 🌸`;
+    if (st.today.length) return `Zero backlog! I'm blooming 🌸`;
     return `${hi} ${isoName('zhra')}! Nothing due today. Revise something? 💜`;
   },
   // Built-in lines, used only while Hussein hasn't added any phrases yet.
@@ -2079,7 +2095,8 @@ const Peony = {
     return out;
   },
   say(text, ms = 3800) {
-    this.bubble.textContent = text; this.bubble.classList.add('show');
+    if (this.el.hidden) return;
+    this.bubble.textContent = text; this.placeBubble(); this.bubble.classList.add('show');
     clearTimeout(this.timer); this.timer = setTimeout(() => this.bubble.classList.remove('show'), ms);
   },
   bloom(happy = true) {
@@ -2095,43 +2112,37 @@ const Peony = {
   celebrate(kind, subject) {
     if (!this.active) return toast(`${subject} studied ✔`);
     this.bloom();
-    if (kind === 'big') { this.say('Everything for today is done! 🎉🌸', 5000); this.confetti(40); }
+    if (kind === 'big') { this.say('Zero backlog! Everything is studied 🎉🌸', 5000); this.confetti(40); }
     else { this.say(`Yay! ${subject} done 🌸`); this.confetti(14); }
   },
   confetti(n) {
     const r = this.el.getBoundingClientRect();
     burst(r.left + r.width / 2, r.top + 40, n);
   },
-  place(x, y) {
-    const w = this.el.offsetWidth || 96, h = this.el.offsetHeight || 120;
-    x = Math.max(4, Math.min(innerWidth - w - 4, x)); y = Math.max(4, Math.min(innerHeight - h - 4, y));
-    Object.assign(this.el.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' });
-    this.el.classList.toggle('left', x < innerWidth / 2 - w / 2);
-    return { x, y };
+  // The Peony docks in fixed places so it never covers a card's ▶: in زهرة's
+  // hero on Today, and in the header avatar on every other tab.
+  park() { if (this.el.parentElement !== document.body) document.body.append(this.el); },
+  dock() {
+    if (!this.active || Focus.open) { this.el.hidden = true; return; }
+    const hero = S.tab === 'today' && $('#tab-today .hero-peony'), head = $('#hello .peony-slot');
+    const slot = hero || head;
+    if (!slot) { this.el.hidden = true; return; }
+    if (head && hero) head.innerHTML = miniPeony || (miniPeony = peonySVG({ face: true }));
+    if (head && !hero) head.innerHTML = '';
+    slot.append(this.el); this.el.hidden = false;
+    this.el.classList.toggle('in-head', !hero);
+  },
+  // Speech bubbles are fixed to the viewport, next to wherever the Peony is docked.
+  placeBubble() {
+    const r = this.el.getBoundingClientRect(), b = this.bubble, inHead = this.el.classList.contains('in-head');
+    b.style.maxWidth = Math.min(240, innerWidth - 32) + 'px';
+    const w = b.offsetWidth;
+    if (inHead) { b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px'; b.style.top = (r.bottom + 10) + 'px'; }
+    else { b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w)) + 'px'; b.style.top = (r.bottom + 2) + 'px'; }   // under the flower, clear of the headline
   }
 };
-(() => {
-  const btn = $('#peony .pbtn');
-  let start = null, moved = false;
-  btn.addEventListener('pointerdown', e => {
-    const r = Peony.el.getBoundingClientRect();
-    start = { px: e.clientX, py: e.clientY, x: r.left, y: r.top }; moved = false;
-    btn.setPointerCapture(e.pointerId);
-  });
-  btn.addEventListener('pointermove', e => {
-    if (!start) return;
-    const dx = e.clientX - start.px, dy = e.clientY - start.py;
-    if (!moved && Math.hypot(dx, dy) < 6) return;
-    moved = true; Peony.el.classList.add('dragging');
-    Peony.place(start.x + dx, start.y + dy);
-  });
-  btn.addEventListener('pointerup', () => {
-    if (moved) { const r = Peony.el.getBoundingClientRect(); ls.set('sp.peonyPos', { x: r.left, y: r.top }); }
-    Peony.el.classList.remove('dragging'); start = null;
-  });
-  btn.addEventListener('click', e => { if (moved) { moved = false; e.preventDefault(); return; } Peony.tap(); });
-  addEventListener('resize', () => { const p = ls.get('sp.peonyPos', null); if (p && Peony.active) Peony.place(p.x, p.y); });
-})();
+$('#peony .pbtn').addEventListener('click', () => Peony.tap());
+addEventListener('scroll', () => Peony.bubble.classList.remove('show'), { passive: true });
 
 /* ===================== MOVE LOCAL DATA TO THE CLOUD ===================== */
 // Before sync existed, each phone kept its own copy in localStorage. After the
