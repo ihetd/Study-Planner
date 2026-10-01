@@ -54,8 +54,10 @@ async function handle(u, env) {
   } else if (m.chat.type === 'private' && m.forward_origin && m.forward_origin.type === 'channel') {
     // an older post forwarded to the bot by hand: only from a channel the bot is admin of
     const origin = chatKeys(m.forward_origin.chat);
-    const known = await db.prepare(`SELECT 1 FROM chats WHERE key IN (${origin.map(() => '?').join(',')})`).bind(...origin).first();
-    if (!known) return reply(env, m, 'I only read posts from the batch channel I was added to.');
+    // trusted: a channel the bot is admin of, or a public channel the schedule's lecture links point to
+    const known = await db.prepare(`SELECT 1 FROM chats WHERE key IN (${origin.map(() => '?').join(',')})`).bind(...origin).first()
+      || (m.forward_origin.chat.username && await db.prepare('SELECT 1 FROM schedules WHERE lower(text) LIKE ?').bind(`%t.me/${m.forward_origin.chat.username.toLowerCase()}/%`).first());
+    if (!known) return reply(env, m, 'I only read lecture posts from the batch channels.');
     keys = origin.map(c => `${c}/${m.forward_origin.message_id}`);
   } else return;
 
