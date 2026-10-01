@@ -89,3 +89,27 @@ The first time the Hussein profile is opened on a phone, it asks you to create a
 5. ❚❚ pauses a session (paused time isn't counted) and ▶ resumes it.
 6. Tick ✔ when you study a lecture.
 7. Calendar → Month / Week / Day. Tap an empty time in Week or Day view (or pick a start time in the planner), tick the lectures, choose a length, then **Plan**. Tap a study block → **Add to Google Calendar** to get Google's reminder notification.
+
+## Telegram bot: automatic schedule and lecture names (option A)
+
+The bot is an admin of the batch channel, so Telegram sends it every post. It saves each lecture PDF's
+file name under the post's link and keeps each day's schedule. When the app opens it asks the bot for
+both: tomorrow's lectures are added by themselves and each lecture gets its name. Pasting still works.
+
+1. **Create the bot.** In Telegram open @BotFather → `/newbot` → pick a name. Keep the token private.
+2. **Add the bot to the channel as an admin** (whoever owns the batch channel has to do this; no special
+   rights are needed). If the PDFs are posted in a second channel, add it there too. The bot only sees
+   posts made after it joins; older PDFs can be forwarded to the bot in a private chat to fill their names.
+3. **Put the bot online** (free Cloudflare account, from the `bot/` folder):
+   ```
+   cd bot
+   npx wrangler login                      # opens Cloudflare in the browser
+   npx wrangler d1 create study-planner-bot  # copy the database_id into wrangler.toml
+   npx wrangler deploy
+   npx wrangler secret put BOT_TOKEN       # paste the token here, in your own terminal
+   ```
+4. **Connect Telegram to it:** open `https://study-planner-bot.<your-subdomain>.workers.dev/setup` once.
+   It should say `"webhook": "connected"`.
+5. **Tell the app where the bot is:** set `BOT_URL` near the top of `index.html` to that workers.dev URL.
+
+`/inbox` is readable by anyone who knows the URL (it holds lecture file names and schedule text only).

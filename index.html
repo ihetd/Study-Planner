@@ -707,6 +707,9 @@ const CLOUD = !/^PASTE/.test(FIREBASE_CONFIG.apiKey);
 /* Optional: URL of the Cloudflare Worker (worker.js) that reads the
    PDF name behind public t.me links. Leave "" to disable. */
 const PDF_WORKER_URL = "";
+/* URL of the Telegram bot worker (bot/worker.js). The bot is an admin of the
+   batch channel: it imports each day's schedule and the lecture PDF names. */
+const BOT_URL = "";
 
 const USERS = {
   zhra:    { name: 'زهرة',    group: 'A1', email: 'zhra@studyplanner.app',    icon: '🌸' },
@@ -1795,10 +1798,10 @@ function renderPreview() {
       ${existing ? `<span class="meta">${existing} already saved, so they'll be updated without losing progress.</span>` : ''}</div>`;
 }
 
-async function savePreview() {
-  const p = S.preview; if (!p) return;
+// Parsed schedule → lecture docs. Ids are date_group_order, so saving twice only updates.
+function scheduleDocs(p) {
   const date = p.date, now = Date.now(), list = [];
-  ['A1', 'A2'].forEach(g => p[g].forEach(l => {
+  ['A1', 'A2'].forEach(g => (p[g] || []).forEach(l => {
     if (!l.subject.trim()) return;
     const id = `${date}_${g}_${l.order}`, ex = Store.get(id);
     const doc = { id, date, group: g, owner: GROUP_OWNER[g], order: l.order, subject: canonSubj(l.subject) };
@@ -1807,6 +1810,11 @@ async function savePreview() {
     if (!ex) Object.assign(doc, { link: doc.link || '', topic: doc.topic || '', status: 'pending', studiedAt: null, planDate: null, createdAt: now });
     list.push(doc);
   }));
+  return list;
+}
+async function savePreview() {
+  const p = S.preview; if (!p) return;
+  const list = scheduleDocs(p);
   $('#saveBtn').disabled = true;
   Backend.upsert(list);
   toast(`Saved ${plural(list.length, 'lecture')} ✔`);
@@ -1815,10 +1823,48 @@ async function savePreview() {
   // Auto-fill topics from public Telegram PDF links (needs PDF_WORKER_URL).
   for (const d of list) {
     if (!safeUrl(d.link) || (Store.get(d.id) || {}).topic) continue;
-    const name = await fetchPdfName(d.link);
+    const name = Bot.nameFor(d.link) || await fetchPdfName(d.link);
     if (name) Backend.update(d.id, { topic: name });
   }
 }
+
+/* ---------------------------- Telegram bot ---------------------------- */
+// t.me/<channel>/<post> and t.me/c/<id>/[<thread>/]<post> → "channel/post", the bot's key.
+const linkKey = u => { const m = String(u || '').match(/^https?:\/\/(?:t|telegram)\.me\/(?:s\/)?(c\/\d+|[A-Za-z0-9_]{4,})(?:\/\d+)*\/(\d+)/i); return m ? `${m[1].toLowerCase()}/${m[2]}` : ''; };
+const Bot = {
+  names: {}, busy: false, at: 0,
+  nameFor(link) { const n = this.names[linkKey(link)]; return n ? pdfToTopic(n) : ''; },
+  // Pull what the bot saw in the channel: new schedules become lectures, links get their names.
+  async sync(force) {
+    if (!BOT_URL || !S.me || this.busy || (!force && Date.now() - this.at < 60e3)) return;
+    this.busy = true; this.at = Date.now();
+    try {
+      const r = await fetch(BOT_URL.replace(/\/$/, '') + '/inbox', { cache: 'no-store' });
+      if (!r.ok) return;
+      const j = await r.json();
+      this.names = j.names || {};
+      const seen = ls.get('sp.botSeen', []);
+      let added = 0, named = 0;
+      for (const sc of j.schedules || []) {
+        if (seen.includes(sc.id)) continue;
+        const parsed = parseSchedule(sc.text);
+        const list = scheduleDocs({ date: parsed.date, A1: parsed.groups.A1 || [], A2: parsed.groups.A2 || [] });
+        if (list.length) { added += list.filter(d => !Store.get(d.id)).length; await Backend.upsert(list); }
+        seen.push(sc.id);
+      }
+      ls.set('sp.botSeen', seen.slice(-60));
+      for (const l of Store.all()) {
+        if (l.topic || !l.link) continue;
+        const n = this.nameFor(l.link);
+        if (n) { Backend.update(l.id, { topic: n }); named++; }
+      }
+      if (added) toast(`📥 ${plural(added, 'lecture')} added from Telegram`);
+      else if (named) toast(`🔗 ${plural(named, 'lecture name')} filled in from Telegram`);
+    } catch {} finally { this.busy = false; }
+  }
+};
+document.addEventListener('visibilitychange', () => { if (!document.hidden) Bot.sync(); });
+setInterval(() => { if (!document.hidden) Bot.sync(); }, 10 * 60e3);
 
 /* ---------------------------- task & exam forms ---------------------------- */
 document.addEventListener('submit', e => {
@@ -2428,6 +2474,7 @@ function enterApp(user) {
   $('#login').hidden = true; $('#app').hidden = false;
   Peony.show(user === 'zhra');
   switchTab(ls.get('sp.tab', 'today'));
+  setTimeout(() => Bot.sync(true), 1500);   // after the first data snapshot
 }
 function logout() {
   if (CLOUD) { CloudBackend.stop(); firebase.auth().signOut(); }
