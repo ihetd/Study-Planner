@@ -544,10 +544,12 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
    "PASTE", the site runs in LOCAL mode (data stays in this browser).
    ===================================================================== */
 const FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "",
-  projectId: "",
-  appId: ""
+  apiKey: "AIzaSyDgRq2hyDsrLNvFZ7HVjp_XEpfIX2L97zk",
+  authDomain: "study-planner-598f7.firebaseapp.com",
+  projectId: "study-planner-598f7",
+  storageBucket: "study-planner-598f7.firebasestorage.app",
+  messagingSenderId: "93395798207",
+  appId: "1:93395798207:web:70bfcfeec5064240f71e0a"
 };
 const CLOUD = !/^PASTE/.test(FIREBASE_CONFIG.apiKey);
 
@@ -905,7 +907,7 @@ function renderToday() {
   const heroLine = live ? `${live.pausedAt ? 'Paused' : 'Studying'} ${esc(live.subject || 'a free session')} right now`
     : next ? `Next up: <b dir="auto">${esc(lecLabel(next))}</b>${next.topic ? ' · ' + esc(next.topic) : ''}`
     : st.today.length ? 'Everything for today is done 🎉' : 'Nothing planned. Pick lectures in the Calendar.';
-  $('#tab-today').innerHTML = `${readOnly() ? '' : installCard()}
+  $('#tab-today').innerHTML = `${readOnly() ? '' : migrateCard() + installCard()}
     <section class="hero">
       <div>
         <small>${esc(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))}</small>
@@ -1634,6 +1636,37 @@ const Peony = {
   btn.addEventListener('click', e => { if (moved) { moved = false; e.preventDefault(); return; } Peony.tap(); });
   addEventListener('resize', () => { const p = ls.get('sp.peonyPos', null); if (p && Peony.active) Peony.place(p.x, p.y); });
 })();
+
+/* ===================== MOVE LOCAL DATA TO THE CLOUD ===================== */
+// Before sync existed, each phone kept its own copy in localStorage. After the
+// first cloud login, offer to upload it once. Nothing local is deleted.
+function localLeftovers() {
+  if (!CLOUD || !S.me || ls.get('sp.migrated.' + S.me, false)) return null;
+  const lectures = ls.get('sp.lectures', []).filter(l => l && l.id && !Store.get(l.id));
+  const logs = ls.get('sp.studyLog', []).filter(e => e && e.user === S.me);   // rules only let you add your own sessions
+  const phrases = S.me === ADMIN ? ls.get('sp.phrases', []).filter(p => !Phrases.list.some(q => q.id === p.id)) : [];
+  return lectures.length || logs.length || phrases.length ? { lectures, logs, phrases } : null;
+}
+function migrateCard() {
+  const d = localLeftovers(); if (!d || readOnly()) return '';
+  const parts = [d.lectures.length && plural(d.lectures.length, 'lecture'), d.logs.length && plural(d.logs.length, 'study session'), d.phrases.length && plural(d.phrases.length, 'phrase')].filter(Boolean).join(', ');
+  return `<div class="install"><img src="assets/icon-192.png" alt="">
+    <div><b>Saved on this phone before sync</b>${parts}. Upload to your synced account?</div>
+    <button class="btn sm" type="button" data-migrate>Upload</button>
+    <button class="x" type="button" data-migrate-skip aria-label="Not now">✕</button></div>`;
+}
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-migrate-skip]')) { ls.set('sp.migrated.' + S.me, true); return renderToday(); }
+  if (!e.target.closest('[data-migrate]')) return;
+  const d = localLeftovers(); if (!d) return;
+  e.target.closest('[data-migrate]').disabled = true;
+  if (d.lectures.length) await Backend.upsert(d.lectures);
+  for (const entry of d.logs) await Backend.addLog(entry);
+  if (d.phrases.length) await Backend.setPhrases([...Phrases.list, ...d.phrases]);
+  ls.set('sp.migrated.' + S.me, true);
+  toast('Uploaded ✔ Both phones see it now');
+  renderToday();
+});
 
 /* ============================ INSTALL AS APP ============================ */
 const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
