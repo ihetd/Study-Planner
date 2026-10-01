@@ -310,8 +310,18 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .gc-colhead b{display:grid;place-items:center;margin:2px auto 0;width:32px;height:32px;border-radius:50%;font-size:17px;color:var(--text)}
 .gc-colhead.today{color:var(--brand-3)}
 .gc-colhead.today b{background:var(--btn);color:#fff}
-.gc-ad-label{font-size:10px;color:var(--muted);text-align:right;padding:4px 6px 0 0;border-bottom:1px solid var(--line)}
-.gc-allday{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:3px 2px;display:grid;gap:2px;align-content:start;min-height:26px;min-width:0}
+.gc-ad-label{font-size:11px;color:var(--muted);text-align:right;padding:4px 6px 0 0;border-bottom:1px solid var(--line)}
+.gc-allday{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:3px 2px;display:grid;gap:2px;align-content:start;min-height:26px;min-width:0;max-height:118px;overflow-y:auto;grid-auto-rows:max-content;overscroll-behavior:contain}
+@media (max-width:560px){.gc-allday{max-height:86px}}
+/* the all-day row stays pinned under the day headers while the hours scroll */
+.gc-ad-label,.gc-allday{position:sticky;top:var(--hh,58px);z-index:3;background:var(--surface);box-shadow:0 1px 0 var(--line)}
+.cs{display:none}
+@media (max-width:560px){
+  .gc-month .gc-chip,.gc-grid.week .gc-chip{font-size:11px;padding:1px 3px;text-overflow:clip;text-align:center}
+  .gc-month .cf,.gc-grid.week .cf{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .gc-month .cs,.gc-grid.week .cs{display:inline}
+  .gc-more{font-size:11px;padding-left:0;text-align:center}
+}
 .gc-gutter{position:relative}
 .gc-gutter span{position:absolute;right:6px;transform:translateY(-50%);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .gc-col{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px 48px);min-width:0}
@@ -449,6 +459,9 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .daily .b{flex:1;min-width:2px;height:100%;display:flex;align-items:flex-end;cursor:default;outline-offset:1px}
 .daily .b i{display:block;width:100%;background:var(--btn);border-radius:4px 4px 0 0;min-height:0}
 .daily .b.today i{background:var(--brand-4)}
+.daily.backlog{height:110px}
+.daily.backlog .b i{background:color-mix(in srgb,var(--btn) 55%,var(--surface))}
+.daily.backlog .b.today i{background:var(--btn)}
 .daily .b:hover i,.daily .b:focus i{filter:brightness(1.25)}
 .xl{display:flex;gap:2px;margin-left:38px;font-size:11px;color:var(--muted)}
 .xl span{flex:1;text-align:center;white-space:nowrap;overflow:visible;min-width:0}
@@ -1291,11 +1304,24 @@ function renderStats() {
   const reviewsDone = mine().reduce((n, l) => n + Object.values(l.revDone || {}).filter(inRange).length, 0);
   const tasksDone = myTasks().filter(k => k.done && inRange(k.doneAt)).length;
   const dayList = Array.from({ length: days }, (_, i) => addDays(from, i));
-  const max = niceMax(Math.max(30, ...dayList.map(d => perDay[d] || 0)));
-  const step = days <= 7 ? 1 : days <= 30 ? 5 : 15;
+  // 90 days of daily bars don't fit a phone; that range is read as 13 weekly bars.
+  const weekly = days > 30;
+  const buckets = weekly ? Array.from({ length: Math.ceil(days / 7) }, (_, i) => dayList.slice(Math.max(0, days - (i + 1) * 7), days - i * 7)).reverse() : dayList.map(d => [d]);
+  const bVal = b => b.reduce((n, d) => n + (perDay[d] || 0), 0);
+  const bName = b => b.length > 1 ? `${fmtDate(b[0])} – ${fmtDate(b[b.length - 1])}` : fmtDate(b[0]);
+  const max = niceMax(Math.max(weekly ? 120 : 30, ...buckets.map(bVal)));
+  const step = days <= 7 ? 1 : days <= 30 ? 5 : 3;
   const xLabel = d => days <= 7 ? DOW[parseYmd(d).getDay()] : parseYmd(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  const bars = dayList.map(d => { const m = perDay[d] || 0; return `<span class="b${d === t ? ' today' : ''}" tabindex="0" data-tip="${esc(fmtDate(d))} · ${m ? fmtMins(m) : 'no study'}"><i style="height:${m / max * 100}%"></i></span>`; }).join('');
+  const bars = buckets.map(b => { const m = bVal(b); return `<span class="b${b.includes(t) ? ' today' : ''}" tabindex="0" data-tip="${esc(bName(b))} · ${m ? fmtMins(m) : 'no study'}"><i style="height:${m / max * 100}%"></i></span>`; }).join('');
   const grid = [0.25, 0.5, 0.75, 1].map(f => `<div class="gl" style="bottom:${f * 100}%"><span>${shortMin(Math.round(max * f))}</span></div>`).join('');
+  // Backlog at the end of each day (or week): lectures whose day had come but weren't studied yet.
+  const endOf = d => parseYmd(addDays(d, 1)).getTime();
+  const backlogAt = d => mine().filter(l => l.date <= d && (l.createdAt || 0) < endOf(d) && !(l.studiedAt && l.studiedAt < endOf(d)) && !(l.status !== 'pending' && !l.studiedAt)).length;
+  const blVals = buckets.map(b => backlogAt(b[b.length - 1]));
+  const blMax = Math.max(4, ...blVals), blNow = blVals[blVals.length - 1];
+  const blBars = buckets.map((b, i) => `<span class="b${b.includes(t) ? ' today' : ''}" tabindex="0" data-tip="${esc(weekly ? 'End of ' + fmtDate(b[b.length - 1]) : fmtDate(b[0]))} · ${blVals[i] ? plural(blVals[i], 'lecture') + ' waiting' : 'zero backlog'}"><i style="height:${blVals[i] / blMax * 100}%"></i></span>`).join('');
+  const blGrid = [0.5, 1].map(f => `<div class="gl" style="bottom:${f * 100}%"><span>${Math.round(blMax * f)}</span></div>`).join('');
+  const xAxis = `<div class="xl" aria-hidden="true">${buckets.map((b, i) => `<span>${i % step === 0 || days <= 7 ? esc(xLabel(b[0])) : ''}</span>`).join('')}</div>`;
   const subjRows = Object.entries(perSubj).sort((a, b) => b[1] - a[1]);
   const smax = subjRows.length ? subjRows[0][1] : 1;
   $('#tab-stats').innerHTML = `
@@ -1310,10 +1336,16 @@ function renderStats() {
       <div><b>${reviewsDone} · ${tasksDone}</b><small>reviews · tasks done</small></div>
     </div>
     <div class="chart">
-      <h3>Study time per day</h3><p class="sub">${activeDays} of ${days} days with study${total ? ` · best ${fmtMins(Math.max(...Object.values(perDay)))}` : ''}</p>
-      <div class="daily" role="img" aria-label="Study minutes per day">${grid}${bars}</div>
-      <div class="xl" aria-hidden="true">${dayList.map((d, i) => `<span>${i % step === 0 || days <= 7 ? esc(xLabel(d)) : ''}</span>`).join('')}</div>
-      <details><summary>Show as table</summary><table><tr><th>Day</th><th>Studied</th></tr>${dayList.slice().reverse().map(d => `<tr><td>${esc(fmtDate(d))}</td><td>${perDay[d] ? fmtMins(perDay[d]) : '—'}</td></tr>`).join('')}</table></details>
+      <h3>Study time per ${weekly ? 'week' : 'day'}</h3><p class="sub">${activeDays} of ${days} days with study${total ? ` · best day ${fmtMins(Math.max(...Object.values(perDay)))}` : ''}</p>
+      <div class="daily" role="img" aria-label="Study minutes per ${weekly ? 'week' : 'day'}">${grid}${bars}</div>
+      ${xAxis}
+      <details><summary>Show as table</summary><table><tr><th>${weekly ? 'Week' : 'Day'}</th><th>Studied</th></tr>${buckets.slice().reverse().map(b => `<tr><td>${esc(bName(b))}</td><td>${bVal(b) ? fmtMins(bVal(b)) : '—'}</td></tr>`).join('')}</table></details>
+    </div>
+    <div class="chart">
+      <h3>Backlog</h3><p class="sub">Lectures waiting at the end of each ${weekly ? 'week' : 'day'} · ${blNow ? `${blNow} now` : 'zero now 🌸'}</p>
+      <div class="daily backlog" role="img" aria-label="Lectures waiting per ${weekly ? 'week' : 'day'}">${blGrid}${blBars}</div>
+      ${xAxis}
+      <details><summary>Show as table</summary><table><tr><th>${weekly ? 'Week ending' : 'Day'}</th><th>Waiting</th></tr>${buckets.slice().reverse().map((b, i) => `<tr><td>${esc(fmtDate(b[b.length - 1]))}</td><td>${blVals[buckets.length - 1 - i]}</td></tr>`).join('')}</table></details>
     </div>
     <div class="chart">
       <h3>Hours per subject</h3><p class="sub">Last ${days} days, from study sessions</p>
@@ -1396,11 +1428,15 @@ const fromMin = m => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
 const lecLabel = l => `${l.subject} #${seqMap.get(l.id) || 1}`;
 // Planned lectures that share a day + time form one study block (one event).
 // Tasks, pending reviews and exams for a day, as calendar chips.
+// Calendar chips carry a full label and a short one ("Or 3") for narrow phone cells.
+const subjShort = s => { const w = s.trim(); return /^[A-Z]{2,3}$/.test(w) ? w : w.slice(0, 2); };
+const chipTxt = (full, short) => `<span class="cf">${full}</span><span class="cs" aria-hidden="true">${short}</span>`;
+const lecChip = (l, d, t) => `<span class="gc-chip${isDone(l) ? ' done' : d < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${chipTxt(esc(lecLabel(l)), esc(subjShort(l.subject) + ' ' + (seqMap.get(l.id) || 1)))}</span>`;
 function extraChips(d) {
   return [
-    ...myExams().filter(e => e.date === d).map(e => `<span class="gc-chip gc-exam" data-go="tasks" style="--sc:${subjColor(e.subj || e.name)}">🎓 ${esc(e.name)}</span>`),
-    ...myTasks().filter(k => k.due === d).map(k => `<span class="gc-chip task${k.done ? ' done' : ''}" data-task-pop="${esc(k.id)}" style="--sc:${PRIO[k.prio].c}">☑ ${esc(k.title)}</span>`),
-    ...mine().flatMap(l => reviewsOf(l).filter(r => !r.done && r.due === d)).map(r => `<span class="gc-chip" data-rev-pop="${esc(r.l.id)}|${r.n}" style="--sc:${subjColor(r.l.subject)}">🔁 ${esc(lecLabel(r.l))}</span>`)
+    ...myExams().filter(e => e.date === d).map(e => `<span class="gc-chip gc-exam" data-go="tasks" style="--sc:${subjColor(e.subj || e.name)}">${chipTxt('🎓 ' + esc(e.name), '🎓')}</span>`),
+    ...myTasks().filter(k => k.due === d).map(k => `<span class="gc-chip task${k.done ? ' done' : ''}" data-task-pop="${esc(k.id)}" style="--sc:${PRIO[k.prio].c}">${chipTxt('☑ ' + esc(k.title), '☑')}</span>`),
+    ...mine().flatMap(l => reviewsOf(l).filter(r => !r.done && r.due === d)).map(r => `<span class="gc-chip" data-rev-pop="${esc(r.l.id)}|${r.n}" style="--sc:${subjColor(r.l.subject)}">${chipTxt('🔁 ' + esc(lecLabel(r.l)), '🔁 ' + esc(subjShort(r.l.subject)))}</span>`)
   ];
 }
 function dayItems(day) {
@@ -1448,12 +1484,12 @@ function renderCalendar() {
       if (i >= 35 && dd.getMonth() !== sd.getMonth()) break;
       const { blocks, allDay } = dayItems(d);
       const chips = [
-        ...blocks.map(b => { const done = b.lectures.every(isDone); return `<span class="gc-chip timed${done ? ' done' : ''}" data-gc-block="${d}|${b.time}" ${blockStyle(b)}>${b.time} ${esc(b.lectures.map(l => l.subject).join(', '))}</span>`; }),
-        ...allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : d < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`),
+        ...blocks.map(b => { const done = b.lectures.every(isDone); return `<span class="gc-chip timed${done ? ' done' : ''}" data-gc-block="${d}|${b.time}" ${blockStyle(b)}>${chipTxt(`${b.time} ${esc(b.lectures.map(l => l.subject).join(', '))}`, esc(b.lectures.map(l => subjShort(l.subject)).join('·')))}</span>`; }),
+        ...allDay.map(l => lecChip(l, d, t)),
         ...extraChips(d)
       ];
       cells += `<div class="gc-cell${dd.getMonth() !== sd.getMonth() ? ' out' : ''}${d === t ? ' today' : ''}${d === sel ? ' sel' : ''}" data-gc-day="${d}" role="button" tabindex="0" aria-label="${fmtDate(d)}, ${chips.length} items">
-        <span class="gc-n" data-gc-goday="${d}">${dd.getDate()}</span>${chips.slice(0, 3).join('')}${chips.length > 3 ? `<span class="gc-more">+${chips.length - 3} more</span>` : ''}</div>`;
+        <span class="gc-n" data-gc-goday="${d}">${dd.getDate()}</span>${chips.slice(0, 3).join('')}${chips.length > 3 ? `<span class="gc-more">${chipTxt(`+${chips.length - 3} more`, `+${chips.length - 3}`)}</span>` : ''}</div>`;
     }
     body = `<div class="gc-month">${cells}</div>`;
   } else {
@@ -1461,7 +1497,7 @@ function renderCalendar() {
     const H = GC.H1 - GC.H0, now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
     const items = days.map(dayItems);
     let grid = `<div class="gc-corner"></div>` + days.map(d => { const dd = parseYmd(d); return `<div class="gc-colhead${d === t ? ' today' : ''}" data-gc-goday="${d}">${DOW[dd.getDay()]}<b>${dd.getDate()}</b></div>`; }).join('');
-    grid += `<div class="gc-gutter gc-ad-label">all-day</div>` + items.map((it, i) => `<div class="gc-allday">${it.allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : days[i] < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`).join('')}${extraChips(days[i]).join('')}</div>`).join('');
+    grid += `<div class="gc-gutter gc-ad-label">all-day</div>` + items.map((it, i) => `<div class="gc-allday">${it.allDay.map(l => lecChip(l, days[i], t)).join('')}${extraChips(days[i]).join('')}</div>`).join('');
     grid += `<div class="gc-gutter" style="height:${H * GC.ROW}px">${Array.from({ length: H }, (_, h) => `<span style="top:${h * GC.ROW}px">${h ? fromMin((GC.H0 + h) * 60) : ''}</span>`).join('')}</div>`;
     grid += items.map((it, i) => {
       // side-by-side columns for overlapping blocks
@@ -1476,7 +1512,7 @@ function renderCalendar() {
       const nowLine = days[i] === t && nowMin >= GC.H0 * 60 ? `<div class="gc-now" style="top:${(nowMin - GC.H0 * 60) / 60 * GC.ROW}px"></div>` : '';
       return `<div class="gc-col${readOnly() ? '' : ' can-add'}" data-gc-col="${days[i]}" style="height:${H * GC.ROW}px">${evHtml}${nowLine}</div>`;
     }).join('');
-    body = `<div class="gc-grid-wrap" id="gcWrap"><div class="gc-grid" style="--cols:${days.length};--colmin:0px">${grid}</div></div>`;
+    body = `<div class="gc-grid-wrap" id="gcWrap"><div class="gc-grid ${view}" style="--cols:${days.length};--colmin:0px">${grid}</div></div>`;
   }
 
   // planner for the selected day
@@ -1506,6 +1542,7 @@ function renderCalendar() {
         return (k.length ? `<h2 class="sec">☑ Tasks <span class="count">${k.length}</span></h2><div class="list">${k.map(taskRow).join('')}</div>` : '')
           + (r.length ? `<h2 class="sec">🔁 Reviews <span class="count">${r.length}</span></h2><div class="list">${r.map(revRow).join('')}</div>` : ''); })()}` : '') + planner;
   const wrap = $('#gcWrap');
+  const ch = wrap && wrap.querySelector('.gc-colhead'); if (ch) wrap.style.setProperty('--hh', ch.offsetHeight + 'px');
   if (wrap && !S.gcScrolled) { wrap.scrollTop = Math.max(0, ((new Date().getHours() - 1) - GC.H0) * GC.ROW); S.gcScrolled = true; }
 }
 
