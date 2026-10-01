@@ -2251,6 +2251,9 @@ const Peony = {
     if (!slot) { this.el.hidden = true; return; }
     if (head && hero) head.innerHTML = miniPeony || (miniPeony = peonySVG({ face: true }));
     if (head && !hero) head.innerHTML = '';
+    const where = hero ? 'hero' : 'head';   // slots are rebuilt on every render; only a real move closes the bubble
+    if (this.where && this.where !== where) this.bubble.classList.remove('show');
+    this.where = where;
     slot.append(this.el); this.el.hidden = false;
     this.el.classList.toggle('in-head', !hero);
   },
@@ -2259,7 +2262,10 @@ const Peony = {
     const r = this.el.getBoundingClientRect(), b = this.bubble, inHead = this.el.classList.contains('in-head');
     b.style.maxWidth = Math.min(240, innerWidth - 32) + 'px';
     const w = b.offsetWidth;
-    if (inHead) { b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px'; b.style.top = (r.bottom + 10) + 'px'; }
+    if (inHead) {   // below the whole header, so it never sits on the tabs
+      const hd = $('header.top').getBoundingClientRect();
+      b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px'; b.style.top = (Math.max(hd.bottom, 0) + 8) + 'px';
+    }
     else {   // just below the hero card, so it never sits on the headline or the buttons
       const h = this.el.closest('.hero')?.getBoundingClientRect() || r;
       b.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w)) + 'px'; b.style.top = (h.bottom + 8) + 'px';
