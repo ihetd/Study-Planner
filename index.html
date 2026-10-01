@@ -140,6 +140,9 @@ main.wrap{padding:18px 16px 170px}
 h2.sec{font-size:17px;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
 h2.sec .count{background:var(--tint-2);color:var(--accent);border-radius:999px;padding:0 9px;font-size:13px}
 h2.sec .sp{flex:1}
+[role=tabpanel] > h2.sec:first-child{margin-top:4px}
+/* Arabic text (dir=auto) keeps RTL order but aligns left like the rest of the layout */
+.topic,.pv-row .field,.manual .field,.pick span,.pop-row span,.pop-card p,.pop-card h3,.sess-log span,.ph p,.ph small,#sessionBar .sb-info span.t{text-align:left}
 .empty{background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--radius);padding:22px 16px;text-align:center;color:var(--muted)}
 .empty .em{display:block;font-size:30px;margin-bottom:4px}
 .empty .btn{margin-top:10px}
@@ -160,8 +163,9 @@ h2.sec .sp{flex:1}
 .row1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .subj{font-weight:800;font-size:17px;color:var(--accent)}
 .sdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--sc);flex:none}
-.seq{font-size:12.5px;font-weight:700;background:var(--tint-2);color:var(--accent);border-radius:6px;padding:0 6px}
-.tag{font-size:12px;font-weight:700;border-radius:6px;padding:0 6px}
+.seq{font-size:12px;font-weight:700;background:var(--tint-2);color:var(--accent);border-radius:6px;padding:1px 6px;line-height:1.5}
+.tag{font-size:12px;font-weight:700;border-radius:6px;padding:1px 6px;line-height:1.5;display:inline-flex;align-items:center;gap:3px}
+.tag svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 .tag.rev{background:var(--ok-tint);color:var(--ok)}
 .tag.late{background:var(--warn-tint);color:var(--warn)}
 .tag.plan{background:var(--tint);color:var(--muted)}
@@ -196,16 +200,17 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .paste-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .preview{margin-top:20px}
 .pv-date{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pv-date .field{width:auto;min-height:44px}
 .pv-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media (max-width:640px){.pv-cols{grid-template-columns:1fr}}
 .pv-col{background:var(--surface);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
 .pv-col h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px}
-.pv-row{display:grid;grid-template-columns:28px 1fr 30px;gap:6px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
-.pv-row .num{font-weight:800;color:var(--accent);padding-top:8px;text-align:center}
-.pv-row .fs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.pv-row .fs .field{padding:7px 9px;font-size:14px;border-radius:9px}
-.pv-row .fs .wide{grid-column:1/-1}
-.pv-row .x{border:0;background:none;color:var(--muted);font-size:18px;padding-top:6px}
+.pv-row{display:grid;grid-template-columns:30px 1fr 34px;gap:8px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.pv-row .num{width:26px;height:26px;margin-top:26px;border-radius:50%;background:var(--tint-2);color:var(--accent);font-weight:800;font-size:13px;display:grid;place-items:center}
+.pv-row .fs{display:grid;gap:8px}
+.pv-row .pf{font-size:12px}
+.pv-row .fs .field{padding:8px 10px;font-size:15px;border-radius:10px;min-height:0}
+.pv-row .x{border:0;background:var(--tint);color:var(--accent);font-size:15px;width:32px;height:32px;border-radius:9px;margin-top:23px}
 .pv-ignored{font-size:13px;color:var(--muted);margin-top:10px}
 .pv-save{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
 
@@ -277,6 +282,8 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 .gc-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .gc-head h2{margin:0 4px;font-size:clamp(17px,4.6vw,22px);flex:1;min-width:120px}
 .gc-arrow{width:36px;padding:7px 0;font-size:18px;line-height:1}
+.gc-head .seg{margin-left:auto}
+@media (max-width:560px){.gc-head .seg{width:100%;margin-left:0}.gc-head .seg button{flex:1}}
 .gc-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
 .gc-dow{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:7px 0 4px;text-transform:uppercase;letter-spacing:.5px}
 .gc-cell{min-height:clamp(68px,15vw,112px);border-top:1px solid var(--line);border-left:1px solid var(--line);padding:3px 2px;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0}
@@ -329,8 +336,10 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 
 /* ---------- calendar planner ---------- */
 .planner{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;display:grid;gap:12px;margin-top:12px}
-.planner .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.planner .row .field{width:auto}
+.pf2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf{display:grid;gap:4px;font-size:13px;font-weight:700;color:var(--muted)}
+.pf .field{min-height:46px}
+.pf .field,.manual .field{font-weight:400;color:var(--text);font-size:15px;letter-spacing:0}
 .pick-group h4{margin:6px 0 4px;font-size:14px;color:var(--accent)}
 .pick{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;cursor:pointer}
 .pick:hover{background:var(--tint)}
@@ -827,7 +836,7 @@ function card(l, opts = {}) {
     l.status === 'revised' ? '<span class="tag rev">revised</span>' : '',
     late ? `<span class="tag late">overdue</span>` : '',
     l.planDate && l.planDate !== l.date && !opts.unplan ? `<span class="tag plan">planned ${esc(relDate(l.planDate))}</span>` : '',
-    l.planTime ? `<span class="tag time">🕒 ${esc(l.planTime)}</span>` : ''
+    l.planTime ? `<span class="tag time"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${esc(l.planTime)}</span>` : ''
   ].join('');
   const ro = readOnly() ? 'disabled' : '';
   const live = liveOf(l.owner), isLive = live && live.lectureId === l.id;
@@ -983,9 +992,9 @@ function renderCalendar() {
   const planner = readOnly() ? '' : `<div class="planner" id="planner">
       <h3 style="margin:0">📅 Plan study for ${esc(relDate(sel))}</h3>
       ${last ? `<div class="planned-ok">✔ Planned ${esc(relDate(last.date))} at ${last.time} · <a href="${esc(gcalUrl(last))}" target="_blank" rel="noopener">Add to Google Calendar 🔔</a></div>` : ''}
-      <div class="row">
-        <label for="planTime" class="meta">Start</label><input class="field" type="time" id="planTime" value="${esc(S.planTime)}">
-        <label for="planDur" class="meta">Length</label><select class="field" id="planDur">${[30, 45, 60, 90, 120, 180].map(m => `<option value="${m}" ${+S.planDur === m ? 'selected' : ''}>${fmtMins(m)}</option>`).join('')}</select>
+      <div class="pf2">
+        <label class="pf">Start time<input class="field" type="time" id="planTime" value="${esc(S.planTime)}"></label>
+        <label class="pf">Length<select class="field" id="planDur">${[30, 45, 60, 90, 120, 180].map(m => `<option value="${m}" ${+S.planDur === m ? 'selected' : ''}>${fmtMins(m)}</option>`).join('')}</select></label>
       </div>
       ${cands.length ? `<div class="picks">${Object.entries(bySubj).map(([subj, arr]) => `<div class="pick-group"><h4 dir="auto">${esc(subj)}</h4>
         ${arr.map(l => `<label class="pick"><input type="checkbox" data-pick="${esc(l.id)}" ${S.pick.has(l.id) ? 'checked' : ''}>
@@ -1167,9 +1176,9 @@ function renderPreview() {
       ${p[g].length ? p[g].map((l, i) => `<div class="pv-row" data-g="${g}" data-i="${i}">
         <span class="num">${l.order}</span>
         <div class="fs">
-          <input class="field wide" data-k="subject" value="${esc(l.subject)}" aria-label="Subject" dir="auto">
-          <input class="field wide" data-k="topic" value="${esc(l.topic)}" aria-label="Topic" placeholder="Lecture name (optional)" dir="auto">
-          <input class="field wide" data-k="link" value="${esc(l.link)}" aria-label="Link" placeholder="link" dir="ltr">
+          <label class="pf">Subject<input class="field" data-k="subject" value="${esc(l.subject)}" dir="auto"></label>
+          <label class="pf">Lecture name<input class="field" data-k="topic" value="${esc(l.topic)}" dir="auto"></label>
+          ${l.link ? `<label class="pf">Link<input class="field" data-k="link" value="${esc(l.link)}" dir="ltr"></label>` : ''}
         </div>
         <button class="x" type="button" data-rm aria-label="Remove lecture">✕</button></div>`).join('') : '<p class="meta">No lectures for this group.</p>'}
     </div>`;
@@ -1178,7 +1187,7 @@ function renderPreview() {
   const existing = ['A1', 'A2'].reduce((n, g) => n + p[g].filter(l => Store.get(`${p.date}_${g}_${l.order}`)).length, 0);
   $('#preview').innerHTML = `
     <div class="pv-date"><label for="pvDate"><b>Lecture day</b></label>
-      <input class="field" id="pvDate" type="date" value="${p.date}" style="width:auto">
+      <input class="field" id="pvDate" type="date" value="${p.date}">
       <span class="meta">${esc(fmtDate(p.date))}${p.dateGuessed ? ' (guessed, please check)' : ''}</span></div>
     <div class="pv-cols">${col('A1')}${col('A2')}</div>
     ${p.ignored.length ? `<p class="pv-ignored">Ignored groups: ${p.ignored.map(esc).join(', ')}</p>` : ''}
@@ -1193,7 +1202,7 @@ async function savePreview() {
     if (!l.subject.trim()) return;
     const id = `${date}_${g}_${l.order}`, ex = Store.get(id);
     const doc = { id, date, group: g, owner: GROUP_OWNER[g], order: l.order, subject: l.subject.trim() };
-    if (safeUrl(l.link.trim())) doc.link = l.link.trim();
+    if (safeUrl((l.link || '').trim())) doc.link = l.link.trim();
     if (l.topic.trim() && !(ex && ex.topic)) doc.topic = l.topic.trim();
     if (!ex) Object.assign(doc, { link: doc.link || '', topic: doc.topic || '', status: 'pending', studiedAt: null, planDate: null, createdAt: now });
     list.push(doc);
