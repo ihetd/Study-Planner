@@ -5,4 +5,4 @@ compatibility_date = "2026-09-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "study-planner-bot"
-database_id = "REPLACE_AFTER_d1_create"
+database_id = "f058694f-7c7c-41e2-acce-10cf58fbe5df"
