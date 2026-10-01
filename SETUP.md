@@ -66,7 +66,7 @@ The first time the Hussein profile is opened on a phone, it asks you to create a
 ## Daily use
 1. Open the channel post, select all, and copy.
 2. In the site, open **＋ Telegram**, paste, click **Analyze**, check the preview, then **Save**.
-3. Hussein: tap ⚙ in the header to add Peony phrases for زهرة (optionally for a specific day, e.g. a birthday).
+3. Hussein: tap ⚙ in the header to add Peony phrases for زهرة. She sees them in a random order when she taps the Peony, one pops up by itself every few minutes, and they also appear in her study mode.
 4. Press ▶ on a lecture to start a study session (the other person sees it live). ✔ Done ends it and marks the lecture studied.
 5. ❚❚ pauses a session (paused time isn't counted) and ▶ resumes it.
 6. Tick ✔ when you study a lecture.

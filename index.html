@@ -1128,37 +1128,33 @@ function renderAdmin() {
   if (S.me !== ADMIN || adminLocked()) return switchTab('today');
   const box = $('#tab-admin');
   // Keep a half-typed phrase when a sync re-renders the panel.
-  const draft = box.querySelector('#phText')?.value || '', draftDate = box.querySelector('#phDate')?.value || '';
+  const draft = box.querySelector('#phText')?.value || '';
   const t = todayStr();
-  const list = [...Phrases.list].sort((a, b) => (a.date || '9') < (b.date || '9') ? -1 : 1);
+  const list = [...Phrases.list].sort((a, b) => (b.at || 0) - (a.at || 0));
   box.innerHTML = `
     <h2 class="sec">🌸 Peony phrases for ${esc(USERS.zhra.name)} <span class="count">${Phrases.list.length}</span><span class="sp"></span><span class="badge-admin">🔒 ADMIN</span></h2>
     ${CLOUD ? '' : `<p class="admin-note">Sync is off, so phrases saved here only reach ${esc(USERS.zhra.name)}’s Peony on this device. Once Firebase is set up they reach her phone automatically.</p>`}
     <form class="admin-form" id="phForm">
       <label for="phText"><b>New phrase</b></label>
       <textarea class="field" id="phText" dir="auto" maxlength="160" placeholder="e.g. أنتِ قدها يا {name} 💜 باقي {left} محاضرات" required></textarea>
-      <div class="row">
-        <label for="phDate" class="meta">Show on a specific day (optional)</label>
-        <input class="field" id="phDate" type="date" style="width:auto">
-      </div>
       <p class="meta" style="margin:0">Placeholders: <code>{name}</code> <code>{left}</code> lectures left today, <code>{overdue}</code>, <code>{streak}</code>, <code>{done}</code>.
-        Dated phrases are her greeting on that day. The rest mix into what she hears when she taps the Peony.</p>
+        She sees your phrases in a random order when she taps the Peony, and one pops up by itself every few minutes.</p>
       <div class="row"><button class="btn" type="submit">Add phrase</button></div>
     </form>
     <h2 class="sec">Saved</h2>
     ${list.length ? `<div class="list">${list.map(p => `<div class="ph">
-        <div><p dir="auto">${esc(p.text)}</p><small dir="auto">${p.date ? (p.date === t ? '📅 Today · ' : p.date < t ? '📅 Past · ' : '📅 ') + esc(fmtDate(p.date)) : 'Any day'} · Preview: ${esc(fillPhrase(p.text))}</small></div>
+        <div><p dir="auto">${esc(p.text)}</p><small dir="auto">Preview: ${esc(fillPhrase(p.text))}</small></div>
         <button class="x" type="button" data-del-phrase="${esc(p.id)}" aria-label="Delete phrase">✕</button></div>`).join('')}</div>`
       : '<div class="empty">No custom phrases yet. She hears the built-in ones until you add some.</div>'}`;
-  $('#phText').value = draft; $('#phDate').value = draftDate;
+  $('#phText').value = draft;
 }
 document.addEventListener('submit', e => {
   if (e.target.id !== 'phForm') return;
   e.preventDefault();
   if (S.me !== ADMIN || adminLocked()) return;
   const text = $('#phText').value.trim(); if (!text) return;
-  const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, date: $('#phDate').value || null, at: Date.now() };
-  $('#phText').value = ''; $('#phDate').value = '';
+  const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, at: Date.now() };
+  $('#phText').value = '';
   Backend.setPhrases([...Phrases.list, p]);
   toast('Phrase added 🌸');
 });
@@ -1521,7 +1517,7 @@ const Focus = {
     if (x.pausedAt) $('#fxMsg').textContent = 'Paused… I’ll wait for you 😴';
     this.tick();
   },
-  say() { const x = liveOf('zhra'); if (x && !x.pausedAt) $('#fxMsg').textContent = this.lines[Math.floor(Math.random() * this.lines.length)]; this.msgAt = Date.now(); },
+  say() { const x = liveOf('zhra'); if (x && !x.pausedAt) $('#fxMsg').textContent = Peony.pick([...this.lines, ...Peony.adminLines()]); this.msgAt = Date.now(); },
   tick() {
     if (!this.open) return;
     const x = liveOf('zhra'); if (!x) return;
@@ -1546,14 +1542,32 @@ const Focus = {
 
 /* ============================ PEONY ============================ */
 const Peony = {
-  el: $('#peony'), bubble: $('#bubble'), timer: null, msgIdx: 0, active: false,
+  el: $('#peony'), bubble: $('#bubble'), timer: null, active: false, last: '', popTimer: null,
   show(on) {
     this.active = on; this.el.hidden = !on || Focus.open;
+    clearTimeout(this.popTimer);
     if (on) {
       const pos = ls.get('sp.peonyPos', null);
       if (pos) this.place(pos.x, pos.y);
       setTimeout(() => this.say(this.greeting()), 900);
+      this.schedulePop();
     }
+  },
+  // Hussein's phrases, filled in, in no particular order. Any old day-specific
+  // phrases are treated like the rest.
+  adminLines() { const st = this.mood(); return Phrases.list.map(p => fillPhrase(p.text, st)); },
+  // A random pick that never repeats the line shown just before.
+  pick(lines) {
+    const pool = lines.length > 1 ? lines.filter(l => l !== this.last) : lines;
+    return this.last = pool[Math.floor(Math.random() * pool.length)];
+  },
+  // Every 3–7 minutes one of the admin phrases pops up by itself.
+  schedulePop() {
+    clearTimeout(this.popTimer);
+    this.popTimer = setTimeout(() => {
+      if (this.active && !Focus.open && !document.hidden && Phrases.list.length) { this.bloom(); this.say(this.pick(this.adminLines()), 5000); }
+      this.schedulePop();
+    }, (3 + Math.random() * 4) * 60e3);
   },
   mood() { return stats(Store.all().filter(l => l.owner === 'zhra')); },
   refresh() {
@@ -1563,8 +1577,6 @@ const Peony = {
   },
   greeting() {
     const st = this.mood(), h = new Date().getHours();
-    const dated = Phrases.list.filter(p => p.date === todayStr());
-    if (dated.length) return fillPhrase(dated[Math.floor(Math.random() * dated.length)].text, st);
     const hi = h < 12 ? 'Good morning' : h < 18 ? 'Hi' : 'Good evening';
     if (!st.total) return `${hi} ${isoName('zhra')}! Paste the schedule and I'll keep track 💜`;
     if (st.overdue.length > 5) return `${st.overdue.length} lectures are waiting… just one small one? 🥺`;
@@ -1572,10 +1584,9 @@ const Peony = {
     if (st.today.length) return `Today is all done! I'm blooming 🌸`;
     return `${hi} ${isoName('zhra')}! Nothing due today. Revise something? 💜`;
   },
+  // Built-in lines, used only while Hussein hasn't added any phrases yet.
   lines() {
     const st = this.mood(), out = [this.greeting()];
-    // Admin phrases come first (today's dated ones plus any-day ones), then the built-ins.
-    Phrases.list.filter(p => !p.date || p.date === todayStr()).forEach(p => out.push(fillPhrase(p.text, st)));
     if (st.streak > 1) out.push(`${st.streak}-day streak! Keep it going 🔥`);
     if (st.overdue && st.overdue.length && st.overdue.length <= 5) out.push(`Only ${st.overdue.length} left from before, you can do it 💪`);
     out.push('Small steps every day 🌱', 'Water first, then one more lecture 💧', `Proud of you, ${isoName('zhra')} 💜`, 'Peonies bloom slowly too 🌸', 'Take a 5 minute break, then back to it ☕');
@@ -1591,9 +1602,8 @@ const Peony = {
     setTimeout(() => this.el.classList.remove('happy'), 1800);
   },
   tap() {
-    const lines = this.lines();
-    this.msgIdx = (this.msgIdx + 1) % lines.length;
-    this.bloom(); this.say(lines[this.msgIdx]);
+    const mine = this.adminLines();
+    this.bloom(); this.say(this.pick(mine.length ? mine : this.lines()));
     this.confetti(6);
   },
   celebrate(kind, subject) {
