@@ -10,7 +10,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Study">
 <title>Study Planner</title>
-<link rel="icon" type="image/png" href="assets/icon-192.png">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -320,7 +322,7 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 .gc-ev.done{opacity:.55}
 .gc-now{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:2;pointer-events:none}
 .gc-now::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:#ea4335}
-.gc-pop{position:fixed;inset:0;z-index:65;background:rgba(20,0,40,.35);display:grid;place-items:end center;padding:12px}
+.gc-pop{position:fixed;inset:0;z-index:65;background:rgba(20,0,40,.35);display:grid;place-items:end center;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
 @media (min-width:640px){.gc-pop{place-items:center}}
 .pop-card{position:relative;background:var(--surface);color:var(--text);border-radius:20px;padding:18px 16px 16px;width:min(420px,100%);box-shadow:0 20px 60px rgba(0,0,0,.35);display:grid;gap:10px}
 .pop-card h3{margin:0 28px 0 0;font-size:17px}
@@ -354,6 +356,25 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 .manual .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media (max-width:520px){.manual .grid2{grid-template-columns:1fr}}
 .manual label{font-size:13px;font-weight:700;color:var(--muted);display:grid;gap:4px}
+
+/* ---------- admin PIN ---------- */
+.pin{letter-spacing:6px;font-size:20px;text-align:center}
+.pw.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.admin-note{background:var(--warn-tint);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin:0 0 12px}
+.badge-admin{font-size:11px;font-weight:800;letter-spacing:.5px;background:var(--btn);color:#fff;border-radius:6px;padding:2px 7px}
+
+/* ---------- install as app ---------- */
+.install{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 12px 12px 14px;margin-bottom:12px;border:1.5px solid var(--tint-2)}
+.install img{width:44px;height:44px;border-radius:11px;flex:none}
+.install div{flex:1;min-width:0;font-size:14px}
+.install b{display:block;font-size:15px}
+.install .x{border:0;background:var(--tint);color:var(--accent);width:30px;height:30px;border-radius:50%;flex:none}
+.install-link{margin-top:10px;border:0;background:none;color:var(--accent);font-weight:700;font-size:14px;text-decoration:underline;text-underline-offset:3px}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:st}
+.steps li{display:flex;align-items:center;gap:10px;background:var(--tint);border-radius:12px;padding:10px 12px;font-size:15px;counter-increment:st}
+.steps li::before{content:counter(st);width:24px;height:24px;border-radius:50%;background:var(--btn);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
+.steps svg{width:20px;height:20px;fill:none;stroke:#0a84ff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:middle}
 
 /* ---------- splash ---------- */
 #splash{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:var(--brand);color:#fff;font-weight:700;letter-spacing:.3px}
@@ -418,7 +439,15 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
       <div class="err" id="loginErr" role="alert"></div>
       <button class="btn" type="submit" id="loginBtn">Sign in</button>
     </form>
+    <form class="pw" id="pinForm" hidden>
+      <label for="pin" id="pinLabel">Admin PIN</label>
+      <input class="field pin" id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" required>
+      <input class="field pin" id="pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="Repeat the PIN" hidden>
+      <div class="err" id="pinErr" role="alert"></div>
+      <button class="btn" type="submit" id="pinBtn">Unlock</button>
+    </form>
     <div class="note" id="modeNote"></div>
+    <button class="install-link" id="installLink" type="button" hidden>📲 Install as an app</button>
     <div class="credit">Peony photo: Kritzolina, Wikimedia Commons, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></div>
   </div>
 </section>
@@ -874,7 +903,7 @@ function renderToday() {
   const heroLine = live ? `${live.pausedAt ? 'Paused' : 'Studying'} ${esc(live.subject || 'a free session')} right now`
     : next ? `Next up: <b dir="auto">${esc(lecLabel(next))}</b>${next.topic ? ' · ' + esc(next.topic) : ''}`
     : st.today.length ? 'Everything for today is done 🎉' : 'Nothing planned. Pick lectures in the Calendar.';
-  $('#tab-today').innerHTML = `
+  $('#tab-today').innerHTML = `${readOnly() ? '' : installCard()}
     <section class="hero">
       <div>
         <small>${esc(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))}</small>
@@ -1092,14 +1121,15 @@ function fillPhrase(text, st = Peony.mood()) {
   }[k]));
 }
 function renderAdmin() {
-  if (S.me !== ADMIN) return switchTab('today');
+  if (S.me !== ADMIN || adminLocked()) return switchTab('today');
   const box = $('#tab-admin');
   // Keep a half-typed phrase when a sync re-renders the panel.
   const draft = box.querySelector('#phText')?.value || '', draftDate = box.querySelector('#phDate')?.value || '';
   const t = todayStr();
   const list = [...Phrases.list].sort((a, b) => (a.date || '9') < (b.date || '9') ? -1 : 1);
   box.innerHTML = `
-    <h2 class="sec">🌸 Peony phrases for ${esc(USERS.zhra.name)} <span class="count">${Phrases.list.length}</span></h2>
+    <h2 class="sec">🌸 Peony phrases for ${esc(USERS.zhra.name)} <span class="count">${Phrases.list.length}</span><span class="sp"></span><span class="badge-admin">🔒 ADMIN</span></h2>
+    ${CLOUD ? '' : `<p class="admin-note">Sync is off, so phrases saved here only reach ${esc(USERS.zhra.name)}’s Peony on this device. Once Firebase is set up they reach her phone automatically.</p>`}
     <form class="admin-form" id="phForm">
       <label for="phText"><b>New phrase</b></label>
       <textarea class="field" id="phText" dir="auto" maxlength="160" placeholder="e.g. أنتِ قدها يا {name} 💜 باقي {left} محاضرات" required></textarea>
@@ -1121,6 +1151,7 @@ function renderAdmin() {
 document.addEventListener('submit', e => {
   if (e.target.id !== 'phForm') return;
   e.preventDefault();
+  if (S.me !== ADMIN || adminLocked()) return;
   const text = $('#phText').value.trim(); if (!text) return;
   const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, date: $('#phDate').value || null, at: Date.now() };
   $('#phText').value = ''; $('#phDate').value = '';
@@ -1311,7 +1342,7 @@ document.addEventListener('click', e => {
   if (t.closest('#sessStop')) return stopSession(false);
   if (t.closest('#adminBtn')) return switchTab(S.tab === 'admin' ? 'today' : 'admin');
   const del = t.closest('[data-del-phrase]');
-  if (del) { Backend.setPhrases(Phrases.list.filter(p => p.id !== del.dataset.delPhrase)); return toast('Phrase deleted'); }
+  if (del && S.me === ADMIN && !adminLocked()) { Backend.setPhrases(Phrases.list.filter(p => p.id !== del.dataset.delPhrase)); return toast('Phrase deleted'); }
 });
 
 document.addEventListener('change', e => {
@@ -1602,10 +1633,82 @@ const Peony = {
   addEventListener('resize', () => { const p = ls.get('sp.peonyPos', null); if (p && Peony.active) Peony.place(p.x, p.y); });
 })();
 
+/* ============================ INSTALL AS APP ============================ */
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let installPrompt = null;   // Android / desktop Chrome hand us a real install prompt
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; refreshInstallUI(); });
+addEventListener('appinstalled', () => { installPrompt = null; ls.set('sp.installDismissed', true); refreshInstallUI(); toast('Installed 🌸'); });
+const canInstall = () => !isStandalone() && (isIOS || !!installPrompt);
+function refreshInstallUI() {
+  $('#installLink').hidden = !canInstall();
+  if (S.me && S.tab === 'today') renderToday();
+}
+const SHARE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+const ADD_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>';
+async function installApp() {
+  if (installPrompt) { installPrompt.prompt(); const r = await installPrompt.userChoice; if (r.outcome === 'accepted') installPrompt = null; return refreshInstallUI(); }
+  showPop(`<h3>📲 Install Study Planner</h3>
+    <p class="meta">It opens full screen from your home screen, with the Peony icon, like a normal app.</p>
+    <ol class="steps">
+      <li><span>Open this page in <b>Safari</b></span></li>
+      <li><span>Tap ${SHARE_ICON} <b>Share</b> at the bottom</span></li>
+      <li><span>Scroll and tap ${ADD_ICON} <b>Add to Home Screen</b></span></li>
+      <li><span>Tap <b>Add</b>. Done 🌸</span></li>
+    </ol>`);
+}
+function installCard() {
+  if (!canInstall() || ls.get('sp.installDismissed', false)) return '';
+  return `<div class="install"><img src="assets/icon-192.png" alt="">
+    <div><b>Install the app</b>${isIOS ? 'Add Study Planner to your home screen' : 'Open it like a real app, full screen'}</div>
+    <button class="btn sm" type="button" data-install>${isIOS ? 'How' : 'Install'}</button>
+    <button class="x" type="button" data-install-dismiss aria-label="Hide">✕</button></div>`;
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-install], #installLink')) installApp();
+  if (e.target.closest('[data-install-dismiss]')) { ls.set('sp.installDismissed', true); renderToday(); }
+});
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'))
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
 /* ============================ AUTH / BOOT ============================ */
 let pickedUser = null;
+
+// Admin PIN (local mode): locks Hussein's profile, and with it the ⚙ phrases page.
+// Only a salted SHA-256 of the PIN is stored, on this device. The device stays
+// trusted after a correct PIN until Hussein switches user (⇄).
+const PIN_SALT = 'study-planner/admin/v1:';
+async function pinHash(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(PIN_SALT + pin));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const adminLocked = () => !CLOUD && !ls.get('sp.adminTrusted', false);
+function showPinForm() {
+  const has = !!ls.get('sp.adminPin', null);
+  $('#pinLabel').textContent = has ? 'Enter your admin PIN' : 'Create an admin PIN (4–8 digits)';
+  $('#pin2').hidden = has; $('#pin2').required = !has;
+  $('#pinBtn').textContent = has ? 'Unlock' : 'Create PIN';
+  $('#pin').value = $('#pin2').value = ''; $('#pinErr').textContent = '';
+  $('#pinForm').hidden = false; $('#pin').focus();
+}
+$('#pinForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pin = $('#pin').value.trim(), stored = ls.get('sp.adminPin', null), fail = msg => {
+    $('#pinErr').textContent = msg; const f = $('#pinForm'); f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake');
+  };
+  if (!/^\d{4,8}$/.test(pin)) return fail('Use 4 to 8 digits');
+  if (!stored) {
+    if (pin !== $('#pin2').value.trim()) return fail('The two PINs don’t match');
+    ls.set('sp.adminPin', await pinHash(pin));
+    toast('Admin PIN created 🔒');
+  } else if (await pinHash(pin) !== stored) { $('#pin').value = ''; return fail('Wrong PIN'); }
+  ls.set('sp.adminTrusted', true);
+  $('#pinForm').hidden = true;
+  enterApp(ADMIN);
+});
 function showLogin() {
   $('#splash').hidden = true;
+  $('#installLink').hidden = !canInstall();
   $('#app').hidden = true; $('#login').hidden = false; Peony.show(false);
   $('#modeNote').textContent = CLOUD ? 'Synced between both phones.' : 'Saved on this device only, so phones don’t sync yet.';
 }
@@ -1619,7 +1722,9 @@ function enterApp(user) {
 }
 function logout() {
   if (CLOUD) { CloudBackend.stop(); firebase.auth().signOut(); }
+  if (S.me === ADMIN) ls.set('sp.adminTrusted', false);   // next time the Hussein profile needs the PIN again
   ls.set('sp.me', null); S.me = null; pickedUser = null;
+  $('#pinForm').hidden = true;
   $$('.who button').forEach(b => b.setAttribute('aria-pressed', 'false'));
   $('#pwForm').hidden = true;
   showLogin();
@@ -1628,11 +1733,13 @@ function logout() {
 $$('.who button').forEach(b => b.addEventListener('click', () => {
   pickedUser = b.dataset.user;
   $$('.who button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('#pinForm').hidden = true;
   // Press animation: the peony photo spins and sheds petals; the bottle does a "cheers" tilt.
   b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
   const r = $('.av', b).getBoundingClientRect();
   if (pickedUser === 'zhra') burst(r.left + r.width / 2, r.top + r.height / 2, 22);
   else burst(r.left + r.width / 2, r.top + r.height / 3, 14, ['#cfe8f7', '#ffffff', '#9cc0d8', '#c8102e']);
+  if (!CLOUD && pickedUser === ADMIN && adminLocked()) { setTimeout(() => b.classList.remove('go'), 900); return showPinForm(); }
   if (!CLOUD) return setTimeout(() => { b.classList.remove('go'); enterApp(pickedUser); }, reduceMotion ? 0 : 750);
   setTimeout(() => b.classList.remove('go'), 900);
   $('#pwForm').hidden = false; $('#loginErr').textContent = ''; $('#pw').focus();
@@ -1653,7 +1760,7 @@ async function boot() {
   if (!CLOUD) {
     Backend = LocalBackend; LocalBackend.start();
     const me = ls.get('sp.me', null);
-    return USERS[me] ? enterApp(me) : showLogin();
+    return USERS[me] && !(me === ADMIN && adminLocked()) ? enterApp(me) : showLogin();
   }
   const v = '10.14.1', base = `https://www.gstatic.com/firebasejs/${v}/`;
   try {

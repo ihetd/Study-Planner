@@ -57,6 +57,12 @@ This only works if the Telegram channel is **public**, meaning links look like `
 
 For private channels, type the lecture name into the lecture card.
 
+## Install on iPhone (like a normal app)
+Open https://ihetd.github.io/Study-Planner/ in **Safari**, then tap **Share → Add to Home Screen → Add**. It opens full screen with the Peony icon and still opens without internet. On Android or desktop Chrome, use the **Install** button in the app.
+
+## Admin PIN (Hussein)
+The first time the Hussein profile is opened on a phone, it asks you to create an admin PIN, which also protects the ⚙ phrases page. Only a salted hash of the PIN is saved on that phone. Open the Hussein profile once on زهرة's phone too and set your PIN there, so nobody else can create one. ⇄ (switch user) locks the profile again. Once Firebase is on, your account password protects it as well, and the Firestore rules only let your account write phrases.
+
 ## Daily use
 1. Open the channel post, select all, and copy.
 2. In the site, open **＋ Telegram**, paste, click **Analyze**, check the preview, then **Save**.
