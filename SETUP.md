@@ -35,6 +35,17 @@ Do the steps below to sync Hussein's and Zhra's phones.
          allow read: if member();
          allow create: if member() && request.auth.token.email == request.resource.data.user + '@studyplanner.app';
        }
+       // Tasks and exams: both can see, only the owner can add, change or delete theirs.
+       match /tasks/{id} {
+         allow read: if member();
+         allow create, update: if member() && request.resource.data.owner == request.auth.token.email.split('@')[0];
+         allow delete: if member() && resource.data.owner == request.auth.token.email.split('@')[0];
+       }
+       match /exams/{id} {
+         allow read: if member();
+         allow create, update: if member() && request.resource.data.owner == request.auth.token.email.split('@')[0];
+         allow delete: if member() && resource.data.owner == request.auth.token.email.split('@')[0];
+       }
        // Peony phrases: both can read, only Hussein (admin) can edit.
        match /config/peony {
          allow read: if member();
@@ -62,6 +73,13 @@ Open https://ihetd.github.io/Study-Planner/ in **Safari**, then tap **Share → 
 
 ## Admin PIN (Hussein)
 The first time the Hussein profile is opened on a phone, it asks you to create an admin PIN, which also protects the ⚙ phrases page. Only a salted hash of the PIN is saved on that phone. Open the Hussein profile once on زهرة's phone too and set your PIN there, so nobody else can create one. ⇄ (switch user) locks the profile again. Once Firebase is on, your account password protects it as well, and the Firestore rules only let your account write phrases.
+
+## Features at a glance
+- **Tasks**: deadlines with due date, priority and subject; weekly view; they also show on Today and in the Calendar.
+- **Exams**: countdown plus a topic list split evenly into a daily goal (fill topics from a subject's lectures).
+- **Pomodoro**: "Free session" lets you pick a subject and ⏱ stopwatch or 🍅 25·5; 🍅 in the session bar switches mid-session. Every session is logged per subject.
+- **Reviews**: ticking a lecture schedules reviews 1, 3, 7 and 14 days later ("Reviews due" on Today, 🔁 in the Calendar).
+- **Stats**: study time per day, hours per subject, streak, pomodoros, lectures/reviews/tasks done for 7, 30 or 90 days.
 
 ## Daily use
 1. Open the channel post, select all, and copy.

@@ -298,7 +298,7 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 .gc-cell.today .gc-n{background:var(--btn);color:#fff}
 .gc-chip{display:block;font-size:11px;line-height:1.4;padding:1px 5px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--tint-2);color:var(--accent);font-weight:600;cursor:pointer}
 .gc-chip[style*="--sc"]{background:color-mix(in srgb,var(--sc) 16%,var(--surface));color:var(--text);box-shadow:inset 3px 0 0 var(--sc)}
-.gc-chip.timed{background:var(--sc,var(--brand-3));color:#fff;box-shadow:none}
+.gc-chip.timed{background:color-mix(in srgb,var(--sc,var(--brand-3)) 30%,var(--surface));color:var(--text);box-shadow:inset 3px 0 0 var(--sc,var(--brand-3));font-weight:700}
 .gc-chip.late{background:var(--warn-tint);color:var(--warn)}
 .gc-chip.done{opacity:.5;text-decoration:line-through}
 .gc-more{font-size:10.5px;color:var(--muted);padding-left:4px;font-weight:600}
@@ -315,7 +315,7 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 .gc-gutter span{position:absolute;right:6px;transform:translateY(-50%);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .gc-col{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px 48px);min-width:0}
 .gc-col.can-add{cursor:copy}
-.gc-ev{position:absolute;z-index:1;border:0;border-radius:6px;background:var(--sc,linear-gradient(135deg,var(--brand-3),var(--brand-2)));color:#fff;font-size:11.5px;padding:3px 6px;overflow:hidden;text-align:start;display:flex;flex-direction:column;gap:1px;box-shadow:0 2px 6px rgba(51,0,102,.25);cursor:pointer}
+.gc-ev{position:absolute;z-index:1;border:0;border-left:3px solid var(--sc,var(--brand-3));border-radius:6px;background:color-mix(in srgb,var(--sc,var(--brand-3)) 26%,var(--surface));color:var(--text);font-size:11.5px;padding:3px 6px;overflow:hidden;text-align:start;display:flex;flex-direction:column;gap:1px;box-shadow:0 2px 6px rgba(51,0,102,.25);cursor:pointer}
 .gc-ev b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:520px){.gc-ev{padding:2px 3px;font-size:10px}.gc-colhead b{width:28px;height:28px;font-size:15px}}
 .gc-ev small{opacity:.85;font-variant-numeric:tabular-nums}
@@ -379,6 +379,94 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 /* ---------- splash ---------- */
 #splash{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:var(--brand);color:#fff;font-weight:700;letter-spacing:.3px}
 #splash img{width:96px;height:auto;display:block;margin:0 auto 10px;animation:float 3s ease-in-out infinite}
+
+/* ---------- 6 tabs: icon above label on phones ---------- */
+@media (max-width:560px){nav.tabs{gap:0}nav.tabs button{flex:1 1 0;min-width:0;flex-direction:column;gap:3px;padding:8px 1px 7px;font-size:11px;letter-spacing:.1px}nav.tabs svg{width:19px;height:19px}}
+
+/* ---------- tasks ---------- */
+.addbox{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:6px}
+.addbox summary{cursor:pointer;list-style:none;font-size:15px}
+.addbox summary::-webkit-details-marker{display:none}
+.addbox[open] summary{margin-bottom:10px}
+.task-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+.task-form .grow{grid-column:1/-1}
+.task-form .btn{grid-column:1/-1}
+@media (min-width:700px){.task-form{grid-template-columns:2.2fr 1fr 1fr 1fr auto}.task-form .grow,.task-form .btn{grid-column:auto}.task-form .btn{height:46px}}
+.prio-high{--pc:#e03131}.prio-med{--pc:#f08c00}.prio-low{--pc:#868e96}
+.task-row{position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--surface);border-radius:14px;padding:10px 10px 10px 16px;box-shadow:var(--shadow)}
+.task-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--pc)}
+.task-row b{display:block;font-size:15px;text-align:left}
+.task-row small{color:var(--muted);font-size:12.5px;text-align:left;display:block}
+.task-row.done b{text-decoration:line-through;opacity:.6}
+.pl{font-weight:800;color:var(--pc)}
+.tcheck{width:28px;height:28px;border-radius:8px;border:2.5px solid var(--pc);background:transparent;display:grid;place-items:center;padding:0}
+.tcheck svg{width:15px;height:15px;stroke:#fff;stroke-width:3.4;fill:none;opacity:0}
+.tcheck[aria-pressed=true]{background:var(--pc)}.tcheck[aria-pressed=true] svg{opacity:1}
+.wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.wk-day{background:var(--surface);border-radius:12px;padding:8px 6px;min-height:96px;box-shadow:var(--shadow);min-width:0}
+.wk-day.today{box-shadow:inset 0 0 0 2px var(--btn),var(--shadow)}
+.wk-day h5{margin:0 0 6px;font-size:11.5px;color:var(--muted);text-transform:uppercase;display:flex;gap:5px;align-items:baseline}
+.wk-day h5 b{font-size:15px;color:var(--text)}
+.wk-item{display:block;width:100%;border:0;text-align:left;font-size:12px;font-weight:600;color:var(--text);padding:3px 6px;border-radius:6px;margin-bottom:3px;background:color-mix(in srgb,var(--pc) 16%,var(--surface));box-shadow:inset 3px 0 0 var(--pc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.wk-item.done{text-decoration:line-through;opacity:.55}
+.wk-empty{color:var(--muted);font-size:12px}
+@media (max-width:700px){.wk{grid-template-columns:1fr;gap:5px}.wk-day{display:grid;grid-template-columns:62px 1fr;gap:8px;min-height:0;align-items:start}.wk-day h5{margin:3px 0 0;flex-direction:column;gap:0}}
+.gc-chip.task,.gc-chip.gc-exam{box-shadow:inset 3px 0 0 var(--sc);background:color-mix(in srgb,var(--sc) 16%,var(--surface));color:var(--text)}
+
+/* ---------- exams ---------- */
+.exam{position:relative;overflow:hidden;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 14px 12px 18px;display:grid;gap:8px;margin-bottom:10px}
+.exam::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--sc)}
+.exam-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.exam-head small{display:block;color:var(--muted);font-size:12.5px}
+.exam-head b{display:block;font-size:18px;text-align:left}
+.exam-count{text-align:center;min-width:64px}
+.exam-count b{font-size:30px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.exam .bar{flex:none;height:8px}
+.exam h4{margin:4px 0 0;font-size:14px}
+.exam details summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:14px}
+.topic-row{display:flex;gap:10px;align-items:center;padding:5px 0;font-size:15px;cursor:pointer}
+.topic-row input{width:20px;height:20px;accent-color:var(--btn);flex:none}
+.topic-row span{text-align:left;min-width:0}
+.topic-row.done span{text-decoration:line-through;opacity:.6}
+.goal-done{color:var(--ok);font-weight:700;font-size:14px}
+.exam-form{display:grid;gap:10px}
+.exam-form textarea.field{min-height:120px}
+.exam-form .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between}
+
+/* ---------- stats ---------- */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpis div{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px;display:grid;gap:2px}
+.kpis b{font-size:clamp(19px,5vw,24px);color:var(--text);font-variant-numeric:tabular-nums}
+.kpis small{color:var(--muted);font-size:12.5px}
+.chart{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-top:12px}
+.chart h3{margin:0;font-size:16px}
+.chart .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.daily{position:relative;height:170px;display:flex;align-items:flex-end;gap:2px;margin:16px 0 4px 38px;border-bottom:1px solid var(--line)}
+.daily .gl{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none}
+.daily .gl span{position:absolute;left:-38px;top:-8px;width:32px;text-align:right;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.daily .b{flex:1;min-width:2px;height:100%;display:flex;align-items:flex-end;cursor:default;outline-offset:1px}
+.daily .b i{display:block;width:100%;background:var(--btn);border-radius:4px 4px 0 0;min-height:0}
+.daily .b.today i{background:var(--brand-4)}
+.daily .b:hover i,.daily .b:focus i{filter:brightness(1.25)}
+.xl{display:flex;gap:2px;margin-left:38px;font-size:11px;color:var(--muted)}
+.xl span{flex:1;text-align:center;white-space:nowrap;overflow:visible;min-width:0}
+.hbar{display:grid;grid-template-columns:minmax(64px,30%) 1fr auto;gap:10px;align-items:center;padding:5px 0;font-size:14px}
+.hbar>span:first-child{text-align:left;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .track{height:14px;position:relative}
+.hbar .track i{position:absolute;left:0;top:0;bottom:0;background:var(--sc);border-radius:0 4px 4px 0;min-width:3px}
+.hbar b{font-variant-numeric:tabular-nums;font-size:13px;color:var(--text)}
+.chart table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.chart td,.chart th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+.chart details summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:700;margin-top:8px}
+#vizTip{position:fixed;z-index:80;background:#1f0f33;color:#fff;font-size:13px;font-weight:600;padding:6px 10px;border-radius:8px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+
+/* ---------- pomodoro / free session ---------- */
+.mode-seg{display:flex;width:100%}.mode-seg button{flex:1}
+#sessionBar .sb-pomo{font-size:12px;font-weight:800;background:rgba(255,255,255,.18);border-radius:999px;padding:1px 7px;margin-left:4px}
+#sessionBar .btn.pomo-toggle{flex:0 0 auto;opacity:.55}
+#sessionBar .btn.pomo-toggle.on{opacity:1;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+#sessionBar.break{background:linear-gradient(135deg,#0b6b4f,#13895f)}
 
 /* ---------- toast ---------- */
 /* fully hidden (not just shifted up) when idle, so no dark edge or shadow peeks in at the top */
@@ -467,7 +555,9 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
       <nav class="tabs" role="tablist">
         <button role="tab" data-tab="today" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Today</button>
         <button role="tab" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
+        <button role="tab" data-tab="tasks" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v3h8V3M8.5 12l2 2 4-4M8.5 17h7"/></svg>Tasks</button>
         <button role="tab" data-tab="checklist" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/></svg>Checklist</button>
+        <button role="tab" data-tab="stats" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
         <button role="tab" data-tab="paste" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
       </nav>
     </div>
@@ -478,7 +568,9 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
   <main class="wrap">
     <section id="tab-today" role="tabpanel"></section>
     <section id="tab-calendar" role="tabpanel" hidden></section>
+    <section id="tab-tasks" role="tabpanel" hidden></section>
     <section id="tab-checklist" role="tabpanel" hidden></section>
+    <section id="tab-stats" role="tabpanel" hidden></section>
     <section id="tab-admin" role="tabpanel" hidden></section>
     <section id="tab-paste" role="tabpanel" hidden>
       <h2 class="sec"><label for="pasteBox">Paste the Telegram schedule</label></h2>
@@ -536,6 +628,7 @@ body.has-session #peony:not([style*="top"]){bottom:132px}
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="vizTip" role="tooltip" hidden></div>
 
 <script>
 /* =====================================================================
@@ -579,8 +672,20 @@ const relDate = s => { const t = todayStr(); return s === t ? 'Today' : s === ad
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
 // One colour per subject, used on cards, calendar chips/events and checklist bars.
-const SUBJ_COLORS = ['#7a3bb0', '#c2255c', '#1c7ed6', '#2b8a3e', '#e8590c', '#0c8599', '#5f3dc4', '#b8860b'];
-const subjColor = s => { let h = 0; for (const c of String(s).trim().toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0; return SUBJ_COLORS[h % SUBJ_COLORS.length]; };
+// Categorical palette checked with the dataviz validator (CVD + contrast) for the
+// light surface and, separately stepped, for the dark one. Subjects get slots in
+// order of first appearance, so a subject keeps its colour and no two share one
+// until there are more than eight.
+const SUBJ_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+const SUBJ_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+let subjOrder = new Map();
+const subjColor = s => {
+  const k = String(s || '').trim().toLowerCase(), pal = darkMQ.matches ? SUBJ_DARK : SUBJ_LIGHT;
+  let i = subjOrder.get(k);
+  if (i == null) { i = 0; for (const c of k) i = (i * 31 + c.charCodeAt(0)) >>> 0; }
+  return pal[i % pal.length];
+};
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ls = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -693,6 +798,8 @@ const ADMIN = 'hussein';
 const Phrases = { list: [] };
 // Study sessions: live[user] = { lectureId, subject, seq, startedAt|null }; log = finished sessions.
 const Sessions = { live: {}, log: [] };
+// Tasks { id, owner, title, due, prio, subj, done, doneAt } and exams { id, owner, name, date, subj, topics[], goal }.
+const Extra = { tasks: new Map(), exams: new Map() };
 
 const LocalBackend = {
   key: 'sp.lectures',
@@ -700,8 +807,13 @@ const LocalBackend = {
     ls.get(this.key, []).forEach(l => Store.map.set(l.id, l));
     Phrases.list = ls.get('sp.phrases', []);
     Sessions.live = ls.get('sp.live', {}); Sessions.log = ls.get('sp.studyLog', []);
+    ['tasks', 'exams'].forEach(c => ls.get('sp.' + c, []).forEach(d => Extra[c].set(d.id, d)));
     Store.emit();
   },
+  saveColl(c) { ls.set('sp.' + c, [...Extra[c].values()]); Store.emit(); },
+  async put(c, doc) { Extra[c].set(doc.id, { ...(Extra[c].get(doc.id) || {}), ...doc }); this.saveColl(c); },
+  async patch(c, id, p) { const d = Extra[c].get(id); if (!d) return; Extra[c].set(id, { ...d, ...p }); this.saveColl(c); },
+  async del(c, id) { Extra[c].delete(id); this.saveColl(c); },
   async setPhrases(list) { Phrases.list = list; ls.set('sp.phrases', list); Store.emit(); },
   async setLive(user, data) { Sessions.live = { ...Sessions.live, [user]: data }; ls.set('sp.live', Sessions.live); Store.emit(); },
   async addLog(entry) { Sessions.log = [...Sessions.log, entry]; ls.set('sp.studyLog', Sessions.log); Store.emit(); },
@@ -711,7 +823,7 @@ const LocalBackend = {
 };
 
 const CloudBackend = {
-  db: null, unsub: null, unsubP: null, unsubL: null, unsubS: null,
+  db: null, unsub: null, unsubP: null, unsubL: null, unsubS: null, unsubX: [],
   start() {
     this.unsub = this.db.collection('lectures').onSnapshot(snap => {
       Store.map.clear();
@@ -729,10 +841,26 @@ const CloudBackend = {
     this.unsubS = this.db.collection('studyLog').where('day', '>=', addDays(todayStr(), -90)).onSnapshot(snap => {
       Sessions.log = snap.docs.map(d => d.data()); Store.emit();
     }, () => {});
+    this.unsubX = ['tasks', 'exams'].map(c => this.db.collection(c).onSnapshot(snap => {
+      Extra[c].clear(); snap.forEach(d => Extra[c].set(d.id, { ...d.data(), id: d.id })); Store.emit();
+    }, err => toast('Sync error: ' + err.message)));
+  },
+  put(c, doc) {
+    Extra[c].set(doc.id, { ...(Extra[c].get(doc.id) || {}), ...doc }); Store.emit();
+    return this.db.collection(c).doc(doc.id).set(doc, { merge: true }).catch(e => toast('Not synced: ' + e.message));
+  },
+  patch(c, id, p) {
+    const d = Extra[c].get(id); if (d) { Extra[c].set(id, { ...d, ...p }); Store.emit(); }
+    return this.db.collection(c).doc(id).update(p).catch(e => toast('Not synced: ' + e.message));
+  },
+  del(c, id) {
+    Extra[c].delete(id); Store.emit();
+    return this.db.collection(c).doc(id).delete().catch(e => toast('Not synced: ' + e.message));
   },
   stop() {
-    [this.unsub, this.unsubP, this.unsubL, this.unsubS].forEach(f => f && f());
-    this.unsub = this.unsubP = this.unsubL = this.unsubS = null; Store.map.clear();
+    [this.unsub, this.unsubP, this.unsubL, this.unsubS, ...this.unsubX].forEach(f => f && f());
+    this.unsub = this.unsubP = this.unsubL = this.unsubS = null; this.unsubX = []; Store.map.clear();
+    Extra.tasks.clear(); Extra.exams.clear();
   },
   setLive(user, data) {
     Sessions.live = { ...Sessions.live, [user]: data }; Store.emit();
@@ -763,7 +891,7 @@ const S = {
   me: null, viewing: null, tab: 'today',
   calSel: todayStr(),
   filter: 'pending', search: '', pick: new Set(), planTime: '', planDur: 60, calView: 'month', lastBlock: null, gcScrolled: false,
-  preview: null
+  preview: null, wk: null, statRange: 7
 };
 const readOnly = () => S.viewing !== S.me;
 const eff = l => l.planDate || l.date;          // the day a lecture is planned for
@@ -784,25 +912,78 @@ function clockHtml(ms) {
   return `<span class="clk">${h ? seg(h, 'hr') + sep : ''}${seg(m, 'min')}${sep}${seg(sec, 'sec')}</span>`;
 }
 
-function startSession(lectureId) {
+/* Pomodoro: 25 min focus, then the timer pauses for a 5 min break with a soft
+   chime. Only focus time is logged; breaks are pauses, so they don't count. */
+const POMO_FOCUS = 25 * 60e3, POMO_BREAK = 5 * 60e3;
+const pomoPref = () => ls.get('sp.pomo.' + S.me, false);
+const Chime = {
+  ctx: null,
+  unlock() { try { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); this.ctx.resume(); } catch {} },
+  play() {
+    try { navigator.vibrate && navigator.vibrate([120, 80, 120]); } catch {}
+    const c = this.ctx; if (!c) return;
+    [[660, 0], [880, .22]].forEach(([f, at]) => {
+      const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + at;
+      o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(c.destination);
+      g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.12, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + .5);
+      o.start(t0); o.stop(t0 + .55);
+    });
+  }
+};
+function startSession(lectureId, opts = {}) {
   if (readOnly()) return;
   if (Sessions.live[S.me] && Sessions.live[S.me].startedAt) stopSession(false, true);
-  const l = lectureId && Store.get(lectureId);
-  Backend.setLive(S.me, { lectureId: l ? l.id : null, subject: l ? l.subject : '', seq: l ? seqMap.get(l.id) || 1 : null, startedAt: Date.now(), pausedAt: null, pausedMs: 0 });
+  const l = lectureId && Store.get(lectureId), mode = opts.mode || (pomoPref() ? 'pomo' : 'watch');
+  Chime.unlock();   // inside the tap, so the break chime is allowed to play later
+  Backend.setLive(S.me, { lectureId: l ? l.id : null, subject: l ? l.subject : (opts.subject || ''), seq: l ? seqMap.get(l.id) || 1 : null,
+    startedAt: Date.now(), pausedAt: null, pausedMs: 0, mode, pomos: 0, brkUntil: null, brkOver: false });
   if (S.me === 'zhra') Focus.show();
-  else toast(l ? `Studying ${l.subject} ⏱` : 'Session started ⏱');
+  else toast(`${mode === 'pomo' ? '🍅' : '⏱'} ${l ? 'Studying ' + l.subject : opts.subject ? 'Studying ' + opts.subject : 'Session started'}`);
+}
+const sessLabel = x => x.subject ? (x.seq ? `${x.subject} #${x.seq}` : x.subject) : 'Free session';
+function pomoCheck() {
+  const x = S.me && liveOf(S.me); if (!x || x.mode !== 'pomo') return;
+  const now = Date.now();
+  if (!x.pausedAt) {
+    const n = Math.floor(elapsed(x) / POMO_FOCUS);
+    if (n > (x.pomos || 0)) {
+      Backend.setLive(S.me, { ...x, pausedAt: now, brkUntil: now + POMO_BREAK, brkOver: false, pomos: n });
+      Chime.play(); toast(`🍅 Pomodoro ${n} done! 5-minute break`);
+      if (Focus.open) { const r = $('#fxArt').getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, 30); }
+      if (S.me === 'zhra' && Peony.active && !Focus.open) { Peony.bloom(); Peony.say('🍅 Great focus! Break time ☕'); }
+    }
+  } else if (x.brkUntil && now >= x.brkUntil) {
+    Backend.setLive(S.me, { ...x, brkUntil: null, brkOver: true });
+    Chime.play(); toast('Break over, ready for the next 🍅?');
+  }
+}
+function togglePomo() {
+  const x = liveOf(S.me); if (!x) return;
+  const mode = x.mode === 'pomo' ? 'watch' : 'pomo';
+  ls.set('sp.pomo.' + S.me, mode === 'pomo');
+  Backend.setLive(S.me, { ...x, mode, pomos: Math.floor(elapsed(x) / POMO_FOCUS), brkUntil: null, brkOver: false });
+  toast(mode === 'pomo' ? '🍅 Pomodoro on: 25 min focus, 5 min break' : '⏱ Stopwatch mode');
+}
+function openFreeSheet() {
+  const subs = subjectsList(), pomo = pomoPref();
+  showPop(`<h3>⏱ Start a study session</h3>
+    <label class="pf">Subject<select class="field" id="fsSubj"><option value="">No subject</option>${subs.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}<option value="__other">Other…</option></select></label>
+    <input class="field" id="fsOther" dir="auto" aria-label="Subject name" placeholder="Subject" hidden>
+    <div class="seg mode-seg" role="group" aria-label="Timer"><button type="button" data-fs-mode="watch" aria-pressed="${!pomo}">⏱ Stopwatch</button><button type="button" data-fs-mode="pomo" aria-pressed="${pomo}">🍅 Pomodoro 25·5</button></div>
+    <div class="pop-btns"><button class="btn" type="button" data-fs-start>▶ Start</button></div>`);
 }
 function stopSession(markDone, quiet) {
   const x = Sessions.live[S.me]; if (!x || !x.startedAt) return;
   const end = x.pausedAt || Date.now(), mins = Math.round(elapsed(x) / 60000);
-  if (mins >= 1) Backend.addLog({ user: S.me, lectureId: x.lectureId || null, subject: x.seq ? `${x.subject} #${x.seq}` : x.subject || '', start: x.startedAt, end, mins, day: ymd(new Date(x.startedAt)) });
-  Backend.setLive(S.me, { lectureId: null, subject: '', seq: null, startedAt: null, pausedAt: null, pausedMs: 0 });
+  if (mins >= 1) Backend.addLog({ user: S.me, lectureId: x.lectureId || null, subject: x.seq ? `${x.subject} #${x.seq}` : x.subject || '', subj: x.subject || 'Free session',
+    mode: x.mode || 'watch', pomos: x.pomos || 0, start: x.startedAt, end, mins, day: ymd(new Date(x.startedAt)) });
+  Backend.setLive(S.me, { lectureId: null, subject: '', seq: null, startedAt: null, pausedAt: null, pausedMs: 0, mode: null, pomos: 0, brkUntil: null, brkOver: false });
   if (markDone && x.lectureId) { const l = Store.get(x.lectureId); if (l && !isDone(l)) toggleStudied(x.lectureId); }
   if (!quiet) toast(mins >= 1 ? `Session saved · ${fmtMins(mins)}` : 'Session cancelled (under 1 min)');
 }
 function togglePause() {
   const x = liveOf(S.me); if (!x) return;
-  if (x.pausedAt) Backend.setLive(S.me, { ...x, pausedMs: (x.pausedMs || 0) + (Date.now() - x.pausedAt), pausedAt: null });
+  if (x.pausedAt) Backend.setLive(S.me, { ...x, pausedMs: (x.pausedMs || 0) + (Date.now() - x.pausedAt), pausedAt: null, brkUntil: null, brkOver: false });
   else Backend.setLive(S.me, { ...x, pausedAt: Date.now() });
 }
 function renderSessionBars() {
@@ -810,20 +991,23 @@ function renderSessionBars() {
   const bar = $('#sessionBar');
   bar.hidden = !mineLive;
   document.body.classList.toggle('has-session', !!mineLive);
-  bar.classList.toggle('paused', !!(mineLive && mineLive.pausedAt));
+  bar.classList.toggle('paused', !!(mineLive && mineLive.pausedAt && !mineLive.brkUntil));
+  bar.classList.toggle('break', !!(mineLive && mineLive.brkUntil));
+  const m = mineLive, state = m && (m.brkUntil ? `BREAK ☕ <span data-countdown="${m.brkUntil}"></span>` : m.brkOver ? 'BREAK OVER' : m.pausedAt ? 'PAUSED' : 'STUDYING');
   if (mineLive) bar.innerHTML = `
     <div class="sb-info"><span class="live-dot${mineLive.pausedAt ? ' off' : ''}"></span>
-      <div style="min-width:0"><small>${mineLive.pausedAt ? 'PAUSED' : 'STUDYING'}</small><span class="t" dir="auto">${mineLive.subject ? `${esc(mineLive.subject)} #${mineLive.seq}` : 'Free session'}</span></div></div>
+      <div style="min-width:0"><small>${state}${m.mode === 'pomo' ? `<span class="sb-pomo">🍅 ${m.pomos || 0}</span>` : ''}</small><span class="t" dir="auto">${esc(sessLabel(m))}</span></div></div>
     <div class="sb-clock" data-style="clock" ${tickAttrs(mineLive)}></div>
     <div class="sb-btns">
       ${S.me === 'zhra' ? '<button class="btn open-focus" id="openFocus" type="button" aria-label="Open study mode">🌸</button>' : ''}
-      <button class="btn" id="sessPause" type="button">${mineLive.pausedAt ? '▶ Resume' : '❚❚ Pause'}</button>
+      <button class="btn pomo-toggle${m.mode === 'pomo' ? ' on' : ''}" id="pomoToggle" type="button" aria-pressed="${m.mode === 'pomo'}" title="Pomodoro 25·5" aria-label="Pomodoro mode">🍅</button>
+      <button class="btn" id="sessPause" type="button">${m.brkUntil ? '▶ Skip break' : m.brkOver ? '▶ Next 🍅' : m.pausedAt ? '▶ Resume' : '❚❚ Pause'}</button>
       ${mineLive.lectureId ? '<button class="btn main" id="sessDone" type="button">✔ Done</button>' : ''}
       <button class="btn" id="sessStop" type="button">■ Stop</button>
     </div>`;
   const lb = $('#liveBar');
   lb.hidden = !otherLive;
-  if (otherLive) lb.innerHTML = `<span class="live-dot${otherLive.pausedAt ? ' off' : ''}"></span><span dir="auto">${esc(USERS[other(S.me)].name)} ${otherLive.pausedAt ? 'paused' : 'is studying'} ${otherLive.subject ? esc(otherLive.subject) + ' #' + otherLive.seq : '(free session)'}</span> · <b ${tickAttrs(otherLive)}></b>`;
+  if (otherLive) lb.innerHTML = `<span class="live-dot${otherLive.pausedAt ? ' off' : ''}"></span><span dir="auto">${esc(USERS[other(S.me)].name)} ${otherLive.pausedAt ? 'paused' : 'is studying'} ${otherLive.subject ? esc(sessLabel(otherLive)) : '(free session)'}</span> · <b ${tickAttrs(otherLive)}></b>`;
   Focus.update();
   tick();
 }
@@ -832,6 +1016,8 @@ function tick() {
     const ms = elapsed({ startedAt: +el.dataset.tick, pausedMs: +el.dataset.pausedMs || 0, pausedAt: +el.dataset.pausedAt || null });
     if (el.dataset.style === 'clock') el.innerHTML = clockHtml(ms); else el.textContent = shortDur(ms);
   });
+  $$('[data-countdown]').forEach(el => { const r = Math.max(0, Math.ceil((+el.dataset.countdown - Date.now()) / 1000)); el.textContent = `${Math.floor(r / 60)}:${pad(r % 60)}`; });
+  pomoCheck();
   Focus.tick();
 }
 setInterval(tick, 1000);
@@ -841,6 +1027,10 @@ let seqMap = new Map();
 function computeSeq() {
   seqMap = new Map();
   const counters = {};
+  subjOrder = new Map();
+  const slot = s => { const k = String(s || '').trim().toLowerCase(); if (k && !subjOrder.has(k)) subjOrder.set(k, subjOrder.size); };
+  Store.all().sort(byDateOrder).forEach(l => slot(l.subject));
+  [...Extra.exams.values()].forEach(e => slot(e.subj)); [...Extra.tasks.values()].forEach(t => slot(t.subj));
   Store.all().sort(byDateOrder).forEach(l => {
     const k = l.group + '|' + l.subject.trim().toLowerCase();
     counters[k] = (counters[k] || 0) + 1;
@@ -848,14 +1038,26 @@ function computeSeq() {
   });
 }
 
-function stats(list = mine()) {
+// A study day = any logged session minute, lecture ticked, or review done.
+function studyStreak(owner) {
+  const t = todayStr(), days = new Set();
+  Sessions.log.forEach(e => { if (e.user === owner && e.mins >= 1) days.add(e.day); });
+  Store.all().forEach(l => {
+    if (l.owner !== owner) return;
+    if (l.studiedAt) days.add(ymd(new Date(l.studiedAt)));
+    Object.values(l.revDone || {}).forEach(ts => days.add(ymd(new Date(ts))));
+  });
+  const live = liveOf(owner); if (live && elapsed(live) >= 60000) days.add(t);
+  let streak = 0, d = days.has(t) ? t : addDays(t, -1);
+  while (days.has(d)) { streak++; d = addDays(d, -1); }
+  return streak;
+}
+function stats(list = mine(), owner = S.viewing) {
   const t = todayStr();
   const today = list.filter(l => eff(l) === t);
   const overdue = list.filter(l => !isDone(l) && eff(l) < t);
   const done = list.filter(isDone);
-  const days = new Set(done.filter(l => l.studiedAt).map(l => ymd(new Date(l.studiedAt))));
-  let streak = 0, d = days.has(t) ? t : addDays(t, -1);
-  while (days.has(d)) { streak++; d = addDays(d, -1); }
+  const streak = studyStreak(owner);
   return { today, todayLeft: today.filter(l => !isDone(l)).length, overdue, done: done.length, total: list.length, streak };
 }
 
@@ -866,7 +1068,7 @@ function card(l, opts = {}) {
   const t = todayStr(), done = isDone(l);
   const late = !done && eff(l) < t;
   const tags = [
-    l.status === 'revised' ? '<span class="tag rev">revised</span>' : '',
+    (() => { const rs = reviewsOf(l), n = rs.filter(r => r.done).length; return rs.length ? `<span class="tag rev" title="Spaced-repetition reviews done">🔁 ${n}/${rs.length}</span>` : ''; })(),
     late ? `<span class="tag late">overdue</span>` : '',
     l.planDate && l.planDate !== l.date && !opts.unplan ? `<span class="tag plan">planned ${esc(relDate(l.planDate))}</span>` : '',
     l.planTime ? `<span class="tag time"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${esc(l.planTime)}</span>` : ''
@@ -890,6 +1092,218 @@ function card(l, opts = {}) {
   </article>`;
 }
 const listHtml = (arr, empty, opts) => arr.length ? `<div class="list">${arr.map(l => card(l, opts)).join('')}</div>` : empty ? `<div class="empty">${empty}</div>` : '';
+/* ======================= SPACED REPETITION ======================= */
+const REVIEW_DAYS = [1, 3, 7, 14];
+function reviewsOf(l) {
+  if (!isDone(l) || !l.studiedAt) return [];
+  const base = ymd(new Date(l.studiedAt)), done = l.revDone || {};
+  return REVIEW_DAYS.map((n, i) => ({ l, n, step: i + 1, due: addDays(base, n), done: !!done[n] }));
+}
+// The latest review that's due for each lecture; missed earlier ones fold into
+// it, so one tap catches up instead of showing a backlog of old reviews.
+const latestDue = (l, day) => reviewsOf(l).filter(r => !r.done && r.due <= day).pop() || null;
+const dueReviews = (day = todayStr()) => mine().map(l => latestDue(l, day)).filter(Boolean).sort((a, b) => a.due < b.due ? -1 : 1);
+function markReviewed(id, n) {
+  const l = Store.get(id); if (!l || readOnly()) return;
+  const done = { ...(l.revDone || {}) };
+  REVIEW_DAYS.filter(d => d <= n).forEach(d => { if (!done[d]) done[d] = Date.now(); });
+  Backend.update(id, { revDone: done, status: 'revised' });
+  const nx = REVIEW_DAYS.find(d => !done[d]);
+  toast(nx ? `Reviewed ✔ Next review in ${nx - n} day${nx - n === 1 ? '' : 's'}` : 'All 4 reviews done 🎉');
+  if (S.me === 'zhra' && Peony.active) { Peony.bloom(); Peony.say(`Review done, it's sticking 🧠🌸`); }
+}
+function revRow(r) {
+  const ro = readOnly(), late = r.due < todayStr();
+  return `<div class="task-row" style="--pc:${subjColor(r.l.subject)}">
+    <span class="sdot" style="--sc:${subjColor(r.l.subject)}"></span>
+    <div><b dir="auto">${esc(lecLabel(r.l))}${r.l.topic ? ' · ' + esc(r.l.topic) : ''}</b>
+      <small>Review ${r.step} of 4 · day ${r.n}${late ? ` · <span class="pl" style="--pc:#e03131">due ${esc(relDate(r.due))}</span>` : ''}</small></div>
+    ${ro ? '' : `<button class="btn sm" type="button" data-review="${esc(r.l.id)}|${r.n}">✓ Reviewed</button>`}</div>`;
+}
+
+/* ============================ TASKS ============================ */
+const PRIO = { high: { label: '‼ High', c: '#e03131' }, med: { label: '! Medium', c: '#f08c00' }, low: { label: 'Low', c: '#868e96' } };
+const prioRank = { high: 0, med: 1, low: 2 };
+const myTasks = () => [...Extra.tasks.values()].filter(t => t.owner === S.viewing);
+const byDue = (a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : prioRank[a.prio] - prioRank[b.prio];
+const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function taskRow(k) {
+  const ro = readOnly(), t = todayStr(), late = !k.done && k.due && k.due < t;
+  const bits = [`<span class="pl">${PRIO[k.prio].label}</span>`, k.due ? (late ? `<span class="pl" style="--pc:#e03131">overdue · ${esc(relDate(k.due))}</span>` : esc(relDate(k.due))) : 'no date', k.subj ? `<span dir="auto">${esc(k.subj)}</span>` : ''].filter(Boolean).join(' · ');
+  return `<div class="task-row prio-${k.prio}${k.done ? ' done' : ''}" data-task="${esc(k.id)}">
+    <button class="tcheck" type="button" data-task-check="${esc(k.id)}" aria-pressed="${!!k.done}" aria-label="Mark ${esc(k.title)} ${k.done ? 'not done' : 'done'}" ${ro ? 'disabled' : ''}>${CHECK_SVG}</button>
+    <div><b dir="auto">${esc(k.title)}</b><small>${bits}</small></div>
+    ${ro ? '<span></span>' : `<button class="icon-btn" type="button" data-task-del="${esc(k.id)}" aria-label="Delete task">✕</button>`}</div>`;
+}
+function toggleTask(id) {
+  const k = Extra.tasks.get(id); if (!k || readOnly()) return;
+  Backend.patch('tasks', id, { done: !k.done, doneAt: k.done ? null : Date.now() });
+  if (!k.done) { toast(`☑ ${k.title} done`); if (S.me === 'zhra' && Peony.active) { Peony.bloom(); Peony.confetti(10); } }
+}
+function openTaskPop(id) {
+  const k = Extra.tasks.get(id); if (!k) return;
+  const ro = readOnly();
+  showPop(`<h3 dir="auto">☑ ${esc(k.title)}</h3>
+    <p class="meta"><span class="prio-${k.prio}"><span class="pl">${PRIO[k.prio].label}</span></span> · ${k.due ? esc(fmtDate(k.due)) : 'no date'}${k.subj ? ' · ' + esc(k.subj) : ''}${k.done ? ' · ✔ done' : ''}</p>
+    ${ro ? '' : `<div class="pop-btns"><button class="btn" type="button" data-task-check="${esc(k.id)}" data-close-pop>${k.done ? 'Mark not done' : '✓ Mark done'}</button>
+      <button class="btn ghost" type="button" data-task-del="${esc(k.id)}" data-close-pop>Delete</button></div>`}`);
+}
+function openRevPop(id, n) {
+  const l = Store.get(id); if (!l) return;
+  const r = reviewsOf(l).find(x => x.n === +n); if (!r) return;
+  showPop(`<h3 dir="auto">🔁 ${esc(lecLabel(l))}</h3>${l.topic ? `<p dir="auto">${esc(l.topic)}</p>` : ''}
+    <p class="meta">Review ${r.step} of 4 · ${esc(fmtDate(r.due))}${r.done ? ' · ✔ done' : ''}</p>
+    ${readOnly() || r.done ? '' : `<div class="pop-btns"><button class="btn" type="button" data-review="${esc(l.id)}|${r.n}" data-close-pop>✓ Reviewed</button></div>`}`);
+}
+const subjectsList = () => [...new Set([...mine().map(l => l.subject.trim()), ...myTasks().map(k => k.subj), ...myExams().map(e => e.subj)].filter(Boolean))].sort();
+
+/* ============================ EXAMS ============================ */
+const myExams = () => [...Extra.exams.values()].filter(e => e.owner === S.viewing).sort((a, b) => a.date < b.date ? -1 : 1);
+const daysBetween = (a, b) => Math.round((parseYmd(b) - parseYmd(a)) / 864e5);
+const goalWrites = new Set();
+// Splits the topics still to do evenly over the days left. The day's goal is
+// frozen once per day, so ticking topics off doesn't pull new ones in.
+function examPlan(ex) {
+  const t = todayStr(), daysLeft = daysBetween(t, ex.date), topics = ex.topics || [];
+  const left = topics.filter(x => !x.done), studyDays = Math.max(1, daysLeft);
+  const per = Math.ceil(left.length / studyDays);
+  let ids;
+  if (ex.goal && ex.goal.day === t) ids = ex.goal.ids;
+  else {
+    ids = left.slice(0, per).map(x => x.id);
+    const key = ex.id + t;
+    if (ex.owner === S.me && !goalWrites.has(key)) { goalWrites.add(key); setTimeout(() => Backend.patch('exams', ex.id, { goal: { day: t, ids } }), 0); }
+  }
+  return { daysLeft, left, per, goal: ids.map(id => topics.find(x => x.id === id)).filter(Boolean) };
+}
+function examCard(ex, compact) {
+  const p = examPlan(ex), ro = readOnly() || ex.owner !== S.me, topics = ex.topics || [];
+  const doneN = topics.filter(x => x.done).length;
+  const topicRow = x => `<label class="topic-row${x.done ? ' done' : ''}"><input type="checkbox" data-topic="${esc(ex.id)}|${esc(x.id)}" ${x.done ? 'checked' : ''} ${ro ? 'disabled' : ''}><span dir="auto">${esc(x.text)}</span></label>`;
+  const goalDone = p.goal.length && p.goal.every(x => x.done);
+  const left = p.daysLeft;
+  return `<div class="exam" style="--sc:${subjColor(ex.subj || ex.name)}">
+    <div class="exam-head"><div><small>🎓 Exam${ex.subj ? ' · <span dir="auto">' + esc(ex.subj) + '</span>' : ''}</small><b dir="auto">${esc(ex.name)}</b><small>${esc(fmtDate(ex.date))}</small></div>
+      <div class="exam-count"><b>${left <= 0 ? '🍀' : left}</b><small>${left < 0 ? 'done' : left === 0 ? 'today!' : left === 1 ? 'day left' : 'days left'}</small></div></div>
+    ${topics.length ? `<div class="bar" role="progressbar" aria-valuenow="${doneN}" aria-valuemax="${topics.length}" aria-label="Topics done"><i style="width:${doneN / topics.length * 100}%"></i></div>
+    <small class="meta">${doneN}/${topics.length} topics done${p.left.length ? ` · about ${p.per} a day to finish in time` : ' · everything covered 🎉'}</small>` : '<small class="meta">No topics yet.</small>'}
+    ${p.goal.length ? `<h4>Today's goal ${goalDone ? '<span class="goal-done">✔ done</span>' : ''}</h4>${p.goal.map(topicRow).join('')}` : ''}
+    ${compact ? '' : `${topics.length ? `<details><summary>All topics (${topics.length})</summary>${topics.map(topicRow).join('')}</details>` : ''}
+    ${ro ? '' : `<div><button class="btn sm ghost" type="button" data-exam-del="${esc(ex.id)}">Delete exam</button></div>`}`}
+  </div>`;
+}
+function toggleTopic(exId, topicId) {
+  const ex = Extra.exams.get(exId); if (!ex || ex.owner !== S.me) return;
+  const topics = (ex.topics || []).map(x => x.id === topicId ? { ...x, done: !x.done, doneAt: x.done ? null : Date.now() } : x);
+  Backend.patch('exams', exId, { topics });
+  const nowDone = topics.find(x => x.id === topicId).done;
+  if (nowDone && S.me === 'zhra' && Peony.active) { Peony.bloom(); Peony.say('One topic closer 🎓🌸'); }
+}
+
+function renderTasks() {
+  const t = todayStr(), ro = readOnly(), all = myTasks(), exams = myExams();
+  const upcoming = exams.filter(e => e.date >= t), past = exams.filter(e => e.date < t);
+  const ws = S.wk || weekStart(t), days = Array.from({ length: 7 }, (_, i) => addDays(ws, i));
+  const open = all.filter(k => !k.done);
+  const groups = [['Overdue', open.filter(k => k.due && k.due < t)], ['Today', open.filter(k => k.due === t)], ['Upcoming', open.filter(k => k.due && k.due > t)], ['No date', open.filter(k => !k.due)]];
+  const done = all.filter(k => k.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 20);
+  const weekDay = d => {
+    const dd = parseYmd(d);
+    const items = [...exams.filter(e => e.date === d).map(e => `<button class="wk-item" type="button" data-go="tasks" style="--pc:${subjColor(e.subj || e.name)}">🎓 ${esc(e.name)}</button>`),
+      ...all.filter(k => k.due === d).sort(byDue).map(k => `<button class="wk-item${k.done ? ' done' : ''}" type="button" data-task-pop="${esc(k.id)}" style="--pc:${PRIO[k.prio].c}" dir="auto">${esc(k.title)}</button>`)];
+    return `<div class="wk-day${d === t ? ' today' : ''}"><h5>${DOW[dd.getDay()]} <b>${dd.getDate()}</b></h5><div>${items.join('') || '<span class="wk-empty">—</span>'}</div></div>`;
+  };
+  $('#tab-tasks').innerHTML = `<datalist id="subjList">${subjectsList().map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+    <h2 class="sec">🎓 Exams <span class="count">${upcoming.length}</span></h2>
+    ${upcoming.map(e => examCard(e, false)).join('') || (ro ? '<div class="empty">No exams added.</div>' : '')}
+    ${ro ? '' : `<details class="addbox" ${upcoming.length ? '' : 'open'}><summary><b>＋ Add an exam</b></summary>
+      <form class="exam-form" id="examForm">
+        <label class="pf">Exam name<input class="field" id="exName" dir="auto" required maxlength="80"></label>
+        <div class="pf2"><label class="pf">Date<input class="field" id="exDate" type="date" min="${t}" required></label>
+          <label class="pf">Subject<input class="field" id="exSubj" list="subjList" dir="auto"></label></div>
+        <label class="pf">Topics, one per line<textarea class="field" id="exTopics" dir="auto"></textarea></label>
+        <div class="row"><button class="btn sm ghost" type="button" data-exam-fill>Fill from this subject's lectures</button><button class="btn" type="submit">Add exam</button></div>
+      </form></details>`}
+    ${past.length ? `<details class="addbox"><summary class="meta">Past exams (${past.length})</summary>${past.reverse().map(e => examCard(e, false)).join('')}</details>` : ''}
+    <h2 class="sec">☑ Tasks <span class="count">${open.length}</span></h2>
+    ${ro ? '' : `<form class="addbox task-form" id="taskForm">
+      <label class="pf grow">New task<input class="field" id="tkTitle" dir="auto" required maxlength="120"></label>
+      <label class="pf">Due<input class="field" id="tkDue" type="date" value="${t}"></label>
+      <label class="pf">Priority<select class="field" id="tkPrio"><option value="high">‼ High</option><option value="med" selected>! Medium</option><option value="low">Low</option></select></label>
+      <label class="pf">Subject<input class="field" id="tkSubj" list="subjList" dir="auto"></label>
+      <button class="btn" type="submit">Add</button></form>`}
+    <h2 class="sec">${esc(ws === weekStart(t) ? 'This week' : 'Week of ' + fmtDate(ws))}<span class="sp"></span>
+      <button class="btn sm ghost gc-arrow" type="button" data-wk="-1" aria-label="Previous week">‹</button>
+      <button class="btn sm ghost" type="button" data-wk="0">Today</button>
+      <button class="btn sm ghost gc-arrow" type="button" data-wk="1" aria-label="Next week">›</button></h2>
+    <div class="wk">${days.map(weekDay).join('')}</div>
+    ${groups.filter(([, arr]) => arr.length).map(([name, arr]) => `<h2 class="sec">${name} <span class="count">${arr.length}</span></h2><div class="list">${arr.sort(byDue).map(taskRow).join('')}</div>`).join('')}
+    ${!open.length ? `<div class="empty" style="margin-top:14px"><span class="em">☑</span>${all.length ? 'All tasks done 🎉' : 'No tasks yet.'}</div>` : ''}
+    ${done.length ? `<details class="addbox" style="margin-top:14px"><summary class="meta">Done (${done.length})</summary><div class="list">${done.map(taskRow).join('')}</div></details>` : ''}`;
+}
+
+/* ============================ STATS ============================ */
+const logSubj = e => e.subj || String(e.subject || '').replace(/\s#\d+$/, '') || 'Free session';
+// axis tops whose quarters are round: 15m/30m/45m/1h, 30m/1h/1.5h/2h, 1h/2h/3h/4h…
+const niceMax = v => [60, 120, 240, 360, 480, 720, 960].find(x => x >= v) || Math.ceil(v / 240) * 240;
+const shortMin = m => m < 60 ? `${m}m` : `${+(m / 60).toFixed(1)}h`;
+function renderStats() {
+  const days = S.statRange, t = todayStr(), from = addDays(t, -(days - 1));
+  const logs = Sessions.log.filter(e => e.user === S.viewing && e.day >= from && e.day <= t);
+  const live = liveOf(S.viewing);
+  const perDay = {}, perSubj = {};
+  const add = (day, subj, m) => { if (m <= 0) return; perDay[day] = (perDay[day] || 0) + m; perSubj[subj] = (perSubj[subj] || 0) + m; };
+  logs.forEach(e => add(e.day, logSubj(e), e.mins));
+  if (live) add(t, live.subject || 'Free session', Math.floor(elapsed(live) / 60000));
+  const total = Object.values(perDay).reduce((a, b) => a + b, 0);
+  const activeDays = Object.keys(perDay).length;
+  const pomos = logs.reduce((n, e) => n + (e.pomos || 0), 0) + (live && live.pomos || 0);
+  const inRange = ts => ts && ymd(new Date(ts)) >= from;
+  const lecturesDone = mine().filter(l => inRange(l.studiedAt)).length;
+  const reviewsDone = mine().reduce((n, l) => n + Object.values(l.revDone || {}).filter(inRange).length, 0);
+  const tasksDone = myTasks().filter(k => k.done && inRange(k.doneAt)).length;
+  const dayList = Array.from({ length: days }, (_, i) => addDays(from, i));
+  const max = niceMax(Math.max(30, ...dayList.map(d => perDay[d] || 0)));
+  const step = days <= 7 ? 1 : days <= 30 ? 5 : 15;
+  const xLabel = d => days <= 7 ? DOW[parseYmd(d).getDay()] : parseYmd(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const bars = dayList.map(d => { const m = perDay[d] || 0; return `<span class="b${d === t ? ' today' : ''}" tabindex="0" data-tip="${esc(fmtDate(d))} · ${m ? fmtMins(m) : 'no study'}"><i style="height:${m / max * 100}%"></i></span>`; }).join('');
+  const grid = [0.25, 0.5, 0.75, 1].map(f => `<div class="gl" style="bottom:${f * 100}%"><span>${shortMin(Math.round(max * f))}</span></div>`).join('');
+  const subjRows = Object.entries(perSubj).sort((a, b) => b[1] - a[1]);
+  const smax = subjRows.length ? subjRows[0][1] : 1;
+  $('#tab-stats').innerHTML = `
+    <div class="gc-head"><h2 style="margin:0 4px 0 0;flex:1">📊 Progress</h2>
+      <div class="seg" role="group" aria-label="Range">${[[7, '7 days'], [30, '30 days'], [90, '90 days']].map(([v, l]) => `<button type="button" data-range="${v}" aria-pressed="${days === v}">${l}</button>`).join('')}</div></div>
+    <div class="kpis">
+      <div><b>${fmtMins(total)}</b><small>studied · ${days} days</small></div>
+      <div><b>${fmtMins(Math.round(total / days))}</b><small>daily average</small></div>
+      <div><b>${studyStreak(S.viewing)} 🔥</b><small>study streak</small></div>
+      <div><b>${pomos} 🍅</b><small>pomodoros</small></div>
+      <div><b>${lecturesDone}</b><small>lectures studied</small></div>
+      <div><b>${reviewsDone} · ${tasksDone}</b><small>reviews · tasks done</small></div>
+    </div>
+    <div class="chart">
+      <h3>Study time per day</h3><p class="sub">${activeDays} of ${days} days with study${total ? ` · best ${fmtMins(Math.max(...Object.values(perDay)))}` : ''}</p>
+      <div class="daily" role="img" aria-label="Study minutes per day">${grid}${bars}</div>
+      <div class="xl" aria-hidden="true">${dayList.map((d, i) => `<span>${i % step === 0 || days <= 7 ? esc(xLabel(d)) : ''}</span>`).join('')}</div>
+      <details><summary>Show as table</summary><table><tr><th>Day</th><th>Studied</th></tr>${dayList.slice().reverse().map(d => `<tr><td>${esc(fmtDate(d))}</td><td>${perDay[d] ? fmtMins(perDay[d]) : '—'}</td></tr>`).join('')}</table></details>
+    </div>
+    <div class="chart">
+      <h3>Hours per subject</h3><p class="sub">Last ${days} days, from study sessions</p>
+      ${subjRows.length ? subjRows.map(([name, m]) => `<div class="hbar" style="--sc:${subjColor(name === 'Free session' ? '' : name)}"><span dir="auto">${esc(name)}</span>
+        <span class="track" data-tip="${esc(name)} · ${fmtMins(m)}" tabindex="0"><i style="width:${m / smax * 100}%"></i></span><b>${fmtMins(m)}</b></div>`).join('')
+        : `<div class="empty"><span class="em">⏱</span>No study sessions in this range yet. Press ▶ on a lecture to start one.</div>`}
+    </div>`;
+}
+// One shared tooltip for chart marks (hover, and keyboard focus).
+function showTip(el, x, y) {
+  const tip = $('#vizTip'); tip.textContent = el.dataset.tip; tip.hidden = false;
+  const w = tip.offsetWidth; tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, x - w / 2)) + 'px'; tip.style.top = Math.max(8, y - 44) + 'px';
+}
+document.addEventListener('pointerover', e => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) showTip(el, e.clientX, e.clientY); });
+document.addEventListener('pointermove', e => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) showTip(el, e.clientX, e.clientY); else $('#vizTip').hidden = true; });
+document.addEventListener('focusin', e => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) { const r = el.getBoundingClientRect(); showTip(el, r.left + r.width / 2, r.top); } });
+document.addEventListener('focusout', () => { $('#vizTip').hidden = true; });
+
 const byPlanTime = (a, b) => (a.planTime || '99') < (b.planTime || '99') ? -1 : (a.planTime || '99') > (b.planTime || '99') ? 1 : byDateOrder(a, b);
 
 function renderToday() {
@@ -922,8 +1336,11 @@ function renderToday() {
       <div><b>${fmtMins(mins)}</b><small>studied today</small></div>
       <div class="${st.overdue.length ? 'warn' : ''}"><b>${st.overdue.length}</b><small>overdue</small></div>
     </div>
+    ${myExams().filter(e => e.date >= t).slice(0, 2).map(e => examCard(e, true)).join('')}
     <h2 class="sec">Today's plan <span class="count">${st.today.length}</span></h2>
     ${listHtml(todayList, `<span class="em">🌤️</span>Nothing planned for today.${readOnly() ? '' : '<br><button class="btn sm" data-go="calendar" type="button">Plan in the Calendar</button> <button class="btn sm ghost" data-go="paste" type="button">Add lectures</button>'}`)}
+    ${(() => { const r = dueReviews(); return r.length ? `<h2 class="sec">🔁 Reviews due <span class="count">${r.length}</span></h2><div class="list">${r.map(revRow).join('')}</div>` : ''; })()}
+    ${(() => { const k = myTasks().filter(x => !x.done && x.due && x.due <= t).sort(byDue); return k.length ? `<h2 class="sec">☑ Tasks due <span class="count">${k.length}</span><span class="sp"></span><button class="btn sm ghost" type="button" data-go="tasks">All tasks</button></h2><div class="list">${k.map(taskRow).join('')}</div>` : ''; })()}
     ${overdue.length ? `<h2 class="sec">Not studied yet <span class="count">${overdue.length}</span><span class="sp"></span>
       ${readOnly() ? '' : '<button class="btn sm ghost" id="moveAll" type="button">Move all to today</button>'}</h2>${listHtml(overdue, '')}` : ''}
     ${todayLog.length || live ? `<h2 class="sec">Study sessions today <span class="count">${todayLog.length + (live ? 1 : 0)}</span></h2>
@@ -940,6 +1357,14 @@ const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m;
 const fromMin = m => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
 const lecLabel = l => `${l.subject} #${seqMap.get(l.id) || 1}`;
 // Planned lectures that share a day + time form one study block (one event).
+// Tasks, pending reviews and exams for a day, as calendar chips.
+function extraChips(d) {
+  return [
+    ...myExams().filter(e => e.date === d).map(e => `<span class="gc-chip gc-exam" data-go="tasks" style="--sc:${subjColor(e.subj || e.name)}">🎓 ${esc(e.name)}</span>`),
+    ...myTasks().filter(k => k.due === d).map(k => `<span class="gc-chip task${k.done ? ' done' : ''}" data-task-pop="${esc(k.id)}" style="--sc:${PRIO[k.prio].c}">☑ ${esc(k.title)}</span>`),
+    ...mine().flatMap(l => reviewsOf(l).filter(r => !r.done && r.due === d)).map(r => `<span class="gc-chip" data-rev-pop="${esc(r.l.id)}|${r.n}" style="--sc:${subjColor(r.l.subject)}">🔁 ${esc(lecLabel(r.l))}</span>`)
+  ];
+}
 function dayItems(day) {
   const list = mine().filter(l => eff(l) === day).sort(byDateOrder), blocks = {};
   list.filter(l => l.planTime).forEach(l => {
@@ -986,7 +1411,8 @@ function renderCalendar() {
       const { blocks, allDay } = dayItems(d);
       const chips = [
         ...blocks.map(b => { const done = b.lectures.every(isDone); return `<span class="gc-chip timed${done ? ' done' : ''}" data-gc-block="${d}|${b.time}" ${blockStyle(b)}>${b.time} ${esc(b.lectures.map(l => l.subject).join(', '))}</span>`; }),
-        ...allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : d < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`)
+        ...allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : d < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`),
+        ...extraChips(d)
       ];
       cells += `<div class="gc-cell${dd.getMonth() !== sd.getMonth() ? ' out' : ''}${d === t ? ' today' : ''}${d === sel ? ' sel' : ''}" data-gc-day="${d}" role="button" tabindex="0" aria-label="${fmtDate(d)}, ${chips.length} items">
         <span class="gc-n" data-gc-goday="${d}">${dd.getDate()}</span>${chips.slice(0, 3).join('')}${chips.length > 3 ? `<span class="gc-more">+${chips.length - 3} more</span>` : ''}</div>`;
@@ -997,7 +1423,7 @@ function renderCalendar() {
     const H = GC.H1 - GC.H0, now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
     const items = days.map(dayItems);
     let grid = `<div class="gc-corner"></div>` + days.map(d => { const dd = parseYmd(d); return `<div class="gc-colhead${d === t ? ' today' : ''}" data-gc-goday="${d}">${DOW[dd.getDay()]}<b>${dd.getDate()}</b></div>`; }).join('');
-    grid += `<div class="gc-gutter gc-ad-label">all-day</div>` + items.map((it, i) => `<div class="gc-allday">${it.allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : days[i] < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`).join('')}</div>`).join('');
+    grid += `<div class="gc-gutter gc-ad-label">all-day</div>` + items.map((it, i) => `<div class="gc-allday">${it.allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : days[i] < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`).join('')}${extraChips(days[i]).join('')}</div>`).join('');
     grid += `<div class="gc-gutter" style="height:${H * GC.ROW}px">${Array.from({ length: H }, (_, h) => `<span style="top:${h * GC.ROW}px">${h ? fromMin((GC.H0 + h) * 60) : ''}</span>`).join('')}</div>`;
     grid += items.map((it, i) => {
       // side-by-side columns for overlapping blocks
@@ -1037,7 +1463,10 @@ function renderCalendar() {
     </div>`;
   const selList = (dayItems(sel).blocks.flatMap(b => b.lectures)).concat(dayItems(sel).allDay);
   $('#tab-calendar').innerHTML = head + body +
-    (view === 'month' ? `<h2 class="sec">${esc(relDate(sel))} <span class="count">${selList.length}</span></h2>${listHtml(selList, '<span class="em">🗓️</span>Nothing on this day yet.', { unplan: true })}` : '') + planner;
+    (view === 'month' ? `<h2 class="sec">${esc(relDate(sel))} <span class="count">${selList.length}</span></h2>${listHtml(selList, '<span class="em">🗓️</span>Nothing on this day yet.', { unplan: true })}
+      ${(() => { const k = myTasks().filter(x => x.due === sel).sort(byDue), r = mine().flatMap(l => reviewsOf(l).filter(x => !x.done && x.due === sel));
+        return (k.length ? `<h2 class="sec">☑ Tasks <span class="count">${k.length}</span></h2><div class="list">${k.map(taskRow).join('')}</div>` : '')
+          + (r.length ? `<h2 class="sec">🔁 Reviews <span class="count">${r.length}</span></h2><div class="list">${r.map(revRow).join('')}</div>` : ''); })()}` : '') + planner;
   const wrap = $('#gcWrap');
   if (wrap && !S.gcScrolled) { wrap.scrollTop = Math.max(0, ((new Date().getHours() - 1) - GC.H0) * GC.ROW); S.gcScrolled = true; }
 }
@@ -1063,7 +1492,11 @@ function showPop(html) {
   $('#gcPop .pop-card').innerHTML = `<button class="pop-x" type="button" data-close-pop aria-label="Close">✕</button>` + html;
   $('#gcPop').hidden = false;
 }
-function closePop() { $('#gcPop').hidden = true; }
+function closePop() {
+  $('#gcPop').hidden = true;
+  const a = document.activeElement; if (a && a.closest && a.closest('.pop-card')) a.blur();   // a hidden, focused field would otherwise pause re-rendering
+  if (renderDeferred) setTimeout(render, 0);
+}
 
 function renderChecklist() {
   const q = S.search.trim().toLowerCase();
@@ -1096,10 +1529,11 @@ function renderChecklist() {
 }
 
 let renderDeferred = false;
+const isTyping = a => !!(a && a.classList && (a.classList.contains('topic') || a.id === 'phText' || (a.closest && a.closest('.addbox')) || (a.closest && a.closest('.pop-card'))));
 function render() {
   // Don't rebuild while someone is typing a topic (a remote update would wipe it).
   const a = document.activeElement;
-  if (a && a.classList && (a.classList.contains('topic') || a.id === 'phText')) { renderDeferred = true; return; }
+  if (isTyping(a)) { renderDeferred = true; return; }
   renderDeferred = false;
   if (!S.me) return;
   computeSeq();
@@ -1114,6 +1548,8 @@ function render() {
   else if (S.tab === 'calendar') renderCalendar();
   else if (S.tab === 'checklist') renderChecklist();
   else if (S.tab === 'admin') renderAdmin();
+  else if (S.tab === 'tasks') renderTasks();
+  else if (S.tab === 'stats') renderStats();
   renderSessionBars();
   Peony.refresh();
 }
@@ -1164,7 +1600,8 @@ Store.onChange(render);
 function toggleStudied(id) {
   const l = Store.get(id); if (!l || readOnly()) return;
   const nowDone = !isDone(l);
-  Backend.update(id, nowDone ? { status: 'studied', studiedAt: Date.now() } : { status: 'pending', studiedAt: null });
+  // ticking (or unticking) restarts the 1-3-7-14 day review schedule
+  Backend.update(id, nowDone ? { status: 'studied', studiedAt: Date.now(), revDone: {} } : { status: 'pending', studiedAt: null, revDone: {} });
   if (nowDone && S.me === 'zhra') {
     // count from the pre-update state: with Firestore the snapshot may not have arrived yet
     const left = stats().today.filter(x => x.id !== id && !isDone(x)).length;
@@ -1251,6 +1688,25 @@ async function savePreview() {
   }
 }
 
+/* ---------------------------- task & exam forms ---------------------------- */
+document.addEventListener('submit', e => {
+  if (e.target.id === 'taskForm') {
+    e.preventDefault(); if (readOnly()) return;
+    const title = $('#tkTitle').value.trim(); if (!title) return;
+    Backend.put('tasks', { id: newId('t'), owner: S.me, title, due: $('#tkDue').value || null, prio: $('#tkPrio').value || 'med', subj: $('#tkSubj').value.trim(), done: false, doneAt: null, createdAt: Date.now() });
+    $('#tkTitle').value = ''; $('#tkSubj').value = ''; document.activeElement.blur();
+    toast('Task added ☑'); renderTasks();
+  }
+  if (e.target.id === 'examForm') {
+    e.preventDefault(); if (readOnly()) return;
+    const name = $('#exName').value.trim(), date = $('#exDate').value; if (!name || !date) return;
+    const topics = $('#exTopics').value.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 300).map((text, i) => ({ id: 'p' + i + Math.random().toString(36).slice(2, 6), text, done: false }));
+    Backend.put('exams', { id: newId('e'), owner: S.me, name, date, subj: $('#exSubj').value.trim(), topics, goal: null, createdAt: Date.now() });
+    document.activeElement.blur();
+    toast(`🎓 ${name} added · ${daysBetween(todayStr(), date)} days to go`); renderTasks();
+  }
+});
+
 /* ---------------------------- manual lecture ---------------------------- */
 document.addEventListener('submit', e => {
   if (e.target.id !== 'manualForm') return;
@@ -1271,7 +1727,7 @@ function switchTab(t) {
   S.tab = t;
   $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   if (t === 'calendar') { S.calView = ls.get('sp.calView', S.calView); S.gcScrolled = false; }
-  ['today', 'calendar', 'checklist', 'paste', 'admin'].forEach(k => $('#tab-' + k).hidden = k !== t);
+  ['today', 'calendar', 'tasks', 'checklist', 'stats', 'paste', 'admin'].forEach(k => $('#tab-' + k).hidden = k !== t);
   ls.set('sp.tab', t);
   render();
 }
@@ -1281,6 +1737,31 @@ document.addEventListener('click', e => {
   const tab = t.closest('nav.tabs button'); if (tab) return switchTab(tab.dataset.tab);
   const go = t.closest('[data-go]'); if (go) return switchTab(go.dataset.go);
   const chk = t.closest('.check'); if (chk) return toggleStudied(chk.closest('.lec').dataset.id);
+  const tc = t.closest('[data-task-check]'); if (tc) { if (t.closest('[data-close-pop]')) closePop(); return toggleTask(tc.dataset.taskCheck); }
+  const td = t.closest('[data-task-del]');
+  if (td) { if (t.closest('[data-close-pop]')) closePop(); const k = Extra.tasks.get(td.dataset.taskDel); if (k && !readOnly() && confirm(`Delete "${k.title}"?`)) Backend.del('tasks', k.id); return; }
+  const tp = t.closest('[data-task-pop]'); if (tp) return openTaskPop(tp.dataset.taskPop);
+  const rv = t.closest('[data-review]'); if (rv) { if (t.closest('[data-close-pop]')) closePop(); const [id, n] = rv.dataset.review.split('|'); return markReviewed(id, +n); }
+  const rp = t.closest('[data-rev-pop]'); if (rp) { const [id, n] = rp.dataset.revPop.split('|'); return openRevPop(id, n); }
+  const ed = t.closest('[data-exam-del]');
+  if (ed) { const ex = Extra.exams.get(ed.dataset.examDel); if (ex && ex.owner === S.me && confirm(`Delete the exam "${ex.name}" and its topic list?`)) Backend.del('exams', ex.id); return; }
+  if (t.closest('[data-exam-fill]')) {
+    const subj = $('#exSubj').value.trim().toLowerCase(); if (!subj) return toast('Type the subject first');
+    const ls_ = mine().filter(l => l.subject.trim().toLowerCase() === subj).sort(byDateOrder);
+    if (!ls_.length) return toast('No lectures for that subject yet');
+    $('#exTopics').value = ls_.map(l => lecLabel(l) + (l.topic ? ' — ' + l.topic : '')).join('\n'); return;
+  }
+  const wk = t.closest('[data-wk]');
+  if (wk) { const v = +wk.dataset.wk; S.wk = v ? addDays(S.wk || weekStart(todayStr()), 7 * v) : null; return renderTasks(); }
+  const rg = t.closest('[data-range]'); if (rg) { S.statRange = +rg.dataset.range; return renderStats(); }
+  const fm = t.closest('[data-fs-mode]'); if (fm) { $$('[data-fs-mode]').forEach(b => b.setAttribute('aria-pressed', b === fm)); return; }
+  if (t.closest('[data-fs-start]')) {
+    const sel = $('#fsSubj').value, subject = sel === '__other' ? $('#fsOther').value.trim() : sel;
+    const mode = $('[data-fs-mode][aria-pressed=true]').dataset.fsMode;
+    ls.set('sp.pomo.' + S.me, mode === 'pomo'); closePop();
+    return startSession(null, { subject, mode });
+  }
+  if (t.closest('#pomoToggle')) return togglePomo();
   if (t.closest('#moveAll')) {
     const tt = todayStr(); stats().overdue.forEach(l => Backend.update(l.id, { planDate: tt }));
     return toast('Moved to today');
@@ -1322,7 +1803,8 @@ document.addEventListener('click', e => {
   if (ss) {
     const id = ss.dataset.sess, cur = liveOf(S.me);
     if (cur && cur.lectureId === id) return stopSession(false);
-    return startSession(id === 'free' ? null : id);
+    if (id === 'free') { closePop(); return openFreeSheet(); }
+    return startSession(id);
   }
   if (t.closest('#planBtn')) {
     const ids = [...S.pick], day = S.calSel, time = S.planTime || null, dur = +S.planDur || 60;
@@ -1353,6 +1835,8 @@ document.addEventListener('change', e => {
     const b = $('#planBtn'); if (b) { b.disabled = !S.pick.size; b.textContent = `Plan ${plural(S.pick.size, 'lecture')}`; }
     return;
   }
+  if (t.id === 'fsSubj') { $('#fsOther').hidden = t.value !== '__other'; if (t.value === '__other') $('#fsOther').focus(); return; }
+  if (t.dataset.topic) { const [ex, id] = t.dataset.topic.split('|'); return toggleTopic(ex, id); }
   if (t.id === 'pvDate' && S.preview) { S.preview.date = t.value || S.preview.date; return renderPreview(); }
 });
 document.addEventListener('input', e => {
@@ -1362,7 +1846,7 @@ document.addEventListener('input', e => {
   if (t.id === 'planDur') S.planDur = +t.value;
   const row = t.closest('.pv-row'); if (row && t.dataset.k) S.preview[row.dataset.g][+row.dataset.i][t.dataset.k] = t.value;
 });
-document.addEventListener('focusout', e => { if (e.target.classList && (e.target.classList.contains('topic') || e.target.id === 'phText')) setTimeout(() => renderDeferred && render(), 0); });
+document.addEventListener('focusout', () => setTimeout(() => { if (renderDeferred && !isTyping(document.activeElement)) render(); }, 0));
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (Focus.open) Focus.hide(); else closePop(); }
   if (e.key === 'Enter' && e.target.dataset && e.target.dataset.gcDay) e.target.click();
@@ -1511,10 +1995,12 @@ const Focus = {
     if (!x) { if (this.open) this.hide(); return; }
     if (!this.open) return;
     $('#focus').classList.toggle('paused', !!x.pausedAt);
-    $('#fxSubj').textContent = x.subject ? `${x.subject} #${x.seq}` : 'Free session';
-    $('#fxPause').textContent = x.pausedAt ? '▶ Resume' : '❚❚ Pause';
+    $('#fxSubj').textContent = (x.mode === 'pomo' ? `🍅 ${x.pomos || 0} · ` : '') + sessLabel(x);
+    $('#fxPause').textContent = x.brkUntil ? '▶ Skip break' : x.brkOver ? '▶ Next 🍅' : x.pausedAt ? '▶ Resume' : '❚❚ Pause';
     $('#fxDone').hidden = !x.lectureId;
-    if (x.pausedAt) $('#fxMsg').textContent = 'Paused… I’ll wait for you 😴';
+    if (x.brkUntil) $('#fxMsg').innerHTML = `Break time ☕ <span data-countdown="${x.brkUntil}"></span>`;
+    else if (x.brkOver) $('#fxMsg').textContent = 'Break over! Ready for the next 🍅?';
+    else if (x.pausedAt) $('#fxMsg').textContent = 'Paused… I’ll wait for you 😴';
     this.tick();
   },
   say() { const x = liveOf('zhra'); if (x && !x.pausedAt) $('#fxMsg').textContent = Peony.pick([...this.lines, ...Peony.adminLines()]); this.msgAt = Date.now(); },
@@ -1531,7 +2017,7 @@ const Focus = {
     $$('.pm', art).forEach(g => g.style.transform = sc(.86, 1.06));
     $$('.pi', art).forEach(g => g.style.transform = sc(.9, 1.04));
     $('#fxBlooms').textContent = cycles ? `${'🌸'.repeat(Math.min(cycles, 8))}  ${plural(cycles, 'bloom')}` : 'Your flower blooms every 25 minutes';
-    if (this.cycle >= 0 && cycles > this.cycle) {
+    if (this.cycle >= 0 && cycles > this.cycle && x.mode !== 'pomo') {
       $('#focus').classList.add('happy'); setTimeout(() => $('#focus').classList.remove('happy'), 3000);
       const r = $('#fxArt').getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, 30);
       $('#fxMsg').textContent = `${cycles * 25} minutes! A 5-minute break? ☕🌸`; this.msgAt = Date.now();
@@ -1569,7 +2055,7 @@ const Peony = {
       this.schedulePop();
     }, (3 + Math.random() * 4) * 60e3);
   },
-  mood() { return stats(Store.all().filter(l => l.owner === 'zhra')); },
+  mood() { return stats(Store.all().filter(l => l.owner === 'zhra'), 'zhra'); },
   refresh() {
     if (!this.active) return;
     const st = this.mood();
