@@ -1,0 +1,1669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#330066">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Study">
+<title>Study Planner</title>
+<link rel="icon" type="image/png" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#330066; --brand-2:#4d1a80; --brand-3:#7a3bb0; --brand-4:#b57edc;
+  --accent:#330066; --tint:#efe5f8; --tint-2:#e3d3f2;
+  --bg:#f7f2fc; --surface:#ffffff; --text:#1f0f33; --muted:#6b5a80; --line:#e6dbf1;
+  --ok:#2e9d6a; --ok-tint:#e2f5ec; --warn:#c2410c; --warn-tint:#fdece3;
+  --shadow:0 1px 2px rgba(51,0,102,.06),0 6px 20px rgba(51,0,102,.08);
+  --radius:16px;
+  --btn:#330066;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --accent:#d4b0f0; --tint:#2a1645; --tint-2:#371d5a;
+    --bg:#110720; --surface:#1c0f31; --text:#f3eafc; --muted:#b5a4cb; --line:#33214f;
+    --ok:#4cc38a; --ok-tint:#143326; --warn:#fb923c; --warn-tint:#3a1d10;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    --btn:#7a3bb0;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Tajawal,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);
+  font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--brand-4);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+
+/* ---------- login ---------- */
+#login{min-height:100vh;display:grid;place-items:center;padding:24px 16px;
+  background:radial-gradient(circle at 20% 10%,#5b2399 0,transparent 45%),radial-gradient(circle at 90% 90%,#7a3bb0 0,transparent 40%),var(--brand)}
+.login-card{background:var(--surface);border-radius:24px;padding:28px 22px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
+.login-card h1{margin:0 0 4px;font-size:28px;color:var(--accent)}
+.login-card p{margin:0 0 20px;color:var(--muted)}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.who button{border:2px solid var(--line);background:var(--tint);border-radius:18px;padding:18px 8px;display:grid;gap:4px;justify-items:center;transition:transform .15s,border-color .15s}
+.who button:hover{transform:translateY(-2px)}
+.who button[aria-pressed=true]{border-color:var(--brand-3);background:var(--tint-2)}
+.who .av{width:84px;height:84px;display:grid;place-items:center;font-size:52px;position:relative}
+.who .av svg,.who .av img{width:100%;height:100%;display:block}
+.who .av.av-photo{width:116px;height:124px;margin:-6px 0 -2px}
+.who button{align-content:end}
+.who .av.av-vodka{width:116px;height:124px;margin:-6px 0 -2px}
+.av-photo img{object-fit:contain;filter:drop-shadow(0 10px 12px rgba(51,0,102,.32));animation:float 3.6s ease-in-out infinite;transition:transform .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes float{0%,100%{translate:0 0;rotate:-2deg}50%{translate:0 -6px;rotate:2deg}}
+.who button:hover .av-photo img{transform:scale(1.06)}
+.who button.go .av-photo img{transform:scale(1.2) rotate(14deg)}
+.av-vodka svg{filter:drop-shadow(0 8px 10px rgba(10,30,60,.3));transform-origin:50% 90%;transition:transform .3s}
+.who button:hover .av-vodka svg{transform:rotate(-6deg)}
+.who button.go .av-vodka svg{animation:cheers .7s ease-in-out}
+@keyframes cheers{0%{transform:rotate(0)}25%{transform:rotate(-18deg) translateY(-6px)}55%{transform:rotate(12deg) translateY(-3px)}80%{transform:rotate(-5deg)}100%{transform:rotate(0)}}
+.credit{font-size:10.5px;color:var(--muted);margin-top:8px;opacity:.8}
+.credit a{color:inherit}
+/* admin */
+.admin-form{background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);display:grid;gap:10px}
+.admin-form .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.admin-form textarea.field{min-height:84px;resize:vertical}
+.ph{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--surface);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow)}
+.ph p{margin:0;font-weight:600}
+.ph small{color:var(--muted)}
+.ph .x{border:0;background:var(--tint);color:var(--accent);border-radius:9px;width:34px;height:34px}
+code{background:var(--tint);border-radius:5px;padding:0 4px;font-size:13px}
+.hello-av{display:inline-grid;place-items:center;width:34px;height:34px;vertical-align:middle;margin-inline-end:8px;background:rgba(255,255,255,.14);border-radius:50%;overflow:visible}
+.hello-av svg,.hello-av img{width:30px;height:30px}
+#hello{display:flex;align-items:center}
+#hello span:last-child{overflow:hidden;text-overflow:ellipsis}
+.pv-col h3 .hello-av{background:var(--tint);margin:0}
+.who b{font-size:18px}
+.who small{color:var(--muted)}
+.pw{margin-top:16px;display:grid;gap:10px;text-align:start}
+.field{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px}
+.field:focus{border-color:var(--brand-3);outline:none}
+.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:700;background:var(--btn);color:#fff;transition:filter .15s,transform .1s}
+.btn:hover{filter:brightness(1.15)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:var(--tint);color:var(--accent)}
+.btn.sm{padding:7px 12px;font-size:14px;border-radius:10px}
+.note{font-size:13px;color:var(--muted);margin-top:14px}
+.err{color:var(--warn);font-size:14px;min-height:1.2em}
+
+/* ---------- header / tabs ---------- */
+header.top{background:linear-gradient(135deg,var(--brand),#4a1585);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 0 0;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(51,0,102,.25)}
+.top-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top-row h1{font-size:20px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:999px;padding:5px 11px;font-size:14px;font-weight:600}
+button.chip:hover{background:rgba(255,255,255,.24)}
+.viewing-bar{background:#ffd9a8;color:#5a2e00;font-size:14px;font-weight:600;text-align:center;padding:6px 10px}
+nav.tabs{display:flex;gap:4px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{background:none;border:0;color:rgba(255,255,255,.72);padding:10px 12px;flex:0 0 auto;font-weight:700;border-bottom:3px solid transparent;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+nav.tabs svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:440px){nav.tabs{gap:0}nav.tabs button{flex:1 1 auto;justify-content:center;padding:10px 4px;gap:4px;font-size:14.5px}nav.tabs svg{width:15px;height:15px}}
+nav.tabs button[aria-selected=true]{color:#fff;border-bottom-color:var(--brand-4)}
+main.wrap{padding:18px 16px 170px}
+
+/* ---------- today hero ---------- */
+.hero{position:relative;overflow:hidden;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;color:#fff;border-radius:22px;padding:18px;
+  background:radial-gradient(circle at 85% 20%,rgba(255,255,255,.16) 0,transparent 40%),linear-gradient(135deg,#330066,#6a2bb0);box-shadow:0 12px 30px rgba(51,0,102,.3)}
+.hero small{opacity:.8;font-weight:600;letter-spacing:.3px}
+.hero h2{margin:2px 0 4px;font-size:clamp(20px,5.6vw,26px);line-height:1.2}
+.hero p{margin:0;opacity:.9;font-size:15px}
+.hero-btns{grid-column:1/-1;display:flex;gap:8px}
+.hero-btns .btn{flex:1;max-width:240px}
+.hero .btn{background:#fff;color:var(--brand);padding:10px 14px}
+.hero .btn.ghost{background:rgba(255,255,255,.16);color:#fff}
+.ring{position:relative;width:92px;height:92px;display:grid;place-items:center}
+.ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:8}
+.ring .bg{stroke:rgba(255,255,255,.18)}
+.ring .fg{stroke:#fff;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+.ring b{font-size:22px;font-variant-numeric:tabular-nums}
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 4px}
+.mini-stats div{background:var(--surface);border-radius:var(--radius);padding:10px 8px;box-shadow:var(--shadow);text-align:center;display:grid;gap:1px}
+.mini-stats b{font-size:clamp(17px,4.8vw,21px);color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mini-stats small{font-size:12px;color:var(--muted)}
+.mini-stats .warn b{color:var(--warn)}
+
+h2.sec{font-size:17px;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+h2.sec .count{background:var(--tint-2);color:var(--accent);border-radius:999px;padding:0 9px;font-size:13px}
+h2.sec .sp{flex:1}
+.empty{background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--radius);padding:22px 16px;text-align:center;color:var(--muted)}
+.empty .em{display:block;font-size:30px;margin-bottom:4px}
+.empty .btn{margin-top:10px}
+
+/* ---------- lecture card ---------- */
+.list{display:grid;gap:10px}
+.lec{position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--surface);border-radius:var(--radius);
+  padding:12px 12px 12px 16px;box-shadow:var(--shadow);border:2px solid transparent;transition:border-color .15s,opacity .2s,transform .15s}
+.lec::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--sc,var(--brand-3))}
+.lec.done{opacity:.72}
+.lec.done .subj{text-decoration:line-through;text-decoration-color:var(--brand-4)}
+.check{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--brand-3);background:transparent;display:grid;place-items:center;padding:0;margin-top:2px;transition:background .15s,transform .15s}
+.check svg{width:18px;height:18px;stroke:#fff;stroke-width:3.2;fill:none;opacity:0}
+.check[aria-pressed=true]{background:var(--brand-3)}
+.check[aria-pressed=true] svg{opacity:1}
+.check:active{transform:scale(.9)}
+.lec .body{min-width:0}
+.row1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.subj{font-weight:800;font-size:17px;color:var(--accent)}
+.sdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--sc);flex:none}
+.seq{font-size:12.5px;font-weight:700;background:var(--tint-2);color:var(--accent);border-radius:6px;padding:0 6px}
+.tag{font-size:12px;font-weight:700;border-radius:6px;padding:0 6px}
+.tag.rev{background:var(--ok-tint);color:var(--ok)}
+.tag.late{background:var(--warn-tint);color:var(--warn)}
+.tag.plan{background:var(--tint);color:var(--muted)}
+.topic{width:100%;border:0;border-bottom:1.5px solid transparent;background:transparent;padding:3px 0;margin:2px 0 0;font-size:15px;border-radius:0}
+.lec:hover .topic,.topic:placeholder-shown{border-bottom-color:var(--line)}
+.topic:focus{outline:none;border-bottom-color:var(--brand-3)}
+.topic::placeholder{color:var(--muted);opacity:.75}
+.meta{font-size:13px;color:var(--muted)}
+.acts{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.lec .meta{margin-top:3px}
+.icon-btn{width:34px;height:34px;border-radius:10px;border:0;background:var(--tint);color:var(--accent);display:grid;place-items:center;text-decoration:none;font-size:16px;position:relative}
+.icon-btn:hover{background:var(--tint-2)}
+.icon-btn select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ro .check,.ro .icon-btn.edit{pointer-events:none;opacity:.45}
+.ro .topic{pointer-events:none}
+
+/* ---------- checklist ---------- */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.toolbar .field{flex:1;min-width:160px}
+.seg{display:inline-flex;background:var(--tint);border-radius:12px;padding:3px}
+.seg button{border:0;background:none;padding:7px 12px;border-radius:9px;font-weight:700;color:var(--muted);font-size:14px}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+.subj-group{margin-top:18px}
+.subj-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.subj-head h3{margin:0;font-size:17px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.subj-head small{color:var(--muted);white-space:nowrap}
+.bar{flex:1;height:8px;background:var(--tint-2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--sc,var(--brand-3));border-radius:99px;transition:width .4s}
+
+/* ---------- paste ---------- */
+textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plaintext;line-height:1.6}
+.paste-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.preview{margin-top:20px}
+.pv-date{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pv-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.pv-cols{grid-template-columns:1fr}}
+.pv-col{background:var(--surface);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+.pv-col h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px}
+.pv-row{display:grid;grid-template-columns:28px 1fr 30px;gap:6px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.pv-row .num{font-weight:800;color:var(--accent);padding-top:8px;text-align:center}
+.pv-row .fs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pv-row .fs .field{padding:7px 9px;font-size:14px;border-radius:9px}
+.pv-row .fs .wide{grid-column:1/-1}
+.pv-row .x{border:0;background:none;color:var(--muted);font-size:18px;padding-top:6px}
+.pv-ignored{font-size:13px;color:var(--muted);margin-top:10px}
+.pv-save{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+
+/* ---------- study sessions ---------- */
+.live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;margin-inline-end:6px;vertical-align:middle;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.live-bar{background:#dcfce7;color:#14532d;font-size:14px;font-weight:600;text-align:center;padding:6px 10px}
+@media (prefers-color-scheme:dark){.live-bar{background:#12351f;color:#bbf7d0}}
+.lec.live{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15),var(--shadow)}
+.icon-btn.sess{background:var(--btn);color:#fff;font-size:13px}
+.lec.live .icon-btn.sess{background:#22c55e}
+/* stopwatch: big digits with tiny unit labels */
+.clk{display:inline-flex;align-items:flex-start;gap:2px;font-variant-numeric:tabular-nums;direction:ltr}
+.clk>span{display:inline-grid;justify-items:center;line-height:1}
+.clk b{font-weight:800;font-size:1em;letter-spacing:.5px}
+.clk i{font-style:normal;font-size:.3em;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.7;margin-top:3px}
+.clk .sep{font-weight:700;opacity:.5;padding:0 1px;line-height:.95}
+#sessionBar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:35;max-width:540px;margin:0 auto;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px 12px;
+  background:linear-gradient(135deg,#330066,#5a1f99);color:#fff;border-radius:20px;padding:12px 14px;box-shadow:0 12px 32px rgba(51,0,102,.45)}
+body.has-session #peony:not([style*="top"]){bottom:132px}
+#sessionBar .sb-info{min-width:0;display:flex;align-items:center;gap:8px}
+#sessionBar .sb-info small{display:block;font-size:12px;opacity:.75;font-weight:600;letter-spacing:.3px}
+#sessionBar .sb-info span.t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sessionBar .sb-clock{font-size:30px;justify-self:end}
+#sessionBar .sb-btns{grid-column:1/-1;display:flex;gap:8px}
+#sessionBar .btn{flex:1;height:40px;padding:0 10px;font-size:14.5px;background:rgba(255,255,255,.14);color:#fff;border-radius:12px}
+#sessionBar .btn.main{background:#fff;color:var(--brand)}
+#sessionBar.paused{background:linear-gradient(135deg,#4a3d5c,#665579)}
+#sessionBar.paused .sb-clock{opacity:.7}
+
+/* ---------- focus mode (زهرة): the flower takes over the screen ---------- */
+#focus{position:fixed;inset:0;z-index:70;display:grid;place-items:center;overflow:hidden;color:#fff;
+  background:radial-gradient(circle at 50% 35%,#6b2fb0 0,#3d0b75 45%,#22003f 100%);padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+#focus .fx-petal{position:absolute;top:-30px;width:16px;height:16px;border-radius:0 70% 0 70%;opacity:.75;animation:drift linear infinite}
+@keyframes drift{0%{transform:translate(0,-40px) rotate(0)}100%{transform:translate(var(--sx),110vh) rotate(var(--sr))}}
+#focus .fx-box{position:relative;display:grid;justify-items:center;gap:14px;text-align:center;max-width:420px;width:100%}
+#focus .fx-min{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;z-index:2}
+#focus .fx-flower{position:relative;width:min(64vw,260px);aspect-ratio:1}
+#focus .fx-ring{position:absolute;inset:0;transform:rotate(-90deg)}
+#focus .fx-ring circle{fill:none;stroke-width:5}
+#focus .fx-ring .bg{stroke:rgba(255,255,255,.14)}
+#focus .fx-ring .fg{stroke:url(#fxGrad);stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+#focus .fx-art{position:absolute;inset:9%;display:grid;place-items:center}
+#focus .fx-art svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 18px 30px rgba(0,0,0,.4))}
+#focus .fx-art .po,#focus .fx-art .pm,#focus .fx-art .pi{transform-box:view-box;transform-origin:60px 54px;transition:transform 1.2s ease}
+#focus .fx-art .flower{transform-box:view-box;transform-origin:60px 70px;animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.04) rotate(2deg)}}
+#focus.paused .fx-art .flower{animation:none;transform:rotate(8deg)}
+#focus.paused .fx-art svg{filter:saturate(.5) drop-shadow(0 18px 30px rgba(0,0,0,.4))}
+#focus .eyes{transform-box:fill-box;transform-origin:center;animation:blink 5s infinite}
+#focus.paused .eyes{display:none} #focus.paused .e-sleep{display:inline}
+#focus.happy .eyes{display:none} #focus.happy .e-happy{display:inline}
+#focus .fx-subj{font-size:15px;font-weight:700;opacity:.85;letter-spacing:.3px}
+#focus .fx-clock{font-size:clamp(46px,15vw,68px)}
+#focus .fx-msg{min-height:1.4em;font-weight:600;font-size:16px;opacity:.95}
+#focus .fx-blooms{font-size:14px;opacity:.8;min-height:1.2em}
+#focus .fx-btns{display:flex;gap:10px;width:100%;margin-top:6px}
+#focus .fx-btns .btn{flex:1;height:50px;font-size:16px;border-radius:16px;background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(6px)}
+#focus .fx-btns .btn.main{background:#fff;color:var(--brand)}
+#sessionBar .btn.open-focus{flex:0 0 auto}
+.live-dot.off{background:#f59e0b;animation:none}
+.sess-log{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:4px 14px}
+.sess-log div{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.sess-log div:first-child{border-top:0}
+.sess-log small{color:var(--muted)}
+.sess-log b{color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* ---------- Google-style calendar ---------- */
+.gc-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.gc-head h2{margin:0 4px;font-size:clamp(17px,4.6vw,22px);flex:1;min-width:120px}
+.gc-arrow{width:36px;padding:7px 0;font-size:18px;line-height:1}
+.gc-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.gc-dow{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:7px 0 4px;text-transform:uppercase;letter-spacing:.5px}
+.gc-cell{min-height:clamp(68px,15vw,112px);border-top:1px solid var(--line);border-left:1px solid var(--line);padding:3px 2px;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0}
+.gc-cell:nth-child(7n+1){border-left:0}
+.gc-cell:hover{background:var(--tint)}
+.gc-cell.sel{background:var(--tint);box-shadow:inset 0 0 0 2px var(--brand-4)}
+.gc-cell.out .gc-n{opacity:.4}
+.gc-n{align-self:center;font-size:12.5px;font-weight:700;min-width:24px;height:24px;display:grid;place-items:center;border-radius:50%;font-variant-numeric:tabular-nums}
+.gc-n:hover{background:var(--tint-2)}
+.gc-cell.today .gc-n{background:var(--btn);color:#fff}
+.gc-chip{display:block;font-size:11px;line-height:1.4;padding:1px 5px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--tint-2);color:var(--accent);font-weight:600;cursor:pointer}
+.gc-chip[style*="--sc"]{background:color-mix(in srgb,var(--sc) 16%,var(--surface));color:var(--text);box-shadow:inset 3px 0 0 var(--sc)}
+.gc-chip.timed{background:var(--sc,var(--brand-3));color:#fff;box-shadow:none}
+.gc-chip.late{background:var(--warn-tint);color:var(--warn)}
+.gc-chip.done{opacity:.5;text-decoration:line-through}
+.gc-more{font-size:10.5px;color:var(--muted);padding-left:4px;font-weight:600}
+.gc-grid-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:68vh;box-shadow:var(--shadow);overscroll-behavior:contain}
+.gc-grid{display:grid;grid-template-columns:44px repeat(var(--cols),minmax(var(--colmin),1fr))}
+.gc-corner,.gc-colhead{position:sticky;top:0;z-index:4;background:var(--surface);border-bottom:1px solid var(--line)}
+.gc-colhead{text-align:center;padding:6px 2px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;cursor:pointer}
+.gc-colhead b{display:grid;place-items:center;margin:2px auto 0;width:32px;height:32px;border-radius:50%;font-size:17px;color:var(--text)}
+.gc-colhead.today{color:var(--brand-3)}
+.gc-colhead.today b{background:var(--btn);color:#fff}
+.gc-ad-label{font-size:10px;color:var(--muted);text-align:right;padding:4px 6px 0 0;border-bottom:1px solid var(--line)}
+.gc-allday{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:3px 2px;display:grid;gap:2px;align-content:start;min-height:26px;min-width:0}
+.gc-gutter{position:relative}
+.gc-gutter span{position:absolute;right:6px;transform:translateY(-50%);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.gc-col{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px 48px);min-width:0}
+.gc-col.can-add{cursor:copy}
+.gc-ev{position:absolute;z-index:1;border:0;border-radius:6px;background:var(--sc,linear-gradient(135deg,var(--brand-3),var(--brand-2)));color:#fff;font-size:11.5px;padding:3px 6px;overflow:hidden;text-align:start;display:flex;flex-direction:column;gap:1px;box-shadow:0 2px 6px rgba(51,0,102,.25);cursor:pointer}
+.gc-ev b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:520px){.gc-ev{padding:2px 3px;font-size:10px}.gc-colhead b{width:28px;height:28px;font-size:15px}}
+.gc-ev small{opacity:.85;font-variant-numeric:tabular-nums}
+.gc-ev.done{opacity:.55}
+.gc-now{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:2;pointer-events:none}
+.gc-now::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:#ea4335}
+.gc-pop{position:fixed;inset:0;z-index:65;background:rgba(20,0,40,.35);display:grid;place-items:end center;padding:12px}
+@media (min-width:640px){.gc-pop{place-items:center}}
+.pop-card{position:relative;background:var(--surface);color:var(--text);border-radius:20px;padding:18px 16px 16px;width:min(420px,100%);box-shadow:0 20px 60px rgba(0,0,0,.35);display:grid;gap:10px}
+.pop-card h3{margin:0 28px 0 0;font-size:17px}
+.pop-card p{margin:0}
+.pop-x{position:absolute;top:10px;right:10px;border:0;background:var(--tint);color:var(--accent);width:30px;height:30px;border-radius:50%}
+.pop-list{display:grid;gap:6px}
+.pop-row{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--tint);border-radius:12px;padding:8px 10px}
+.pop-row.done span{text-decoration:line-through;opacity:.6}
+.pop-btns{display:flex;gap:8px;flex-wrap:wrap}
+.pop-btns .btn{flex:1;text-align:center;text-decoration:none}
+.planned-ok{background:var(--ok-tint);color:var(--ok);border-radius:10px;padding:8px 10px;font-weight:600;font-size:14px}
+.planned-ok a{color:inherit}
+
+/* ---------- calendar planner ---------- */
+.planner{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;display:grid;gap:12px;margin-top:12px}
+.planner .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.planner .row .field{width:auto}
+.pick-group h4{margin:6px 0 4px;font-size:14px;color:var(--accent)}
+.pick{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;cursor:pointer}
+.pick:hover{background:var(--tint)}
+.pick input{width:20px;height:20px;accent-color:var(--brand-3);flex:none}
+.pick span{flex:1;min-width:0}
+.pick small{color:var(--muted)}
+.picks{max-height:320px;overflow:auto;margin:0 -4px;padding:0 4px}
+.tag.time{background:var(--btn);color:#fff}
+.icon-btn.unplan{font-size:14px}
+/* manual add */
+.manual{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;display:grid;gap:10px;margin-top:22px}
+.manual .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.manual .grid2{grid-template-columns:1fr}}
+.manual label{font-size:13px;font-weight:700;color:var(--muted);display:grid;gap:4px}
+
+/* ---------- splash ---------- */
+#splash{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:var(--brand);color:#fff;font-weight:700;letter-spacing:.3px}
+#splash img{width:96px;height:auto;display:block;margin:0 auto 10px;animation:float 3s ease-in-out infinite}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-140%);background:#1f0f33;color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;z-index:60;transition:transform .25s;max-width:calc(100vw - 32px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ---------- peony mascot ---------- */
+#peony{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:40;width:96px;touch-action:none;user-select:none;-webkit-user-select:none}
+#peony .pbtn{background:none;border:0;padding:0;width:96px;height:120px;display:block;cursor:grab;-webkit-tap-highlight-color:transparent}
+#peony.dragging .pbtn{cursor:grabbing}
+#peony svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 6px 10px rgba(51,0,102,.3))}
+#peony .flower{transform-box:view-box;transform-origin:60px 138px;animation:sway 4s ease-in-out infinite}
+#peony .po,#peony .pm,#peony .pi{transform-box:view-box;transform-origin:60px 54px;transition:transform .5s cubic-bezier(.3,1.6,.5,1)}
+#peony.bloom .po{transform:scale(1.14) rotate(8deg)}
+#peony.bloom .pm{transform:scale(1.1) rotate(-10deg)}
+#peony.bloom .pi{transform:scale(1.08) rotate(14deg)}
+#peony .eyes{transform-box:fill-box;transform-origin:center;animation:blink 5s infinite}
+.e-happy,.e-sleep,.m-o{display:none}
+#peony.happy .eyes{display:none} #peony.happy .e-happy{display:inline}
+#peony.sleepy .eyes{display:none} #peony.sleepy .e-sleep{display:inline}
+#peony.sleepy .m-smile{display:none} #peony.sleepy .m-o{display:inline}
+#peony.sleepy .flower{animation:droop 5s ease-in-out infinite}
+#peony.sleepy svg{filter:saturate(.55) drop-shadow(0 6px 10px rgba(51,0,102,.25))}
+.zz{display:none;font-weight:800;fill:var(--brand-3);font-size:13px}
+#peony.sleepy .zz{display:inline;animation:zz 2.4s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes droop{0%,100%{transform:rotate(14deg)}50%{transform:rotate(10deg)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes zz{0%{opacity:0;transform:translateY(4px)}50%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+.bubble{position:absolute;bottom:118px;right:0;width:max-content;max-width:min(240px,calc(100vw - 40px));background:var(--surface);color:var(--text);
+  border:2px solid var(--brand-4);border-radius:16px 16px 4px 16px;padding:9px 12px;font-size:14.5px;font-weight:600;box-shadow:var(--shadow);
+  opacity:0;transform:translateY(6px) scale(.96);transform-origin:bottom right;transition:opacity .2s,transform .2s;pointer-events:none}
+.bubble.show{opacity:1;transform:none}
+#peony.left .bubble{right:auto;left:0;border-radius:16px 16px 16px 4px;transform-origin:bottom left}
+@media (max-width:520px){.hero{padding:16px;gap:10px}.ring{width:80px;height:80px}.ring b{font-size:19px}#peony{width:80px}#peony .pbtn{width:80px;height:100px}.bubble{bottom:100px}body.has-session #peony:not([style*="top"]){bottom:128px}}
+.petal{position:fixed;z-index:55;width:12px;height:12px;border-radius:0 60% 0 60%;pointer-events:none;animation:fall var(--t,1.6s) cubic-bezier(.2,.6,.4,1) forwards}
+@keyframes fall{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div id="splash" role="status"><div><img src="assets/peony.png" alt="">Loading…</div></div>
+
+<!-- ============ LOGIN ============ -->
+<section id="login" hidden>
+  <div class="login-card">
+    <h1>Study Planner</h1>
+    <p>Who's studying today?</p>
+    <div class="who" role="group" aria-label="Choose profile">
+      <button type="button" data-user="zhra" aria-pressed="false"><span class="av av-photo" aria-hidden="true"><img src="assets/peony.png" alt="" width="116" height="124" onerror="this.replaceWith('🌸')"></span><b lang="ar">زهرة</b><small>Group A1</small></button>
+      <button type="button" data-user="hussein" aria-pressed="false"><span class="av av-vodka" aria-hidden="true" id="loginVodka"></span><b>Hussein</b><small>Group A2</small></button>
+    </div>
+    <form class="pw" id="pwForm" hidden>
+      <label for="pw">Password</label>
+      <input class="field" id="pw" type="password" autocomplete="current-password" required>
+      <div class="err" id="loginErr" role="alert"></div>
+      <button class="btn" type="submit" id="loginBtn">Sign in</button>
+    </form>
+    <div class="note" id="modeNote"></div>
+    <div class="credit">Peony photo: Kritzolina, Wikimedia Commons, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <header class="top">
+    <div class="wrap">
+      <div class="top-row">
+        <h1 id="hello">Study Planner</h1>
+        <button class="chip" id="viewToggle" type="button"></button>
+        <button class="chip" id="adminBtn" type="button" aria-label="Admin: Peony phrases" hidden>⚙</button>
+        <button class="chip" id="logout" type="button" aria-label="Switch user">⇄</button>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="today" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Today</button>
+        <button role="tab" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
+        <button role="tab" data-tab="checklist" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/></svg>Checklist</button>
+        <button role="tab" data-tab="paste" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+      </nav>
+    </div>
+    <div class="viewing-bar" id="viewingBar" hidden></div>
+    <div class="live-bar" id="liveBar" role="status" hidden></div>
+  </header>
+
+  <main class="wrap">
+    <section id="tab-today" role="tabpanel"></section>
+    <section id="tab-calendar" role="tabpanel" hidden></section>
+    <section id="tab-checklist" role="tabpanel" hidden></section>
+    <section id="tab-admin" role="tabpanel" hidden></section>
+    <section id="tab-paste" role="tabpanel" hidden>
+      <h2 class="sec"><label for="pasteBox">Paste the Telegram schedule</label></h2>
+      <textarea class="field" id="pasteBox" dir="auto"></textarea>
+      <div class="paste-actions">
+        <button class="btn" id="analyzeBtn" type="button">Analyze</button>
+        <button class="btn ghost" id="clearBtn" type="button">Clear</button>
+      </div>
+      <div id="preview" class="preview"></div>
+      <form class="manual" id="manualForm">
+        <h2 class="sec" style="margin:0">✍️ Add a lecture by hand</h2>
+        <div class="grid2">
+          <label>Subject<input class="field" id="mSubject" dir="auto" required></label>
+          <label>Lecture name<input class="field" id="mTopic" dir="auto"></label>
+        </div>
+        <div><button class="btn" type="submit">Add lecture</button></div>
+      </form>
+    </section>
+  </main>
+  <div id="sessionBar" role="status" aria-live="polite" hidden></div>
+</div>
+
+<div id="gcPop" class="gc-pop" hidden><div class="pop-card" role="dialog" aria-modal="true"></div></div>
+
+<!-- ============ FOCUS MODE (زهرة's study session) ============ -->
+<div id="focus" role="dialog" aria-modal="true" aria-label="Study session" hidden>
+  <div class="fx-sky" aria-hidden="true"></div>
+  <button class="chip fx-min" id="fxMin" type="button">⤡ Minimize</button>
+  <div class="fx-box">
+    <div class="fx-subj" id="fxSubj" dir="auto"></div>
+    <div class="fx-flower">
+      <svg class="fx-ring" viewBox="0 0 100 100" aria-hidden="true">
+        <defs><linearGradient id="fxGrad" x1="0" x2="1"><stop offset="0" stop-color="#f4a3c8"/><stop offset="1" stop-color="#d4b0f0"/></linearGradient></defs>
+        <circle class="bg" cx="50" cy="50" r="46"/><circle class="fg" id="fxRing" cx="50" cy="50" r="46" stroke-dasharray="289.03" stroke-dashoffset="289.03"/>
+      </svg>
+      <div class="fx-art" id="fxArt"></div>
+    </div>
+    <div class="fx-clock" id="fxClock"></div>
+    <div class="fx-blooms" id="fxBlooms"></div>
+    <div class="fx-msg" id="fxMsg" aria-live="polite"></div>
+    <div class="fx-btns">
+      <button class="btn" id="fxPause" type="button"></button>
+      <button class="btn main" id="fxDone" type="button">✔ Done</button>
+      <button class="btn" id="fxStop" type="button">■ Stop</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PEONY (زهرة only) ============ -->
+<div id="peony" hidden>
+  <div class="bubble" id="bubble" role="status" aria-live="polite"></div>
+  <button class="pbtn" type="button" aria-label="Peony, your study buddy. Tap for a message.">
+    <span id="peonyArt"></span>
+  </button>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   CONFIG: paste your Firebase web config here (Firebase Console →
+   Project settings → Your apps → Web app). While apiKey starts with
+   "PASTE", the site runs in LOCAL mode (data stays in this browser).
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "PASTE_API_KEY",
+  authDomain: "",
+  projectId: "",
+  appId: ""
+};
+const CLOUD = !/^PASTE/.test(FIREBASE_CONFIG.apiKey);
+
+/* Optional: URL of the Cloudflare Worker (worker.js) that reads the
+   PDF name behind public t.me links. Leave "" to disable. */
+const PDF_WORKER_URL = "";
+
+const USERS = {
+  zhra:    { name: 'زهرة',    group: 'A1', email: 'zhra@studyplanner.app',    icon: '🌸' },
+  hussein: { name: 'Hussein', group: 'A2', email: 'hussein@studyplanner.app', icon: '🍸' }
+};
+const GROUP_OWNER = { A1: 'zhra', A2: 'hussein' };
+const isoName = u => '\u2068' + USERS[u].name + '\u2069';   // keeps "زهرة" from scrambling English sentences
+const other = u => (u === 'zhra' ? 'hussein' : 'zhra');
+
+/* ---------------------------- helpers ---------------------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayStr = () => ymd(new Date());
+const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+const fmtDate = s => parseYmd(s).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const relDate = s => { const t = todayStr(); return s === t ? 'Today' : s === addDays(t, 1) ? 'Tomorrow' : s === addDays(t, -1) ? 'Yesterday' : fmtDate(s); };
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
+// One colour per subject, used on cards, calendar chips/events and checklist bars.
+const SUBJ_COLORS = ['#7a3bb0', '#c2255c', '#1c7ed6', '#2b8a3e', '#e8590c', '#0c8599', '#5f3dc4', '#b8860b'];
+const subjColor = s => { let h = 0; for (const c of String(s).trim().toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0; return SUBJ_COLORS[h % SUBJ_COLORS.length]; };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ======================= TELEGRAM PARSER (pure) ======================= */
+const ORDINALS = { 'اولي': 1, 'ثانيه': 2, 'ثالثه': 3, 'رابعه': 4, 'خامسه': 5, 'سادسه': 6, 'سابعه': 7, 'ثامنه': 8, 'تاسعه': 9, 'عاشره': 10 };
+const toLatinDigits = s => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+const normAr = s => s.replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/[ً-ْـ]/g, '');
+const stripDecor = s => s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, '').replace(/\s+/g, ' ').trim();
+
+function ordinalOf(word, fallback) {
+  if (!word) return fallback;
+  if (/^\d+$/.test(word)) return +word;
+  const w = normAr(word).replace(/^ال/, '');
+  return ORDINALS[w] || fallback;
+}
+
+/** Turns one daily Telegram post into { date, dateGuessed, groups: { A1: [...], A2: [...] } }. */
+function parseSchedule(raw, now = new Date()) {
+  const text = toLatinDigits(String(raw || '')).replace(/\r/g, '');
+  const out = { date: null, dateGuessed: false, groups: {} };
+
+  // Date: prefer the number after "المصادف", else the first d/m in the text.
+  const dm = text.match(/المصادف\s*[:：]?\s*(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(\d{2,4}))?/) ||
+             text.match(/(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(\d{2,4}))?/);
+  if (dm) {
+    const day = +dm[1], mon = +dm[2];
+    let year = dm[3] ? (+dm[3] < 100 ? 2000 + +dm[3] : +dm[3]) : now.getFullYear();
+    let d = new Date(year, mon - 1, day);
+    if (!dm[3]) {
+      const diff = (d - now) / 864e5;
+      if (diff < -180) d = new Date(year + 1, mon - 1, day);
+      else if (diff > 180) d = new Date(year - 1, mon - 1, day);
+    }
+    if (d.getMonth() === mon - 1 && d.getDate() === day) out.date = ymd(d);
+  }
+  if (!out.date) {
+    const d = new Date(now); if (/غد/.test(text)) d.setDate(d.getDate() + 1);
+    out.date = ymd(d); out.dateGuessed = true;
+  }
+
+  // Group sections.
+  const gRe = /(?:group|grp|كروب|جروب|مجموعة|مجموعه)\s*[:\-]?\s*([a-z])\s*[-\s]?(\d{1,2})/gi;
+  const heads = [...text.matchAll(gRe)];
+  heads.forEach((h, i) => {
+    const key = h[1].toUpperCase() + h[2];
+    const body = text.slice(h.index + h[0].length, i + 1 < heads.length ? heads[i + 1].index : text.length);
+    const list = out.groups[key] || (out.groups[key] = []);
+    parseSection(body).forEach(l => list.push(l));
+  });
+  return out;
+}
+
+function parseSection(body) {
+  // Ordinal must be an Arabic word or a number, so "رابط المحاضرة [[https://…]]" isn't a header.
+  const lRe = /المحاضر[ةه][^\S\n]*([ء-ي]+|\d+)?[^\S\n]*[:：][^\S\n]*([^\n]*)/g;
+  const heads = [...body.matchAll(lRe)].filter(h => !/رابط[^\S\n]*$/.test(body.slice(Math.max(0, h.index - 8), h.index)));
+  const used = new Set();
+  return heads.map((h, i) => {
+    const block = body.slice(h.index, i + 1 < heads.length ? heads[i + 1].index : body.length);
+    let order = ordinalOf(h[1], i + 1);
+    if (used.has(order)) order = i + 1;
+    used.add(order);
+    let subject = stripDecor(h[2].replace(/\[\[[^\]]*\]\]/g, '')), topic = '';
+    const split = subject.match(/^(.+?)\s+[-–—|]\s+(.+)$/);
+    if (split) { subject = split[1].trim(); topic = split[2].trim(); }
+    const tm = block.match(/الوقت[^\d\n]*(\d{1,2}(?::\d{2})?)\s*[-–—]\s*(\d{1,2}(?::\d{2})?)/);
+    const pm = block.match(/المكان[^:：\n]*[:：]\s*([^\n]+)/);
+    const lm = block.match(/\[\[(https?:[^\]\s]+)\]\]/) || block.match(/(https?:\/\/[^\s\]]+)/);
+    return {
+      order, subject, topic,
+      time: tm ? `${tm[1]}-${tm[2]}` : '',
+      place: pm ? stripDecor(pm[1].replace(/\[\[[^\]]*\]\]/g, '')) : '',
+      link: lm ? lm[1] : ''
+    };
+  }).filter(l => l.subject);
+}
+
+/** Clipboard HTML → text, keeping hidden link targets as [[url]] markers. */
+function htmlToTextWithLinks(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href');
+    if (/^https?:/i.test(href)) a.replaceWith(`${a.textContent} [[${href}]]`);
+  });
+  doc.querySelectorAll('br').forEach(b => b.replaceWith('\n'));
+  doc.querySelectorAll('p,div,li,tr,h1,h2,h3,h4').forEach(el => el.append('\n'));
+  return doc.body.textContent.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/* ============================ STORE ============================ */
+// Same API for both backends: all(), get(id), upsert(list), update(id, patch).
+const Store = {
+  map: new Map(), listeners: new Set(), ready: false,
+  all() { return [...this.map.values()]; },
+  get(id) { return this.map.get(id); },
+  onChange(f) { this.listeners.add(f); },
+  emit() { this.ready = true; this.listeners.forEach(f => f()); }
+};
+
+// Peony phrases written by the admin (Hussein): [{ id, text, date|null, at }].
+const ADMIN = 'hussein';
+const Phrases = { list: [] };
+// Study sessions: live[user] = { lectureId, subject, seq, startedAt|null }; log = finished sessions.
+const Sessions = { live: {}, log: [] };
+
+const LocalBackend = {
+  key: 'sp.lectures',
+  start() {
+    ls.get(this.key, []).forEach(l => Store.map.set(l.id, l));
+    Phrases.list = ls.get('sp.phrases', []);
+    Sessions.live = ls.get('sp.live', {}); Sessions.log = ls.get('sp.studyLog', []);
+    Store.emit();
+  },
+  async setPhrases(list) { Phrases.list = list; ls.set('sp.phrases', list); Store.emit(); },
+  async setLive(user, data) { Sessions.live = { ...Sessions.live, [user]: data }; ls.set('sp.live', Sessions.live); Store.emit(); },
+  async addLog(entry) { Sessions.log = [...Sessions.log, entry]; ls.set('sp.studyLog', Sessions.log); Store.emit(); },
+  persist() { ls.set(this.key, Store.all()); },
+  async upsert(list) { list.forEach(l => Store.map.set(l.id, { ...(Store.get(l.id) || {}), ...l })); this.persist(); Store.emit(); },
+  async update(id, patch) { const l = Store.get(id); if (!l) return; Store.map.set(id, { ...l, ...patch }); this.persist(); Store.emit(); }
+};
+
+const CloudBackend = {
+  db: null, unsub: null, unsubP: null, unsubL: null, unsubS: null,
+  start() {
+    this.unsub = this.db.collection('lectures').onSnapshot(snap => {
+      Store.map.clear();
+      snap.forEach(doc => Store.map.set(doc.id, { ...doc.data(), id: doc.id }));
+      Store.emit();
+    }, err => toast('Sync error: ' + err.message));
+    this.unsubP = this.db.doc('config/peony').onSnapshot(d => {
+      Phrases.list = (d.exists && d.data().phrases) || [];
+      Store.emit();
+    }, () => {});
+    this.unsubL = this.db.collection('live').onSnapshot(snap => {
+      const live = {}; snap.forEach(d => live[d.id] = d.data());
+      Sessions.live = live; Store.emit();
+    }, () => {});
+    this.unsubS = this.db.collection('studyLog').where('day', '>=', addDays(todayStr(), -90)).onSnapshot(snap => {
+      Sessions.log = snap.docs.map(d => d.data()); Store.emit();
+    }, () => {});
+  },
+  stop() {
+    [this.unsub, this.unsubP, this.unsubL, this.unsubS].forEach(f => f && f());
+    this.unsub = this.unsubP = this.unsubL = this.unsubS = null; Store.map.clear();
+  },
+  setLive(user, data) {
+    Sessions.live = { ...Sessions.live, [user]: data }; Store.emit();
+    return this.db.doc('live/' + user).set(data).catch(e => toast('Not synced: ' + e.message));
+  },
+  addLog(entry) {
+    return this.db.collection('studyLog').add(entry).catch(e => toast('Not synced: ' + e.message));
+  },
+  setPhrases(list) {
+    Phrases.list = list; Store.emit();
+    return this.db.doc('config/peony').set({ phrases: list }).catch(e => toast('Not synced: ' + e.message));
+  },
+  // Writes resolve on the server ack, but the local cache fires onSnapshot
+  // instantly, so the UI never waits on the network.
+  upsert(list) {
+    const b = this.db.batch();
+    list.forEach(l => b.set(this.db.collection('lectures').doc(l.id), l, { merge: true }));
+    return b.commit().catch(e => toast('Not synced: ' + e.message));
+  },
+  update(id, patch) {
+    return this.db.collection('lectures').doc(id).update(patch).catch(e => toast('Not synced: ' + e.message));
+  }
+};
+let Backend = LocalBackend;
+
+/* ============================ STATE ============================ */
+const S = {
+  me: null, viewing: null, tab: 'today',
+  calSel: todayStr(),
+  filter: 'pending', search: '', pick: new Set(), planTime: '', planDur: 60, calView: 'month', lastBlock: null, gcScrolled: false,
+  preview: null
+};
+const readOnly = () => S.viewing !== S.me;
+const eff = l => l.planDate || l.date;          // the day a lecture is planned for
+const isDone = l => l.status === 'studied' || l.status === 'revised';
+const mine = () => Store.all().filter(l => l.owner === S.viewing);
+const byDateOrder = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.order - b.order);
+
+/* ---------------------------- study sessions ---------------------------- */
+const MAX_SESSION = 6 * 3600e3;   // a session left running longer than this is treated as forgotten
+const liveOf = u => { const x = Sessions.live[u]; return x && x.startedAt && Date.now() - x.startedAt < 18 * 3600e3 ? x : null; };
+const fmtMins = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${pad(m % 60)}m`;
+const elapsed = x => Math.min(MAX_SESSION, (x.pausedAt || Date.now()) - x.startedAt - (x.pausedMs || 0));
+const tickAttrs = x => `data-tick="${x.startedAt}" data-paused-ms="${x.pausedMs || 0}" data-paused-at="${x.pausedAt || ''}"`;
+const shortDur = ms => ms < 60000 ? 'just started' : fmtMins(Math.floor(ms / 60000));
+function clockHtml(ms) {
+  const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60;
+  const seg = (v, u) => `<span><b>${pad(v)}</b><i>${u}</i></span>`, sep = '<span class="sep">:</span>';
+  return `<span class="clk">${h ? seg(h, 'hr') + sep : ''}${seg(m, 'min')}${sep}${seg(sec, 'sec')}</span>`;
+}
+
+function startSession(lectureId) {
+  if (readOnly()) return;
+  if (Sessions.live[S.me] && Sessions.live[S.me].startedAt) stopSession(false, true);
+  const l = lectureId && Store.get(lectureId);
+  Backend.setLive(S.me, { lectureId: l ? l.id : null, subject: l ? l.subject : '', seq: l ? seqMap.get(l.id) || 1 : null, startedAt: Date.now(), pausedAt: null, pausedMs: 0 });
+  if (S.me === 'zhra') Focus.show();
+  else toast(l ? `Studying ${l.subject} ⏱` : 'Session started ⏱');
+}
+function stopSession(markDone, quiet) {
+  const x = Sessions.live[S.me]; if (!x || !x.startedAt) return;
+  const end = x.pausedAt || Date.now(), mins = Math.round(elapsed(x) / 60000);
+  if (mins >= 1) Backend.addLog({ user: S.me, lectureId: x.lectureId || null, subject: x.seq ? `${x.subject} #${x.seq}` : x.subject || '', start: x.startedAt, end, mins, day: ymd(new Date(x.startedAt)) });
+  Backend.setLive(S.me, { lectureId: null, subject: '', seq: null, startedAt: null, pausedAt: null, pausedMs: 0 });
+  if (markDone && x.lectureId) { const l = Store.get(x.lectureId); if (l && !isDone(l)) toggleStudied(x.lectureId); }
+  if (!quiet) toast(mins >= 1 ? `Session saved · ${fmtMins(mins)}` : 'Session cancelled (under 1 min)');
+}
+function togglePause() {
+  const x = liveOf(S.me); if (!x) return;
+  if (x.pausedAt) Backend.setLive(S.me, { ...x, pausedMs: (x.pausedMs || 0) + (Date.now() - x.pausedAt), pausedAt: null });
+  else Backend.setLive(S.me, { ...x, pausedAt: Date.now() });
+}
+function renderSessionBars() {
+  const mineLive = S.me && liveOf(S.me), otherLive = S.me && liveOf(other(S.me));
+  const bar = $('#sessionBar');
+  bar.hidden = !mineLive;
+  document.body.classList.toggle('has-session', !!mineLive);
+  bar.classList.toggle('paused', !!(mineLive && mineLive.pausedAt));
+  if (mineLive) bar.innerHTML = `
+    <div class="sb-info"><span class="live-dot${mineLive.pausedAt ? ' off' : ''}"></span>
+      <div style="min-width:0"><small>${mineLive.pausedAt ? 'PAUSED' : 'STUDYING'}</small><span class="t" dir="auto">${mineLive.subject ? `${esc(mineLive.subject)} #${mineLive.seq}` : 'Free session'}</span></div></div>
+    <div class="sb-clock" data-style="clock" ${tickAttrs(mineLive)}></div>
+    <div class="sb-btns">
+      ${S.me === 'zhra' ? '<button class="btn open-focus" id="openFocus" type="button" aria-label="Open study mode">🌸</button>' : ''}
+      <button class="btn" id="sessPause" type="button">${mineLive.pausedAt ? '▶ Resume' : '❚❚ Pause'}</button>
+      ${mineLive.lectureId ? '<button class="btn main" id="sessDone" type="button">✔ Done</button>' : ''}
+      <button class="btn" id="sessStop" type="button">■ Stop</button>
+    </div>`;
+  const lb = $('#liveBar');
+  lb.hidden = !otherLive;
+  if (otherLive) lb.innerHTML = `<span class="live-dot${otherLive.pausedAt ? ' off' : ''}"></span><span dir="auto">${esc(USERS[other(S.me)].name)} ${otherLive.pausedAt ? 'paused' : 'is studying'} ${otherLive.subject ? esc(otherLive.subject) + ' #' + otherLive.seq : '(free session)'}</span> · <b ${tickAttrs(otherLive)}></b>`;
+  Focus.update();
+  tick();
+}
+function tick() {
+  $$('[data-tick]').forEach(el => {
+    const ms = elapsed({ startedAt: +el.dataset.tick, pausedMs: +el.dataset.pausedMs || 0, pausedAt: +el.dataset.pausedAt || null });
+    if (el.dataset.style === 'clock') el.innerHTML = clockHtml(ms); else el.textContent = shortDur(ms);
+  });
+  Focus.tick();
+}
+setInterval(tick, 1000);
+
+// Lecture number per subject and group (Ortho #7), derived so it's always consistent.
+let seqMap = new Map();
+function computeSeq() {
+  seqMap = new Map();
+  const counters = {};
+  Store.all().sort(byDateOrder).forEach(l => {
+    const k = l.group + '|' + l.subject.trim().toLowerCase();
+    counters[k] = (counters[k] || 0) + 1;
+    seqMap.set(l.id, counters[k]);
+  });
+}
+
+function stats(list = mine()) {
+  const t = todayStr();
+  const today = list.filter(l => eff(l) === t);
+  const overdue = list.filter(l => !isDone(l) && eff(l) < t);
+  const done = list.filter(isDone);
+  const days = new Set(done.filter(l => l.studiedAt).map(l => ymd(new Date(l.studiedAt))));
+  let streak = 0, d = days.has(t) ? t : addDays(t, -1);
+  while (days.has(d)) { streak++; d = addDays(d, -1); }
+  return { today, todayLeft: today.filter(l => !isDone(l)).length, overdue, done: done.length, total: list.length, streak };
+}
+
+/* ============================ RENDER ============================ */
+const CHECK_SVG = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function card(l, opts = {}) {
+  const t = todayStr(), done = isDone(l);
+  const late = !done && eff(l) < t;
+  const tags = [
+    l.status === 'revised' ? '<span class="tag rev">revised</span>' : '',
+    late ? `<span class="tag late">overdue</span>` : '',
+    l.planDate && l.planDate !== l.date && !opts.unplan ? `<span class="tag plan">planned ${esc(relDate(l.planDate))}</span>` : '',
+    l.planTime ? `<span class="tag time">🕒 ${esc(l.planTime)}</span>` : ''
+  ].join('');
+  const ro = readOnly() ? 'disabled' : '';
+  const live = liveOf(l.owner), isLive = live && live.lectureId === l.id;
+  const meta = isLive ? `<span class="live-dot${live.pausedAt ? ' off' : ''}"></span>${live.pausedAt ? 'Paused' : 'Studying now'} · <span ${tickAttrs(live)}></span>` : '';
+  const link = safeUrl(l.link);
+  return `<article class="lec${done ? ' done' : ''}${isLive ? ' live' : ''}" data-id="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">
+    <button class="check" type="button" aria-pressed="${done}" aria-label="Mark ${esc(l.subject)} as ${done ? 'not studied' : 'studied'}" ${ro}>${CHECK_SVG}</button>
+    <div class="body">
+      <div class="row1"><span class="subj" dir="auto">${esc(l.subject)}</span><span class="seq">#${seqMap.get(l.id) || 1}</span>${tags}</div>
+      <input class="topic" dir="auto" value="${esc(l.topic || '')}" placeholder="${readOnly() ? 'No lecture name yet' : '✎ Add lecture name'}" aria-label="Lecture name for ${esc(l.subject)}" ${ro}>
+      ${meta ? `<div class="meta" dir="auto">${meta}</div>` : ''}
+    </div>
+    <div class="acts">
+      ${readOnly() ? '' : `<button class="icon-btn sess" type="button" data-sess="${esc(l.id)}" title="${isLive ? 'Stop session' : 'Start study session'}" aria-label="${isLive ? 'Stop study session' : `Start studying ${esc(l.subject)}`}">${isLive ? '■' : '▶'}</button>`}
+      ${link ? `<a class="icon-btn" href="${esc(link)}" target="_blank" rel="noopener" title="Open lecture link" aria-label="Open lecture link">🔗</a>` : ''}
+      ${opts.unplan && l.planDate && !readOnly() ? `<button class="icon-btn unplan" type="button" data-unplan="${esc(l.id)}" title="Remove from this day" aria-label="Remove ${esc(l.subject)} from this day">✕</button>` : ''}
+    </div>
+  </article>`;
+}
+const listHtml = (arr, empty, opts) => arr.length ? `<div class="list">${arr.map(l => card(l, opts)).join('')}</div>` : empty ? `<div class="empty">${empty}</div>` : '';
+const byPlanTime = (a, b) => (a.planTime || '99') < (b.planTime || '99') ? -1 : (a.planTime || '99') > (b.planTime || '99') ? 1 : byDateOrder(a, b);
+
+function renderToday() {
+  const st = stats(), t = todayStr();
+  const who = USERS[S.viewing].name;
+  const todayList = st.today.sort((a, b) => isDone(a) - isDone(b) || byPlanTime(a, b));
+  const overdue = st.overdue.sort(byDateOrder);
+  const upcoming = mine().filter(l => !isDone(l) && eff(l) > t && eff(l) <= addDays(t, 7)).sort(byDateOrder);
+  const todayLog = Sessions.log.filter(e => e.user === S.viewing && e.day === t).sort((a, b) => a.start - b.start);
+  const live = liveOf(S.viewing);
+  const mins = todayLog.reduce((n, e) => n + e.mins, 0) + (live ? Math.floor(elapsed(live) / 60000) : 0);
+  const doneN = st.today.length - st.todayLeft, pct = st.today.length ? Math.round(doneN / st.today.length * 100) : 0;
+  const next = todayList.find(l => !isDone(l)) || overdue[0];
+  const C = 2 * Math.PI * 40;
+  const heroLine = live ? `${live.pausedAt ? 'Paused' : 'Studying'} ${esc(live.subject || 'a free session')} right now`
+    : next ? `Next up: <b dir="auto">${esc(lecLabel(next))}</b>${next.topic ? ' · ' + esc(next.topic) : ''}`
+    : st.today.length ? 'Everything for today is done 🎉' : 'Nothing planned. Pick lectures in the Calendar.';
+  $('#tab-today').innerHTML = `
+    <section class="hero">
+      <div>
+        <small>${esc(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))}</small>
+        <h2>${st.today.length ? `${doneN} of ${st.today.length} done today` : readOnly() ? `${esc(who)}'s day` : 'A fresh day'}</h2>
+        <p>${heroLine}</p>
+      </div>
+      <div class="ring" role="img" aria-label="${pct}% of today done"><svg viewBox="0 0 92 92"><circle class="bg" cx="46" cy="46" r="40"/><circle class="fg" cx="46" cy="46" r="40" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct / 100)).toFixed(1)}"/></svg><b>${pct}%</b></div>
+      ${readOnly() || live ? '' : `<div class="hero-btns">${next ? `<button class="btn" type="button" data-sess="${esc(next.id)}">▶ Start studying</button>` : ''}<button class="btn ghost" type="button" data-sess="free">⏱ Free session</button></div>`}
+    </section>
+    <div class="mini-stats">
+      <div><b>${st.streak} 🔥</b><small>day streak</small></div>
+      <div><b>${fmtMins(mins)}</b><small>studied today</small></div>
+      <div class="${st.overdue.length ? 'warn' : ''}"><b>${st.overdue.length}</b><small>overdue</small></div>
+    </div>
+    <h2 class="sec">Today's plan <span class="count">${st.today.length}</span></h2>
+    ${listHtml(todayList, `<span class="em">🌤️</span>Nothing planned for today.${readOnly() ? '' : '<br><button class="btn sm" data-go="calendar" type="button">Plan in the Calendar</button> <button class="btn sm ghost" data-go="paste" type="button">Add lectures</button>'}`)}
+    ${overdue.length ? `<h2 class="sec">Not studied yet <span class="count">${overdue.length}</span><span class="sp"></span>
+      ${readOnly() ? '' : '<button class="btn sm ghost" id="moveAll" type="button">Move all to today</button>'}</h2>${listHtml(overdue, '')}` : ''}
+    ${todayLog.length || live ? `<h2 class="sec">Study sessions today <span class="count">${todayLog.length + (live ? 1 : 0)}</span></h2>
+      <div class="sess-log">${todayLog.map(e => `<div><span dir="auto">${esc(e.subject || 'Free session')}</span><small>${new Date(e.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</small><b>${fmtMins(e.mins)}</b></div>`).join('')}
+      ${live ? `<div class="now"><span dir="auto"><span class="live-dot${live.pausedAt ? ' off' : ''}"></span>${esc(live.subject || 'Free session')}</span><small>${live.pausedAt ? 'paused' : 'now'}</small><b ${tickAttrs(live)}></b></div>` : ''}</div>` : ''}
+    ${upcoming.length ? `<h2 class="sec">Coming up <span class="count">${upcoming.length}</span></h2>${listHtml(upcoming, '')}` : ''}
+`;
+}
+
+/* ------------------- calendar (Google Calendar style) ------------------- */
+const GC = { H0: 6, H1: 24, ROW: 48 };
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const fromMin = m => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
+const lecLabel = l => `${l.subject} #${seqMap.get(l.id) || 1}`;
+// Planned lectures that share a day + time form one study block (one event).
+function dayItems(day) {
+  const list = mine().filter(l => eff(l) === day).sort(byDateOrder), blocks = {};
+  list.filter(l => l.planTime).forEach(l => {
+    const b = blocks[l.planTime] || (blocks[l.planTime] = { date: day, time: l.planTime, dur: 0, lectures: [] });
+    b.lectures.push(l); b.dur = Math.max(b.dur, l.planDur || 60);
+  });
+  return { blocks: Object.values(blocks).sort((x, y) => toMin(x.time) - toMin(y.time)), allDay: list.filter(l => !l.planTime) };
+}
+function gcalUrl(b) {
+  const [y, m, d] = b.date.split('-').map(Number), st = new Date(y, m - 1, d, ...b.time.split(':').map(Number)), en = new Date(st.getTime() + b.dur * 60000);
+  const f = x => `${x.getFullYear()}${pad(x.getMonth() + 1)}${pad(x.getDate())}T${pad(x.getHours())}${pad(x.getMinutes())}00`;
+  return 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+    action: 'TEMPLATE', text: `📚 Study: ${b.lectures.map(lecLabel).join(', ')}`, dates: `${f(st)}/${f(en)}`,
+    details: b.lectures.map(l => `• ${lecLabel(l)}${l.topic ? ' — ' + l.topic : ''}`).join('\n') + `\n\n${location.origin}${location.pathname}`,
+    ctz: Intl.DateTimeFormat().resolvedOptions().timeZone
+  });
+}
+const weekStart = d => addDays(d, -parseYmd(d).getDay());
+// A block with one subject takes that subject's colour; mixed blocks use the brand gradient.
+function blockStyle(b, raw) {
+  const subs = new Set(b.lectures.map(l => l.subject.trim().toLowerCase()));
+  const css = subs.size === 1 ? `--sc:${subjColor(b.lectures[0].subject)};` : '';
+  return raw ? css : css ? `style="${css}"` : '';
+}
+
+function renderCalendar() {
+  const t = todayStr(), sel = S.calSel, view = S.calView, sd = parseYmd(sel);
+  const title = view === 'day' ? parseYmd(sel).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+    : sd.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const head = `<div class="gc-head">
+      <button class="btn sm ghost" type="button" data-gc-nav="today">Today</button>
+      <button class="btn sm ghost gc-arrow" type="button" data-gc-nav="-1" aria-label="Previous">‹</button>
+      <button class="btn sm ghost gc-arrow" type="button" data-gc-nav="1" aria-label="Next">›</button>
+      <h2>${esc(title)}</h2>
+      <div class="seg" role="group" aria-label="View">${['month', 'week', 'day'].map(v => `<button type="button" data-gc-view="${v}" aria-pressed="${view === v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}</div>
+    </div>`;
+  let body = '';
+  if (view === 'month') {
+    const first = ymd(new Date(sd.getFullYear(), sd.getMonth(), 1)), start = weekStart(first);
+    let cells = DOW.map(d => `<div class="gc-dow">${d}</div>`).join('');
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(start, i), dd = parseYmd(d);
+      if (i >= 35 && dd.getMonth() !== sd.getMonth()) break;
+      const { blocks, allDay } = dayItems(d);
+      const chips = [
+        ...blocks.map(b => { const done = b.lectures.every(isDone); return `<span class="gc-chip timed${done ? ' done' : ''}" data-gc-block="${d}|${b.time}" ${blockStyle(b)}>${b.time} ${esc(b.lectures.map(l => l.subject).join(', '))}</span>`; }),
+        ...allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : d < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`)
+      ];
+      cells += `<div class="gc-cell${dd.getMonth() !== sd.getMonth() ? ' out' : ''}${d === t ? ' today' : ''}${d === sel ? ' sel' : ''}" data-gc-day="${d}" role="button" tabindex="0" aria-label="${fmtDate(d)}, ${chips.length} items">
+        <span class="gc-n" data-gc-goday="${d}">${dd.getDate()}</span>${chips.slice(0, 3).join('')}${chips.length > 3 ? `<span class="gc-more">+${chips.length - 3} more</span>` : ''}</div>`;
+    }
+    body = `<div class="gc-month">${cells}</div>`;
+  } else {
+    const days = view === 'week' ? Array.from({ length: 7 }, (_, i) => addDays(weekStart(sel), i)) : [sel];
+    const H = GC.H1 - GC.H0, now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
+    const items = days.map(dayItems);
+    let grid = `<div class="gc-corner"></div>` + days.map(d => { const dd = parseYmd(d); return `<div class="gc-colhead${d === t ? ' today' : ''}" data-gc-goday="${d}">${DOW[dd.getDay()]}<b>${dd.getDate()}</b></div>`; }).join('');
+    grid += `<div class="gc-gutter gc-ad-label">all-day</div>` + items.map((it, i) => `<div class="gc-allday">${it.allDay.map(l => `<span class="gc-chip${isDone(l) ? ' done' : days[i] < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${esc(lecLabel(l))}</span>`).join('')}</div>`).join('');
+    grid += `<div class="gc-gutter" style="height:${H * GC.ROW}px">${Array.from({ length: H }, (_, h) => `<span style="top:${h * GC.ROW}px">${h ? fromMin((GC.H0 + h) * 60) : ''}</span>`).join('')}</div>`;
+    grid += items.map((it, i) => {
+      // side-by-side columns for overlapping blocks
+      const cols = [];
+      const evs = it.blocks.map(b => { const st = toMin(b.time), en = st + b.dur; let c = cols.findIndex(e => e <= st); if (c < 0) { c = cols.length; cols.push(0); } cols[c] = en; return { b, st, en, c }; });
+      const n = Math.max(1, cols.length);
+      const evHtml = evs.map(({ b, st, en, c }) => {
+        const top = (st - GC.H0 * 60) / 60 * GC.ROW, h = Math.max(22, b.dur / 60 * GC.ROW - 2), done = b.lectures.every(isDone);
+        return `<button type="button" class="gc-ev${done ? ' done' : ''}" data-gc-block="${days[i]}|${b.time}" style="${blockStyle(b, true)}top:${top}px;height:${h}px;left:calc(${c / n * 100}% + 2px);width:calc(${100 / n}% - 4px)">
+          <b>${esc(b.lectures.map(l => l.subject).join(', '))}</b><small>${b.time} – ${fromMin(en)}</small></button>`;
+      }).join('');
+      const nowLine = days[i] === t && nowMin >= GC.H0 * 60 ? `<div class="gc-now" style="top:${(nowMin - GC.H0 * 60) / 60 * GC.ROW}px"></div>` : '';
+      return `<div class="gc-col${readOnly() ? '' : ' can-add'}" data-gc-col="${days[i]}" style="height:${H * GC.ROW}px">${evHtml}${nowLine}</div>`;
+    }).join('');
+    body = `<div class="gc-grid-wrap" id="gcWrap"><div class="gc-grid" style="--cols:${days.length};--colmin:0px">${grid}</div></div>`;
+  }
+
+  // planner for the selected day
+  const list = mine();
+  const cands = readOnly() ? [] : list.filter(l => !isDone(l) && eff(l) !== sel);
+  const bySubj = {};
+  cands.sort(byDateOrder).forEach(l => (bySubj[l.subject.trim()] = bySubj[l.subject.trim()] || []).push(l));
+  [...S.pick].forEach(id => { if (!cands.some(l => l.id === id)) S.pick.delete(id); });
+  const last = S.lastBlock && dayItems(S.lastBlock.date).blocks.find(b => b.time === S.lastBlock.time);
+  const planner = readOnly() ? '' : `<div class="planner" id="planner">
+      <h3 style="margin:0">📅 Plan study for ${esc(relDate(sel))}</h3>
+      ${last ? `<div class="planned-ok">✔ Planned ${esc(relDate(last.date))} at ${last.time} · <a href="${esc(gcalUrl(last))}" target="_blank" rel="noopener">Add to Google Calendar 🔔</a></div>` : ''}
+      <div class="row">
+        <label for="planTime" class="meta">Start</label><input class="field" type="time" id="planTime" value="${esc(S.planTime)}">
+        <label for="planDur" class="meta">Length</label><select class="field" id="planDur">${[30, 45, 60, 90, 120, 180].map(m => `<option value="${m}" ${+S.planDur === m ? 'selected' : ''}>${fmtMins(m)}</option>`).join('')}</select>
+      </div>
+      ${cands.length ? `<div class="picks">${Object.entries(bySubj).map(([subj, arr]) => `<div class="pick-group"><h4 dir="auto">${esc(subj)}</h4>
+        ${arr.map(l => `<label class="pick"><input type="checkbox" data-pick="${esc(l.id)}" ${S.pick.has(l.id) ? 'checked' : ''}>
+          <span dir="auto"><b>${esc(lecLabel(l))}</b> ${l.topic ? '· ' + esc(l.topic) : ''}<br><small>${eff(l) < todayStr() ? 'overdue · ' : ''}${esc(relDate(eff(l)))}</small></span></label>`).join('')}</div>`).join('')}</div>
+      <div><button class="btn" id="planBtn" type="button" ${S.pick.size ? '' : 'disabled'}>Plan ${plural(S.pick.size, 'lecture')}</button></div>`
+      : '<p class="meta" style="margin:0">Every unstudied lecture is already on this day.</p>'}
+    </div>`;
+  const selList = (dayItems(sel).blocks.flatMap(b => b.lectures)).concat(dayItems(sel).allDay);
+  $('#tab-calendar').innerHTML = head + body +
+    (view === 'month' ? `<h2 class="sec">${esc(relDate(sel))} <span class="count">${selList.length}</span></h2>${listHtml(selList, '<span class="em">🗓️</span>Nothing on this day yet.', { unplan: true })}` : '') + planner;
+  const wrap = $('#gcWrap');
+  if (wrap && !S.gcScrolled) { wrap.scrollTop = Math.max(0, ((new Date().getHours() - 1) - GC.H0) * GC.ROW); S.gcScrolled = true; }
+}
+
+function openBlockPop(date, time) {
+  const b = dayItems(date).blocks.find(x => x.time === time); if (!b) return;
+  const ro = readOnly();
+  showPop(`<h3>📚 ${esc(relDate(date))} · ${b.time} – ${fromMin(toMin(b.time) + b.dur)}</h3>
+    <div class="pop-list">${b.lectures.map(l => `<div class="pop-row${isDone(l) ? ' done' : ''}"><span dir="auto"><b>${esc(lecLabel(l))}</b>${l.topic ? ' · ' + esc(l.topic) : ''}</span>
+      ${ro ? (isDone(l) ? '✔' : '') : `<button class="icon-btn sess" type="button" data-sess="${esc(l.id)}" data-close-pop aria-label="Start studying ${esc(l.subject)}">▶</button>`}</div>`).join('')}</div>
+    <div class="pop-btns"><a class="btn" href="${esc(gcalUrl(b))}" target="_blank" rel="noopener">📅 Add to Google Calendar</a>
+    ${ro ? '' : `<button class="btn ghost" type="button" data-unplan-block="${date}|${b.time}" data-close-pop>Remove</button>`}</div>`);
+}
+function openLecPop(id) {
+  const l = Store.get(id); if (!l) return;
+  const ro = readOnly();
+  showPop(`<h3 dir="auto">${esc(lecLabel(l))}</h3>${l.topic ? `<p dir="auto">${esc(l.topic)}</p>` : ''}
+    <p class="meta">${isDone(l) ? '✔ Studied' : eff(l) < todayStr() ? 'Not studied yet · overdue' : 'Not studied yet'} · ${esc(relDate(eff(l)))}</p>
+    ${ro ? '' : `<div class="pop-btns"><button class="btn" type="button" data-sess="${esc(l.id)}" data-close-pop>▶ Start session</button>
+      <button class="btn ghost" type="button" data-plan-this="${esc(l.id)}" data-close-pop>📅 Plan a time</button></div>`}`);
+}
+function showPop(html) {
+  $('#gcPop .pop-card').innerHTML = `<button class="pop-x" type="button" data-close-pop aria-label="Close">✕</button>` + html;
+  $('#gcPop').hidden = false;
+}
+function closePop() { $('#gcPop').hidden = true; }
+
+function renderChecklist() {
+  const q = S.search.trim().toLowerCase();
+  const all = mine();
+  const shown = all.filter(l =>
+    (S.filter === 'all' || (S.filter === 'pending' ? !isDone(l) : isDone(l))) &&
+    (!q || `${l.subject} ${l.topic || ''}`.toLowerCase().includes(q)));
+  const subjects = {};
+  all.forEach(l => { const k = l.subject.trim(); (subjects[k] = subjects[k] || { all: [], shown: [] }).all.push(l); });
+  shown.forEach(l => subjects[l.subject.trim()].shown.push(l));
+  const groups = Object.entries(subjects).filter(([, g]) => g.shown.length)
+    .sort((a, b) => b[1].all.filter(l => !isDone(l)).length - a[1].all.filter(l => !isDone(l)).length);
+  const pending = all.filter(l => !isDone(l)).length;
+  const prevFocus = document.activeElement && document.activeElement.id === 'search';
+  $('#tab-checklist').innerHTML = `
+    <div class="toolbar">
+      <input class="field" id="search" type="search" placeholder="Search subject or lecture name" aria-label="Search" value="${esc(S.search)}">
+      <div class="seg" role="group" aria-label="Filter">
+        ${[['pending', `To study (${pending})`], ['done', 'Studied'], ['all', 'All']].map(([k, v]) => `<button type="button" data-filter="${k}" aria-pressed="${S.filter === k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    ${groups.length ? groups.map(([name, g]) => {
+      const d = g.all.filter(isDone).length;
+      return `<div class="subj-group" style="--sc:${subjColor(name)}"><div class="subj-head"><h3 dir="auto"><span class="sdot"></span>${esc(name)}</h3>
+        <div class="bar" role="progressbar" aria-valuenow="${d}" aria-valuemax="${g.all.length}" aria-label="${esc(name)} progress"><i style="width:${g.all.length ? d / g.all.length * 100 : 0}%"></i></div>
+        <small>${d}/${g.all.length} · ${g.all.length - d} left</small></div>
+        ${listHtml(g.shown.sort(byDateOrder), '')}</div>`;
+    }).join('') : `<div class="empty" style="margin-top:14px">${all.length ? (S.filter === 'pending' && !q ? '<span class="em">🎉</span>Everything studied!' : 'No matches.') : '<span class="em">📚</span>No lectures yet. Add them from the Add tab.'}</div>`}`;
+  if (prevFocus) { const s = $('#search'); s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+}
+
+let renderDeferred = false;
+function render() {
+  // Don't rebuild while someone is typing a topic (a remote update would wipe it).
+  const a = document.activeElement;
+  if (a && a.classList && (a.classList.contains('topic') || a.id === 'phText')) { renderDeferred = true; return; }
+  renderDeferred = false;
+  if (!S.me) return;
+  computeSeq();
+  const u = USERS[S.viewing];
+  $('#hello').innerHTML = `${avatarHtml(S.viewing)}<span>${readOnly() ? `Progress · ${esc(u.name)}` : `Hi ${esc(u.name)}`}</span>`;
+  $('#viewToggle').innerHTML = readOnly() ? '← My plan' : `👀 ${USERS[other(S.me)].name}`;
+  $('#viewingBar').hidden = !readOnly();
+  $('#viewingBar').textContent = `Viewing ${u.name} · Group ${u.group} · read-only`;
+  $('main').classList.toggle('ro', readOnly());
+  $('#adminBtn').hidden = S.me !== ADMIN;
+  if (S.tab === 'today') renderToday();
+  else if (S.tab === 'calendar') renderCalendar();
+  else if (S.tab === 'checklist') renderChecklist();
+  else if (S.tab === 'admin') renderAdmin();
+  renderSessionBars();
+  Peony.refresh();
+}
+
+/* ------------------------- admin: Peony phrases ------------------------- */
+function fillPhrase(text, st = Peony.mood()) {
+  return text.replace(/\{(name|left|overdue|streak|done)\}/g, (_, k) => ({
+    name: isoName('zhra'), left: st.todayLeft ?? 0, overdue: (st.overdue || []).length, streak: st.streak ?? 0, done: st.done ?? 0
+  }[k]));
+}
+function renderAdmin() {
+  if (S.me !== ADMIN) return switchTab('today');
+  const box = $('#tab-admin');
+  // Keep a half-typed phrase when a sync re-renders the panel.
+  const draft = box.querySelector('#phText')?.value || '', draftDate = box.querySelector('#phDate')?.value || '';
+  const t = todayStr();
+  const list = [...Phrases.list].sort((a, b) => (a.date || '9') < (b.date || '9') ? -1 : 1);
+  box.innerHTML = `
+    <h2 class="sec">🌸 Peony phrases for ${esc(USERS.zhra.name)} <span class="count">${Phrases.list.length}</span></h2>
+    <form class="admin-form" id="phForm">
+      <label for="phText"><b>New phrase</b></label>
+      <textarea class="field" id="phText" dir="auto" maxlength="160" placeholder="e.g. أنتِ قدها يا {name} 💜 باقي {left} محاضرات" required></textarea>
+      <div class="row">
+        <label for="phDate" class="meta">Show on a specific day (optional)</label>
+        <input class="field" id="phDate" type="date" style="width:auto">
+      </div>
+      <p class="meta" style="margin:0">Placeholders: <code>{name}</code> <code>{left}</code> lectures left today, <code>{overdue}</code>, <code>{streak}</code>, <code>{done}</code>.
+        Dated phrases are her greeting on that day. The rest mix into what she hears when she taps the Peony.</p>
+      <div class="row"><button class="btn" type="submit">Add phrase</button></div>
+    </form>
+    <h2 class="sec">Saved</h2>
+    ${list.length ? `<div class="list">${list.map(p => `<div class="ph">
+        <div><p dir="auto">${esc(p.text)}</p><small dir="auto">${p.date ? (p.date === t ? '📅 Today · ' : p.date < t ? '📅 Past · ' : '📅 ') + esc(fmtDate(p.date)) : 'Any day'} · Preview: ${esc(fillPhrase(p.text))}</small></div>
+        <button class="x" type="button" data-del-phrase="${esc(p.id)}" aria-label="Delete phrase">✕</button></div>`).join('')}</div>`
+      : '<div class="empty">No custom phrases yet. She hears the built-in ones until you add some.</div>'}`;
+  $('#phText').value = draft; $('#phDate').value = draftDate;
+}
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'phForm') return;
+  e.preventDefault();
+  const text = $('#phText').value.trim(); if (!text) return;
+  const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, date: $('#phDate').value || null, at: Date.now() };
+  $('#phText').value = ''; $('#phDate').value = '';
+  Backend.setPhrases([...Phrases.list, p]);
+  toast('Phrase added 🌸');
+});
+Store.onChange(render);
+
+/* ============================ ACTIONS ============================ */
+function toggleStudied(id) {
+  const l = Store.get(id); if (!l || readOnly()) return;
+  const nowDone = !isDone(l);
+  Backend.update(id, nowDone ? { status: 'studied', studiedAt: Date.now() } : { status: 'pending', studiedAt: null });
+  if (nowDone && S.me === 'zhra') {
+    // count from the pre-update state: with Firestore the snapshot may not have arrived yet
+    const left = stats().today.filter(x => x.id !== id && !isDone(x)).length;
+    Peony.celebrate(left === 0 && eff(l) === todayStr() ? 'big' : 'small', l.subject);
+  } else if (nowDone) toast(`${l.subject} studied ✔`);
+}
+
+const pdfToTopic = name => name.replace(/\.pdf$/i, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
+async function fetchPdfName(link) {
+  if (!PDF_WORKER_URL || !/^https?:\/\/(t|telegram)\.me\/(s\/)?[A-Za-z0-9_]{4,}\/\d+/.test(link)) return '';
+  try {
+    const r = await fetch(`${PDF_WORKER_URL}?url=${encodeURIComponent(link)}`);
+    if (!r.ok) return '';
+    const j = await r.json();
+    return pdfToTopic(j.title || (j.text || '').split('\n')[0] || '');
+  } catch { return ''; }
+}
+
+/* ---------------------------- paste flow ---------------------------- */
+function analyze() {
+  const text = $('#pasteBox').value;
+  if (!text.trim()) { toast('Paste the Telegram message first'); return; }
+  const r = parseSchedule(text);
+  const A1 = r.groups.A1 || [], A2 = r.groups.A2 || [];
+  if (!A1.length && !A2.length) {
+    S.preview = null;
+    $('#preview').innerHTML = `<div class="empty">Couldn't find any A1 or A2 lectures. Check that the message has "Group A1" / "Group A2" and lines like "المحاضرة الاولى: Ortho".</div>`;
+    return;
+  }
+  S.preview = { date: r.date, dateGuessed: r.dateGuessed, A1: A1.map(x => ({ ...x })), A2: A2.map(x => ({ ...x })),
+    ignored: Object.keys(r.groups).filter(k => !GROUP_OWNER[k]) };
+  renderPreview();
+}
+
+function renderPreview() {
+  const p = S.preview; if (!p) { $('#preview').innerHTML = ''; return; }
+  const col = g => {
+    const u = USERS[GROUP_OWNER[g]];
+    return `<div class="pv-col"><h3>${avatarHtml(GROUP_OWNER[g])} ${esc(u.name)} <span class="seq">${g}</span></h3>
+      ${p[g].length ? p[g].map((l, i) => `<div class="pv-row" data-g="${g}" data-i="${i}">
+        <span class="num">${l.order}</span>
+        <div class="fs">
+          <input class="field wide" data-k="subject" value="${esc(l.subject)}" aria-label="Subject" dir="auto">
+          <input class="field wide" data-k="topic" value="${esc(l.topic)}" aria-label="Topic" placeholder="Lecture name (optional)" dir="auto">
+          <input class="field wide" data-k="link" value="${esc(l.link)}" aria-label="Link" placeholder="link" dir="ltr">
+        </div>
+        <button class="x" type="button" data-rm aria-label="Remove lecture">✕</button></div>`).join('') : '<p class="meta">No lectures for this group.</p>'}
+    </div>`;
+  };
+  const total = p.A1.length + p.A2.length;
+  const existing = ['A1', 'A2'].reduce((n, g) => n + p[g].filter(l => Store.get(`${p.date}_${g}_${l.order}`)).length, 0);
+  $('#preview').innerHTML = `
+    <div class="pv-date"><label for="pvDate"><b>Lecture day</b></label>
+      <input class="field" id="pvDate" type="date" value="${p.date}" style="width:auto">
+      <span class="meta">${esc(fmtDate(p.date))}${p.dateGuessed ? ' (guessed, please check)' : ''}</span></div>
+    <div class="pv-cols">${col('A1')}${col('A2')}</div>
+    ${p.ignored.length ? `<p class="pv-ignored">Ignored groups: ${p.ignored.map(esc).join(', ')}</p>` : ''}
+    <div class="pv-save"><button class="btn" id="saveBtn" type="button">Save ${plural(total, 'lecture')}</button>
+      ${existing ? `<span class="meta">${existing} already saved, so they'll be updated without losing progress.</span>` : ''}</div>`;
+}
+
+async function savePreview() {
+  const p = S.preview; if (!p) return;
+  const date = p.date, now = Date.now(), list = [];
+  ['A1', 'A2'].forEach(g => p[g].forEach(l => {
+    if (!l.subject.trim()) return;
+    const id = `${date}_${g}_${l.order}`, ex = Store.get(id);
+    const doc = { id, date, group: g, owner: GROUP_OWNER[g], order: l.order, subject: l.subject.trim() };
+    if (safeUrl(l.link.trim())) doc.link = l.link.trim();
+    if (l.topic.trim() && !(ex && ex.topic)) doc.topic = l.topic.trim();
+    if (!ex) Object.assign(doc, { link: doc.link || '', topic: doc.topic || '', status: 'pending', studiedAt: null, planDate: null, createdAt: now });
+    list.push(doc);
+  }));
+  $('#saveBtn').disabled = true;
+  Backend.upsert(list);
+  toast(`Saved ${plural(list.length, 'lecture')} ✔`);
+  S.preview = null; $('#preview').innerHTML = ''; $('#pasteBox').value = '';
+  switchTab('today');
+  // Auto-fill topics from public Telegram PDF links (needs PDF_WORKER_URL).
+  for (const d of list) {
+    if (!safeUrl(d.link) || (Store.get(d.id) || {}).topic) continue;
+    const name = await fetchPdfName(d.link);
+    if (name) Backend.update(d.id, { topic: name });
+  }
+}
+
+/* ---------------------------- manual lecture ---------------------------- */
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'manualForm') return;
+  e.preventDefault();
+  const subject = $('#mSubject').value.trim(); if (!subject) return;
+  if (!S.me) return;
+  const owner = S.me, group = USERS[owner].group, date = todayStr();
+  const order = Math.max(0, ...Store.all().filter(l => l.date === date && l.group === group).map(l => l.order)) + 1;
+  Backend.upsert([{ id: `${date}_${group}_m${Date.now().toString(36)}`, date, group, owner, order, subject, topic: $('#mTopic').value.trim(),
+    link: '', status: 'pending', studiedAt: null, planDate: null, planTime: null, createdAt: Date.now(), manual: true }]);
+  $('#mSubject').value = ''; $('#mTopic').value = '';
+  toast(`Added ${subject} ✔`);
+});
+
+/* ============================ EVENTS ============================ */
+function switchTab(t) {
+  if (t === 'admin' && S.me !== ADMIN) t = 'today';
+  S.tab = t;
+  $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  if (t === 'calendar') { S.calView = ls.get('sp.calView', S.calView); S.gcScrolled = false; }
+  ['today', 'calendar', 'checklist', 'paste', 'admin'].forEach(k => $('#tab-' + k).hidden = k !== t);
+  ls.set('sp.tab', t);
+  render();
+}
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  const tab = t.closest('nav.tabs button'); if (tab) return switchTab(tab.dataset.tab);
+  const go = t.closest('[data-go]'); if (go) return switchTab(go.dataset.go);
+  const chk = t.closest('.check'); if (chk) return toggleStudied(chk.closest('.lec').dataset.id);
+  if (t.closest('#moveAll')) {
+    const tt = todayStr(); stats().overdue.forEach(l => Backend.update(l.id, { planDate: tt }));
+    return toast('Moved to today');
+  }
+  if (t.closest('[data-close-pop]') || t.id === 'gcPop') closePop();
+  const nav = t.closest('[data-gc-nav]');
+  if (nav) {
+    const v = nav.dataset.gcNav, sd = parseYmd(S.calSel);
+    if (v === 'today') S.calSel = todayStr();
+    else if (S.calView === 'month') S.calSel = ymd(new Date(sd.getFullYear(), sd.getMonth() + +v, 1));
+    else S.calSel = addDays(S.calSel, (S.calView === 'week' ? 7 : 1) * +v);
+    return renderCalendar();
+  }
+  const vw = t.closest('[data-gc-view]'); if (vw) { S.calView = vw.dataset.gcView; S.gcScrolled = false; ls.set('sp.calView', S.calView); return renderCalendar(); }
+  const blk = t.closest('[data-gc-block]'); if (blk) { const [d, tm] = blk.dataset.gcBlock.split('|'); S.calSel = d; renderCalendar(); return openBlockPop(d, tm); }
+  const lc = t.closest('[data-gc-lec]'); if (lc) return openLecPop(lc.dataset.gcLec);
+  const gd = t.closest('[data-gc-goday]'); if (gd) { S.calSel = gd.dataset.gcGoday; S.calView = 'day'; S.gcScrolled = false; return renderCalendar(); }
+  const col = t.closest('.gc-col.can-add');
+  if (col && !t.closest('.gc-ev')) {
+    const y = e.clientY - col.getBoundingClientRect().top, mins = GC.H0 * 60 + Math.floor(y / (GC.ROW / 2)) * 30;
+    S.calSel = col.dataset.gcCol; S.planTime = fromMin(mins); renderCalendar();
+    $('#planner') && $('#planner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return toast(`Pick lectures for ${relDate(S.calSel)} at ${S.planTime}`);
+  }
+  const cell = t.closest('[data-gc-day]'); if (cell) { S.calSel = cell.dataset.gcDay; return renderCalendar(); }
+  const ub = t.closest('[data-unplan-block]');
+  if (ub) { const [d, tm] = ub.dataset.unplanBlock.split('|'); dayItems(d).blocks.find(x => x.time === tm)?.lectures.forEach(l => Backend.update(l.id, { planDate: null, planTime: null, planDur: null })); return toast('Removed from the schedule'); }
+  const pt = t.closest('[data-plan-this]');
+  if (pt) { S.pick = new Set([pt.dataset.planThis]); if (S.calSel === eff(Store.get(pt.dataset.planThis))) S.calSel = todayStr() === S.calSel ? addDays(S.calSel, 1) : todayStr(); renderCalendar(); $('#planner').scrollIntoView({ behavior: 'smooth' }); return; }
+  const f = t.closest('[data-filter]'); if (f) { S.filter = f.dataset.filter; return renderChecklist(); }
+  const rm = t.closest('[data-rm]');
+  if (rm) { const row = rm.closest('.pv-row'); S.preview[row.dataset.g].splice(+row.dataset.i, 1); return renderPreview(); }
+  if (t.closest('#analyzeBtn')) return analyze();
+  if (t.closest('#clearBtn')) { $('#pasteBox').value = ''; S.preview = null; return renderPreview(); }
+  if (t.closest('#saveBtn')) return savePreview();
+  if (t.closest('#viewToggle')) { S.viewing = readOnly() ? S.me : other(S.me); return render(); }
+  if (t.closest('#logout')) return logout();
+  const ss = t.closest('[data-sess]');
+  if (ss) {
+    const id = ss.dataset.sess, cur = liveOf(S.me);
+    if (cur && cur.lectureId === id) return stopSession(false);
+    return startSession(id === 'free' ? null : id);
+  }
+  if (t.closest('#planBtn')) {
+    const ids = [...S.pick], day = S.calSel, time = S.planTime || null, dur = +S.planDur || 60;
+    S.pick.clear(); S.lastBlock = time ? { date: day, time } : null;
+    ids.forEach(id => Backend.update(id, { planDate: day, planTime: time, planDur: time ? dur : null }));
+    return toast(`Planned ${plural(ids.length, 'lecture')} for ${relDate(day)}${time ? ' at ' + time : ''}`);
+  }
+  const up = t.closest('[data-unplan]');
+  if (up) { Backend.update(up.dataset.unplan, { planDate: null, planTime: null, planDur: null }); return toast('Back on its lecture day'); }
+  if (t.closest('#openFocus')) return Focus.show();
+  if (t.closest('#fxMin')) return Focus.hide();
+  if (t.closest('#fxPause')) return togglePause();
+  if (t.closest('#fxDone')) return stopSession(true);
+  if (t.closest('#fxStop')) return stopSession(false);
+  if (t.closest('#sessDone')) return stopSession(true);
+  if (t.closest('#sessPause')) return togglePause();
+  if (t.closest('#sessStop')) return stopSession(false);
+  if (t.closest('#adminBtn')) return switchTab(S.tab === 'admin' ? 'today' : 'admin');
+  const del = t.closest('[data-del-phrase]');
+  if (del) { Backend.setPhrases(Phrases.list.filter(p => p.id !== del.dataset.delPhrase)); return toast('Phrase deleted'); }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.classList.contains('topic')) { const id = t.closest('.lec').dataset.id; if ((Store.get(id) || {}).topic !== t.value.trim()) Backend.update(id, { topic: t.value.trim() }); return; }
+  if (t.dataset.pick) {
+    t.checked ? S.pick.add(t.dataset.pick) : S.pick.delete(t.dataset.pick);
+    const b = $('#planBtn'); if (b) { b.disabled = !S.pick.size; b.textContent = `Plan ${plural(S.pick.size, 'lecture')}`; }
+    return;
+  }
+  if (t.id === 'pvDate' && S.preview) { S.preview.date = t.value || S.preview.date; return renderPreview(); }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'search') { S.search = t.value; renderChecklist(); }
+  if (t.id === 'planTime') S.planTime = t.value;
+  if (t.id === 'planDur') S.planDur = +t.value;
+  const row = t.closest('.pv-row'); if (row && t.dataset.k) S.preview[row.dataset.g][+row.dataset.i][t.dataset.k] = t.value;
+});
+document.addEventListener('focusout', e => { if (e.target.classList && (e.target.classList.contains('topic') || e.target.id === 'phText')) setTimeout(() => renderDeferred && render(), 0); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (Focus.open) Focus.hide(); else closePop(); }
+  if (e.key === 'Enter' && e.target.dataset && e.target.dataset.gcDay) e.target.click();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('topic')) e.target.blur(); });
+
+// Keep hidden Telegram link targets when pasting rich text.
+$('#pasteBox').addEventListener('paste', e => {
+  const html = e.clipboardData && e.clipboardData.getData('text/html');
+  if (!html || !/<a\s[^>]*href=/i.test(html)) return;
+  e.preventDefault();
+  const box = e.target, txt = htmlToTextWithLinks(html);
+  box.setRangeText(txt, box.selectionStart, box.selectionEnd, 'end');
+  toast('Pasted with lecture links 🔗');
+});
+
+/* ============================ PEONY ART ============================ */
+// A realistic double peony built from layered, ruffled, gradient petals.
+// The seeded RNG keeps the flower identical on every load.
+function rng(seed) {
+  return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function petalPath(L, W, ruffle, rand) {
+  const f = n => n.toFixed(1), top = -L * 0.6, rx = W / 2, ry = L * 0.4, n = 7;
+  let d = `M0 0 C${f(-W * .16)} ${f(-L * .12)} ${f(-W * .62)} ${f(-L * .3)} ${f(-rx)} ${f(top)}`;
+  for (let k = 1; k <= n; k++) {
+    const a = Math.PI - Math.PI * k / n, am = Math.PI - Math.PI * (k - .5) / n;
+    const b = 1 + ruffle * (.5 + rand() * .9);
+    d += ` Q${f(Math.cos(am) * rx * b)} ${f(top - Math.sin(am) * ry * b)} ${f(Math.cos(a) * rx)} ${f(top - Math.sin(a) * ry)}`;
+  }
+  return d + ` C${f(W * .62)} ${f(-L * .3)} ${f(W * .16)} ${f(-L * .12)} 0 0Z`;
+}
+const PEONY_LAYERS = [
+  { cls: 'po', n: 9, L: 44, W: 36, rot: 0,  tip: '#efdcfa', mid: '#d0a9ef', base: '#a86fd6', edge: '#a274c9', ruf: .10, veins: true },
+  { cls: 'po', n: 9, L: 38, W: 31, rot: 20, tip: '#e4caf6', mid: '#bd8be8', base: '#8f52c9', edge: '#8a55bd', ruf: .12, veins: true },
+  { cls: 'pm', n: 8, L: 30, W: 27, rot: 8,  tip: '#dfc1f4', mid: '#b47ee2', base: '#8143bd', edge: '#7036a8', ruf: .14 },
+  { cls: 'pi', n: 7, L: 22, W: 23, rot: 32, tip: '#cfa5ee', mid: '#9d5fd3', base: '#64249f', edge: '#58208d', ruf: .16 },
+  { cls: 'pi', n: 6, L: 14, W: 17, rot: 14, tip: '#bf8ce6', mid: '#8746c2', base: '#4d1a80', edge: '#44157a', ruf: .2 }
+];
+let peonyUid = 0;
+function peonySVG({ face = false, stem = false } = {}) {
+  const id = 'pn' + (++peonyUid), rand = rng(330066), cx = 60, cy = 54;
+  const defs = [`<filter id="${id}s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.3" flood-color="#2a0a40" flood-opacity=".28"/></filter>`,
+    `<linearGradient id="${id}leaf" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#2f6b3c"/><stop offset="1" stop-color="#6fbf7f"/></linearGradient>`,
+    `<radialGradient id="${id}glow"><stop offset="0" stop-color="#fff8fd" stop-opacity=".75"/><stop offset=".7" stop-color="#f3e3fb" stop-opacity=".35"/><stop offset="1" stop-color="#f3e3fb" stop-opacity="0"/></radialGradient>`,
+    `<filter id="${id}b"><feGaussianBlur stdDeviation="1"/></filter>`];
+  const layers = PEONY_LAYERS.map((ly, li) => {
+    defs.push(`<linearGradient id="${id}g${li}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${ly.base}"/><stop offset=".55" stop-color="${ly.mid}"/><stop offset="1" stop-color="${ly.tip}"/></linearGradient>`);
+    let petals = '';
+    for (let i = 0; i < ly.n; i++) {
+      const a = ly.rot + i * 360 / ly.n + (rand() - .5) * 12, L = ly.L * (.92 + rand() * .16), W = ly.W * (.9 + rand() * .2);
+      petals += `<g transform="rotate(${a.toFixed(1)})"><path d="${petalPath(L, W, ly.ruf, rand)}" fill="url(#${id}g${li})" stroke="${ly.edge}" stroke-width=".5" stroke-opacity=".55"/>`;
+      if (ly.veins) petals += `<path d="M0 ${-L * .18} Q${-W * .1} ${-L * .5} ${-W * .14} ${-L * .82} M0 ${-L * .18} Q${W * .1} ${-L * .5} ${W * .14} ${-L * .82} M0 ${-L * .2} L0 ${-L * .85}" stroke="${ly.edge}" stroke-width=".45" stroke-opacity=".28" fill="none"/>`;
+      petals += '</g>';
+    }
+    const stamens = li === 3 ? Array.from({ length: 10 }, () => { const a = rand() * 6.28, r = 2 + rand() * 4; return `<circle cx="${(Math.cos(a) * r).toFixed(1)}" cy="${(Math.sin(a) * r).toFixed(1)}" r="${(.9 + rand() * .7).toFixed(1)}" fill="#f2c94c" stroke="#c99a1e" stroke-width=".3"/>`; }).join('') : '';
+    return `<g class="${ly.cls}"><g transform="translate(${cx} ${cy}) scale(1 .9)" filter="url(#${id}s)">${petals}${stamens}</g></g>`;
+  }).join('');
+  const leaf = (x, y, rot, s) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})"><path d="M0 0 C10 -6 26 -6 38 0 C26 7 10 7 0 0Z" fill="url(#${id}leaf)"/><path d="M1 0 L36 0" stroke="#24502d" stroke-width=".7" opacity=".6"/></g>`;
+  const faceSvg = face ? `
+    <ellipse cx="${cx}" cy="${cy + 2}" rx="15" ry="12" fill="url(#${id}glow)"/>
+    <g class="eyes" fill="#2a0a40"><ellipse cx="54.5" cy="54" rx="2.6" ry="3.2"/><ellipse cx="65.5" cy="54" rx="2.6" ry="3.2"/>
+      <circle cx="55.4" cy="52.8" r="1" fill="#fff"/><circle cx="66.4" cy="52.8" r="1" fill="#fff"/><circle cx="53.8" cy="55.3" r=".45" fill="#fff"/><circle cx="64.8" cy="55.3" r=".45" fill="#fff"/></g>
+    <g class="e-happy" stroke="#2a0a40" stroke-width="1.8" fill="none" stroke-linecap="round"><path d="M51.8 55 Q54.5 51.5 57.2 55"/><path d="M62.8 55 Q65.5 51.5 68.2 55"/></g>
+    <g class="e-sleep" stroke="#2a0a40" stroke-width="1.8" fill="none" stroke-linecap="round"><path d="M51.8 54 Q54.5 56.5 57.2 54"/><path d="M62.8 54 Q65.5 56.5 68.2 54"/></g>
+    <ellipse cx="50" cy="58.6" rx="3.2" ry="2" fill="#ff8fbf" opacity=".6" filter="url(#${id}b)"/><ellipse cx="70" cy="58.6" rx="3.2" ry="2" fill="#ff8fbf" opacity=".6" filter="url(#${id}b)"/>
+    <path class="m-smile" d="M57.2 59.2 Q60 62 62.8 59.2" stroke="#2a0a40" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <ellipse class="m-o" cx="60" cy="60.3" rx="1.6" ry="1.9" fill="#2a0a40"/>
+    <text class="zz" x="84" y="22">z</text>` : '';
+  const stemSvg = stem ? `<path d="M60 136 C57 118 63 100 60 82" stroke="#3a7d48" stroke-width="4.5" fill="none" stroke-linecap="round"/>${leaf(60, 112, 200, 1)}${leaf(61, 100, -25, .9)}` : '';
+  return `<svg viewBox="${stem ? '0 0 120 140' : '8 4 104 104'}" aria-hidden="true"><defs>${defs.join('')}</defs><g class="flower">${stemSvg}
+    ${leaf(58, 66, 155, 1.15)}${leaf(62, 66, 25, 1.15)}${leaf(60, 60, 95, .8)}${layers}${faceSvg}</g></svg>`;
+}
+// Frosted-glass vodka bottle (Hussein's avatar).
+let vodkaUid = 0;
+function vodkaSVG() {
+  const id = 'vk' + (++vodkaUid);
+  const bottle = 'M26 14 L38 14 L38 31 C38 40 52 42 52 56 L52 114 Q52 122 44 122 L20 122 Q12 122 12 114 L12 56 C12 42 26 40 26 31 Z';
+  return `<svg viewBox="0 0 64 128" aria-hidden="true"><defs>
+    <linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#9fbfd6" stop-opacity=".95"/><stop offset=".22" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".5" stop-color="#e3eff7" stop-opacity=".25"/><stop offset=".8" stop-color="#ffffff" stop-opacity=".45"/><stop offset="1" stop-color="#86a8c2" stop-opacity=".95"/></linearGradient>
+    <linearGradient id="${id}l" x1="0" x2="1"><stop offset="0" stop-color="#bcd8ea"/><stop offset=".35" stop-color="#f2f9ff"/><stop offset=".7" stop-color="#d6e9f5"/><stop offset="1" stop-color="#9cc0d8"/></linearGradient>
+    <linearGradient id="${id}c" x1="0" x2="1"><stop offset="0" stop-color="#6b7178"/><stop offset=".35" stop-color="#f4f6f8"/><stop offset=".6" stop-color="#b9bec4"/><stop offset="1" stop-color="#4f5359"/></linearGradient>
+    <linearGradient id="${id}t" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9eef3"/></linearGradient>
+    <clipPath id="${id}k"><path d="${bottle}"/></clipPath></defs>
+    <ellipse cx="32" cy="123" rx="20" ry="3" fill="#000" opacity=".15"/>
+    <g clip-path="url(#${id}k)"><rect x="0" y="45" width="64" height="80" fill="url(#${id}l)" opacity=".85"/>
+      <path d="M12 46 Q32 43 52 46" stroke="#ffffff" stroke-width="1.2" fill="none" opacity=".8"/></g>
+    <path d="${bottle}" fill="url(#${id}g)" stroke="#7d9fb8" stroke-width=".9"/>
+    <rect x="14" y="66" width="36" height="36" rx="1.5" fill="url(#${id}t)" stroke="#c9d3dc" stroke-width=".5"/>
+    <rect x="14" y="66" width="36" height="4.5" fill="#c8102e"/>
+    <circle cx="32" cy="78" r="4.2" fill="none" stroke="#b8962e" stroke-width=".8"/><path d="M29.6 78.6 L32 75.6 L34.4 78.6 Z" fill="#b8962e"/>
+    <text x="32" y="91" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="7" letter-spacing=".5" fill="#14254a">VODKA</text>
+    <text x="32" y="97.5" text-anchor="middle" font-family="Georgia,serif" font-size="3.6" letter-spacing=".6" fill="#6b7a90">PREMIUM · 40%</text>
+    <rect x="16.5" y="52" width="3" height="62" rx="1.5" fill="#fff" opacity=".6"/><rect x="45.5" y="56" width="1.6" height="54" rx=".8" fill="#fff" opacity=".35"/>
+    <rect x="28" y="16" width="1.6" height="14" rx=".8" fill="#fff" opacity=".55"/>
+    <rect x="25" y="3" width="14" height="13" rx="2" fill="url(#${id}c)"/>
+    <path d="M27 5 V14 M29.5 5 V14 M32 5 V14 M34.5 5 V14 M37 5 V14" stroke="#5d6168" stroke-width=".4" opacity=".6"/>
+    <rect x="24" y="14.5" width="16" height="2.4" rx="1" fill="#c8102e"/></svg>`;
+}
+let miniPeony = null, miniVodka = null;
+function avatarHtml(user) {
+  if (user === 'zhra') return `<span class="hello-av">${miniPeony || (miniPeony = peonySVG({ face: true }))}</span>`;
+  return `<span class="hello-av">${miniVodka || (miniVodka = vodkaSVG())}</span>`;
+}
+$('#peonyArt').outerHTML = peonySVG({ face: true, stem: true });
+$('#loginVodka').innerHTML = vodkaSVG();
+
+function burst(x, y, n, colors = ['#b57edc', '#7a3bb0', '#e2c6f5', '#330066', '#f4a3c8']) {
+  if (reduceMotion) return;
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('i'); p.className = 'petal';
+    const ang = Math.random() * Math.PI * 2, dist = 60 + Math.random() * 140;
+    p.style.cssText = `left:${x}px;top:${y}px;background:${colors[i % colors.length]};--dx:${Math.cos(ang) * dist}px;--dy:${Math.sin(ang) * dist * .6 + 120 + Math.random() * 120}px;--r:${Math.random() * 720 - 360}deg;--t:${1.2 + Math.random() * .9}s`;
+    document.body.append(p); setTimeout(() => p.remove(), 2200);
+  }
+}
+
+/* ============================ FOCUS MODE ============================ */
+// When زهرة studies, the Peony fills the screen: the ring fills every 25 minutes
+// and the flower opens a little more as it does.
+const Focus = {
+  open: false, cycle: -1, msgAt: 0, CYCLE: 25 * 60e3, RING: 289.03,
+  lines: ['Breathe… one page at a time 🌱', "I'm right here with you 🌸", 'Focus now, rest soon ☕', 'Every minute counts 💜', 'You are doing amazing 🌷', 'Sip some water 💧'],
+  show() {
+    if (S.me !== 'zhra' || !liveOf('zhra')) return;
+    this.open = true; $('#focus').hidden = false; document.body.style.overflow = 'hidden';
+    if (!$('#fxArt').firstChild) $('#fxArt').innerHTML = peonySVG({ face: true });
+    if (!$('#focus .fx-petal')) this.sky();
+    Peony.el.hidden = true; this.cycle = -1; this.update(); this.say();
+  },
+  hide() {
+    this.open = false; $('#focus').hidden = true; document.body.style.overflow = '';
+    Peony.el.hidden = !Peony.active;
+  },
+  sky() {
+    if (reduceMotion) return;
+    const colors = ['#d4b0f0', '#f4a3c8', '#b57edc', '#ffffff', '#e2c6f5'], sky = $('#focus .fx-sky');
+    for (let i = 0; i < 16; i++) {
+      const p = document.createElement('i'); p.className = 'fx-petal';
+      p.style.cssText = `left:${Math.random() * 100}%;background:${colors[i % colors.length]};--sx:${(Math.random() - .5) * 160}px;--sr:${Math.random() * 720 - 360}deg;animation-duration:${10 + Math.random() * 10}s;animation-delay:${-Math.random() * 20}s;transform:scale(${.6 + Math.random() * .7})`;
+      sky.append(p);
+    }
+  },
+  update() {
+    const x = S.me === 'zhra' && liveOf('zhra');
+    if (!x) { if (this.open) this.hide(); return; }
+    if (!this.open) return;
+    $('#focus').classList.toggle('paused', !!x.pausedAt);
+    $('#fxSubj').textContent = x.subject ? `${x.subject} #${x.seq}` : 'Free session';
+    $('#fxPause').textContent = x.pausedAt ? '▶ Resume' : '❚❚ Pause';
+    $('#fxDone').hidden = !x.lectureId;
+    if (x.pausedAt) $('#fxMsg').textContent = 'Paused… I’ll wait for you 😴';
+    this.tick();
+  },
+  say() { const x = liveOf('zhra'); if (x && !x.pausedAt) $('#fxMsg').textContent = this.lines[Math.floor(Math.random() * this.lines.length)]; this.msgAt = Date.now(); },
+  tick() {
+    if (!this.open) return;
+    const x = liveOf('zhra'); if (!x) return;
+    const ms = elapsed(x), cycles = Math.floor(ms / this.CYCLE), p = (ms % this.CYCLE) / this.CYCLE;
+    $('#fxClock').innerHTML = clockHtml(ms);
+    $('#fxRing').style.strokeDashoffset = this.RING * (1 - p);
+    // the flower opens as the 25 minutes fill up
+    const sc = (a, b) => `scale(${(a + (b - a) * p).toFixed(3)})`;
+    const art = $('#fxArt');
+    $$('.po', art).forEach(g => g.style.transform = sc(.82, 1.08));
+    $$('.pm', art).forEach(g => g.style.transform = sc(.86, 1.06));
+    $$('.pi', art).forEach(g => g.style.transform = sc(.9, 1.04));
+    $('#fxBlooms').textContent = cycles ? `${'🌸'.repeat(Math.min(cycles, 8))}  ${plural(cycles, 'bloom')}` : 'Your flower blooms every 25 minutes';
+    if (this.cycle >= 0 && cycles > this.cycle) {
+      $('#focus').classList.add('happy'); setTimeout(() => $('#focus').classList.remove('happy'), 3000);
+      const r = $('#fxArt').getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, 30);
+      $('#fxMsg').textContent = `${cycles * 25} minutes! A 5-minute break? ☕🌸`; this.msgAt = Date.now();
+    } else if (!x.pausedAt && Date.now() - this.msgAt > 4 * 60e3) this.say();
+    this.cycle = cycles;
+  }
+};
+
+/* ============================ PEONY ============================ */
+const Peony = {
+  el: $('#peony'), bubble: $('#bubble'), timer: null, msgIdx: 0, active: false,
+  show(on) {
+    this.active = on; this.el.hidden = !on || Focus.open;
+    if (on) {
+      const pos = ls.get('sp.peonyPos', null);
+      if (pos) this.place(pos.x, pos.y);
+      setTimeout(() => this.say(this.greeting()), 900);
+    }
+  },
+  mood() { return stats(Store.all().filter(l => l.owner === 'zhra')); },
+  refresh() {
+    if (!this.active) return;
+    const st = this.mood();
+    this.el.classList.toggle('sleepy', st.overdue && st.overdue.length > 5);
+  },
+  greeting() {
+    const st = this.mood(), h = new Date().getHours();
+    const dated = Phrases.list.filter(p => p.date === todayStr());
+    if (dated.length) return fillPhrase(dated[Math.floor(Math.random() * dated.length)].text, st);
+    const hi = h < 12 ? 'Good morning' : h < 18 ? 'Hi' : 'Good evening';
+    if (!st.total) return `${hi} ${isoName('zhra')}! Paste the schedule and I'll keep track 💜`;
+    if (st.overdue.length > 5) return `${st.overdue.length} lectures are waiting… just one small one? 🥺`;
+    if (st.todayLeft) return `${hi} ${isoName('zhra')}! ${plural(st.todayLeft, 'lecture')} left today 🌸`;
+    if (st.today.length) return `Today is all done! I'm blooming 🌸`;
+    return `${hi} ${isoName('zhra')}! Nothing due today. Revise something? 💜`;
+  },
+  lines() {
+    const st = this.mood(), out = [this.greeting()];
+    // Admin phrases come first (today's dated ones plus any-day ones), then the built-ins.
+    Phrases.list.filter(p => !p.date || p.date === todayStr()).forEach(p => out.push(fillPhrase(p.text, st)));
+    if (st.streak > 1) out.push(`${st.streak}-day streak! Keep it going 🔥`);
+    if (st.overdue && st.overdue.length && st.overdue.length <= 5) out.push(`Only ${st.overdue.length} left from before, you can do it 💪`);
+    out.push('Small steps every day 🌱', 'Water first, then one more lecture 💧', `Proud of you, ${isoName('zhra')} 💜`, 'Peonies bloom slowly too 🌸', 'Take a 5 minute break, then back to it ☕');
+    return out;
+  },
+  say(text, ms = 3800) {
+    this.bubble.textContent = text; this.bubble.classList.add('show');
+    clearTimeout(this.timer); this.timer = setTimeout(() => this.bubble.classList.remove('show'), ms);
+  },
+  bloom(happy = true) {
+    this.el.classList.add('bloom'); if (happy) this.el.classList.add('happy');
+    setTimeout(() => this.el.classList.remove('bloom'), 650);
+    setTimeout(() => this.el.classList.remove('happy'), 1800);
+  },
+  tap() {
+    const lines = this.lines();
+    this.msgIdx = (this.msgIdx + 1) % lines.length;
+    this.bloom(); this.say(lines[this.msgIdx]);
+    this.confetti(6);
+  },
+  celebrate(kind, subject) {
+    if (!this.active) return toast(`${subject} studied ✔`);
+    this.bloom();
+    if (kind === 'big') { this.say('Everything for today is done! 🎉🌸', 5000); this.confetti(40); }
+    else { this.say(`Yay! ${subject} done 🌸`); this.confetti(14); }
+  },
+  confetti(n) {
+    const r = this.el.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + 40, n);
+  },
+  place(x, y) {
+    const w = this.el.offsetWidth || 96, h = this.el.offsetHeight || 120;
+    x = Math.max(4, Math.min(innerWidth - w - 4, x)); y = Math.max(4, Math.min(innerHeight - h - 4, y));
+    Object.assign(this.el.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' });
+    this.el.classList.toggle('left', x < innerWidth / 2 - w / 2);
+    return { x, y };
+  }
+};
+(() => {
+  const btn = $('#peony .pbtn');
+  let start = null, moved = false;
+  btn.addEventListener('pointerdown', e => {
+    const r = Peony.el.getBoundingClientRect();
+    start = { px: e.clientX, py: e.clientY, x: r.left, y: r.top }; moved = false;
+    btn.setPointerCapture(e.pointerId);
+  });
+  btn.addEventListener('pointermove', e => {
+    if (!start) return;
+    const dx = e.clientX - start.px, dy = e.clientY - start.py;
+    if (!moved && Math.hypot(dx, dy) < 6) return;
+    moved = true; Peony.el.classList.add('dragging');
+    Peony.place(start.x + dx, start.y + dy);
+  });
+  btn.addEventListener('pointerup', () => {
+    if (moved) { const r = Peony.el.getBoundingClientRect(); ls.set('sp.peonyPos', { x: r.left, y: r.top }); }
+    Peony.el.classList.remove('dragging'); start = null;
+  });
+  btn.addEventListener('click', e => { if (moved) { moved = false; e.preventDefault(); return; } Peony.tap(); });
+  addEventListener('resize', () => { const p = ls.get('sp.peonyPos', null); if (p && Peony.active) Peony.place(p.x, p.y); });
+})();
+
+/* ============================ AUTH / BOOT ============================ */
+let pickedUser = null;
+function showLogin() {
+  $('#splash').hidden = true;
+  $('#app').hidden = true; $('#login').hidden = false; Peony.show(false);
+  $('#modeNote').textContent = CLOUD ? 'Synced between both phones.' : 'Saved on this device only, so phones don’t sync yet.';
+}
+function enterApp(user) {
+  S.me = S.viewing = user;
+  ls.set('sp.me', user);
+  $('#splash').hidden = true;
+  $('#login').hidden = true; $('#app').hidden = false;
+  Peony.show(user === 'zhra');
+  switchTab(ls.get('sp.tab', 'today'));
+}
+function logout() {
+  if (CLOUD) { CloudBackend.stop(); firebase.auth().signOut(); }
+  ls.set('sp.me', null); S.me = null; pickedUser = null;
+  $$('.who button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  $('#pwForm').hidden = true;
+  showLogin();
+}
+
+$$('.who button').forEach(b => b.addEventListener('click', () => {
+  pickedUser = b.dataset.user;
+  $$('.who button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  // Press animation: the peony photo spins and sheds petals; the bottle does a "cheers" tilt.
+  b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
+  const r = $('.av', b).getBoundingClientRect();
+  if (pickedUser === 'zhra') burst(r.left + r.width / 2, r.top + r.height / 2, 22);
+  else burst(r.left + r.width / 2, r.top + r.height / 3, 14, ['#cfe8f7', '#ffffff', '#9cc0d8', '#c8102e']);
+  if (!CLOUD) return setTimeout(() => { b.classList.remove('go'); enterApp(pickedUser); }, reduceMotion ? 0 : 750);
+  setTimeout(() => b.classList.remove('go'), 900);
+  $('#pwForm').hidden = false; $('#loginErr').textContent = ''; $('#pw').focus();
+}));
+
+$('#pwForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!pickedUser) return;
+  $('#loginBtn').disabled = true; $('#loginErr').textContent = '';
+  try { await firebase.auth().signInWithEmailAndPassword(USERS[pickedUser].email, $('#pw').value); $('#pw').value = ''; }
+  catch (err) { $('#loginErr').textContent = /password|credential|user/i.test(err.code || '') ? 'Wrong password' : err.message; }
+  finally { $('#loginBtn').disabled = false; }
+});
+
+const loadScript = src => new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = bad; document.head.append(s); });
+
+async function boot() {
+  if (!CLOUD) {
+    Backend = LocalBackend; LocalBackend.start();
+    const me = ls.get('sp.me', null);
+    return USERS[me] ? enterApp(me) : showLogin();
+  }
+  const v = '10.14.1', base = `https://www.gstatic.com/firebasejs/${v}/`;
+  try {
+    await loadScript(base + 'firebase-app-compat.js');
+    await Promise.all([loadScript(base + 'firebase-auth-compat.js'), loadScript(base + 'firebase-firestore-compat.js')]);
+  } catch { document.body.innerHTML = '<p style="padding:24px">Could not load Firebase. Check your connection and reload.</p>'; return; }
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const db = firebase.firestore();
+  // Offline cache: taps update instantly and sync in the background.
+  await db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+  CloudBackend.db = db; Backend = CloudBackend;
+  firebase.auth().onAuthStateChanged(user => {
+    if (!user) return showLogin();
+    const key = Object.keys(USERS).find(k => USERS[k].email.toLowerCase() === (user.email || '').toLowerCase());
+    if (!key) { firebase.auth().signOut(); return toast('This account is not allowed'); }
+    CloudBackend.start(); enterApp(key);
+  });
+}
+boot();
+</script>
+</body>
+</html>
