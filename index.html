@@ -1278,24 +1278,19 @@ const REVIEW_DAYS = [1, 3, 7, 14];
 // Hard lectures (they took much longer than usual to study) get closer, extra reviews.
 const HARD_DAYS = [1, 2, 4, 7, 14, 30];
 
-/* Time spent on each lecture, from study sessions started on it. A lecture is "hard" when it
-   took clearly longer than that person's usual one: at least 45 min and 1.5× their median
-   (with fewer than 3 timed lectures, 60 min). */
-let timeCache = { key: '', mins: new Map(), bar: {} };
+/* Time spent on each lecture, from study sessions started on it. A lecture that took
+   2 hours or more is "hard": it gets extra, closer reviews. */
+const HARD_MINS = 120;
+let timeCache = { key: '', mins: new Map() };
 function lectureTime() {
   const key = Sessions.log.length + '|' + Store.map.size;
   if (timeCache.key === key) return timeCache;
   const mins = new Map();
   Sessions.log.forEach(e => { if (e.lectureId && e.mins > 0) mins.set(e.lectureId, (mins.get(e.lectureId) || 0) + e.mins); });
-  const bar = {};
-  Object.keys(USERS).forEach(u => {
-    const v = Store.all().filter(l => l.owner === u).map(l => mins.get(l.id) || 0).filter(m => m > 0).sort((a, b) => a - b);
-    bar[u] = v.length < 3 ? 60 : Math.max(45, Math.round(v[v.length >> 1] * 1.5));
-  });
-  return timeCache = { key, mins, bar };
+  return timeCache = { key, mins };
 }
 const minsOn = l => lectureTime().mins.get(l.id) || 0;
-const isHard = l => { const t = lectureTime(), m = t.mins.get(l.id) || 0; return m > 0 && m >= t.bar[l.owner]; };
+const isHard = l => minsOn(l) >= HARD_MINS;
 const daysFor = l => isHard(l) ? HARD_DAYS : REVIEW_DAYS;
 
 function reviewsOf(l) {
@@ -1511,7 +1506,7 @@ function renderStats() {
       if (!timed.length) return '';
       const top = minsOn(timed[0]);
       return `<div class="chart">
-        <h3>Took longest to study</h3><p class="sub">Hard ones get extra reviews (days ${HARD_DAYS.join(', ')}) and come first in Reviews due</p>
+        <h3>Took longest to study</h3><p class="sub">2 hours or more counts as hard: extra reviews (days ${HARD_DAYS.join(', ')}), first in Reviews due</p>
         ${timed.map(l => { const rs = reviewsOf(l), d = rs.filter(r => r.done).length; return `<div class="hbar" style="--sc:${subjColor(l.subject)}"><span dir="auto">${esc(lecLabel(l))}</span>
           <span class="track" data-tip="${esc(lecLabel(l))}${l.topic ? ': ' + esc(l.topic) : ''}, ${fmtMins(minsOn(l))}${rs.length ? `, ${d}/${rs.length} reviews` : ''}" tabindex="0"><i style="width:${minsOn(l) / top * 100}%"></i></span>
           <b>${fmtMins(minsOn(l))}<small>${isHard(l) ? 'hard' : ''}</small></b></div>`; }).join('')}
@@ -1977,6 +1972,7 @@ const Bot = {
           if (made.length) { await Backend.upsert(made.filter(d => !Store.get(d.id))); toast(`${plural(made.length, 'practical lecture')} added from Telegram`); }
         }
         const id = 'tg_' + p.id.replace(/[^A-Za-z0-9]/g, '_') + '_' + S.me;
+        if ([...Extra.exams.values()].some(e => e.owner === S.me && e.id !== id && sameName(e.name) === sameName(x.name) && e.date === x.date)) continue;   // already have this exam
         if (!Extra.exams.get(id)) { await Backend.put('exams', { id, owner: S.me, name: x.name, date: x.date, subj: x.subj, lectureIds, source: 'telegram', createdAt: Date.now() }); exams++; }
       }
       ls.set('sp.botExamSeen.' + S.me, seenEx.slice(-80));
