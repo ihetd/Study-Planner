@@ -1817,7 +1817,17 @@ function parseExamPost(text, at = Date.now()) {
   for (const [, n] of t.matchAll(/#\s*(\d{1,3})/g)) nums.add(+n);
   for (const [, list] of t.matchAll(/(?:lec(?:ture)?s?|محاضر(?:ة|ه|ات))\s*((?:\d{1,3}\s*(?:,|،|and|&|و|-)?\s*)+)/gi))
     for (const [, a, b] of list.matchAll(/(\d{1,3})(?:\s*-\s*(\d{1,3}))?/g)) for (let k = +a; k <= +(b || a) && k - a < 40; k++) nums.add(k);
-  return { date, groups, subj, practical, nums: [...nums], name: [subj || 'Exam', practical ? 'practical' : '', subj || practical || type !== 'exam' ? type : ''].filter(Boolean).join(' ') };
+  // Topics listed one per line under the announcement (an optional subject-only line first):
+  // each line is one lecture. "1- Retina exam" and "• Retina exam" lose their bullets.
+  const topics = [];
+  let subject = subj;
+  t.split('\n').slice(1).map(x => x.trim()).filter(x => x && !/^\[(group|from):/.test(x)).forEach(x => {
+    const only = canonSubj(normAr(x).replace(/^(ال|لل|بال)/, ''));
+    if (SUBJECTS.includes(only)) { if (!subject) subject = only; return; }
+    const topic = x.replace(/^(\d{1,2}\s*[-.)]|[-•*·▪●]+)\s*/, '').trim();
+    if (topic && topic.length <= 120) topics.push(topic);
+  });
+  return { date, groups, subj: subject, practical, topics, nums: [...nums], name: [subj || 'Exam', practical ? 'practical' : '', subj || practical || type !== 'exam' ? type : ''].filter(Boolean).join(' ') };
 }
 
 const Bot = {
@@ -1854,7 +1864,20 @@ const Bot = {
         // link the lecture numbers it mentions (practical lectures for a practical exam, when there are any)
         const pool = mine().filter(l => !x.subj || l.subject === x.subj), prac = pool.filter(isPractical);
         const from = x.practical && prac.length ? prac : pool.filter(l => !isPractical(l));
-        const lectureIds = x.subj ? from.filter(l => x.nums.includes(seqMap.get(l.id))).map(l => l.id) : [];
+        const lectureIds = x.subj && !x.topics.length ? from.filter(l => x.nums.includes(seqMap.get(l.id))).map(l => l.id) : [];   // a listed topic beats a stray number
+        // Listed topics: link the lecture with that name, or add it (as practical for a practical exam).
+        if (x.subj && x.topics.length) {
+          const norm = v => normAr(String(v || '')).toLowerCase().replace(/\s+/g, ' ').trim(), made = [];
+          x.topics.forEach((topic, i) => {
+            const have = mine().find(l => l.subject === x.subj && norm(l.topic) === norm(topic) && (!x.practical || isPractical(l)));
+            if (have) { if (!lectureIds.includes(have.id)) lectureIds.push(have.id); return; }
+            if (!x.practical) return;   // theory lectures come from the schedule; only practical ones are added here
+            const lid = 'tgp_' + p.id.replace(/[^A-Za-z0-9]/g, '_') + '_' + i, day = ymd(new Date(p.at));
+            made.push({ id: lid, date: day, group: myGroup, owner: S.me, order: 100 + i, subject: x.subj, topic, kind: 'practical', link: '', status: 'pending', studiedAt: null, planDate: null, planTime: null, createdAt: Date.now(), manual: true });
+            lectureIds.push(lid);
+          });
+          if (made.length) { await Backend.upsert(made.filter(d => !Store.get(d.id))); toast(`${plural(made.length, 'practical lecture')} added from Telegram`); }
+        }
         const id = 'tg_' + p.id.replace(/[^A-Za-z0-9]/g, '_') + '_' + S.me;
         if (!Extra.exams.get(id)) { await Backend.put('exams', { id, owner: S.me, name: x.name, date: x.date, subj: x.subj, lectureIds, source: 'telegram', createdAt: Date.now() }); exams++; }
       }

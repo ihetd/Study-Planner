@@ -97,7 +97,10 @@ async function handle(u, env) {
   if (askWho) return tg(env, 'sendMessage', { chat_id: m.chat.id, reply_to_message_id: m.message_id,
     text: `Exam noted for ${prettyDay(examDay)}. Who are you? I'll remember it, so your exams go to your app.`,
     reply_markup: { inline_keyboard: [[{ text: 'Hussein (A2)', callback_data: 'who:hussein' }, { text: 'زهرة (A1)', callback_data: 'who:zhra' }]] } });
-  if (isExam) return reply(env, m, `Exam saved for ${prettyDay(examDay)}, ${group ? 'group ' + group : 'both groups'}. It will show in the app.`);
+  if (isExam) {
+    const listed = text.split('\n').slice(1).filter(x => x.trim() && !/^\s*(ortho|ophth?o?|optho|ent|wh)\s*$/i.test(x)).length;
+    return reply(env, m, `Exam saved for ${prettyDay(examDay)}, ${group ? 'group ' + group : 'both groups'}${listed ? `, with ${listed} lecture${listed === 1 ? '' : 's'}` : ''}. It will show in the app.`);
+  }
   if (isSchedule) {
     const n = (text.match(/المحاضرة\s+\S+\s*:/g) || []).length, day = (text.match(/المصادف\s*([\d٠-٩]{1,2}\s*\/\s*[\d٠-٩]{1,2})/) || [])[1];
     const links = (withLinksCount(text, m.entities || m.caption_entities || []));
