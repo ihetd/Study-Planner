@@ -1787,23 +1787,37 @@ function scheduleDocs(p) {
 /* ---------------------------- Telegram bot ---------------------------- */
 // t.me/<channel>/<post> and t.me/c/<id>/[<thread>/]<post> → "channel/post", the bot's key.
 const linkKey = u => { const m = String(u || '').match(/^https?:\/\/(?:t|telegram)\.me\/(?:s\/)?(c\/\d+|[A-Za-z0-9_]{4,})(?:\/\d+)*\/(\d+)/i); return m ? `${m[1].toLowerCase()}/${m[2]}` : ''; };
-// An exam announcement → { date, groups, subj, name }. Needs a day/month date; the group
-// (A1/A2) decides whose app adds it, and no group means both. Returns null if there's no date.
-function parseExamPost(text) {
-  const t = toLatinDigits(String(text || ''));
+// An exam message → { date, groups, subj, name, lectureIds }. The day can be written (18/10),
+// relative (today, tomorrow, باجر) or a weekday ("sunday", "الاحد"), counted from when it was sent.
+// The group (A1/A2) decides whose app adds it; the bot tags private messages with the sender's
+// group, and a message with no group at all is for both. Returns null without a day.
+const WEEKDAYS = [['sunday', 'الاحد', 'الأحد'], ['monday', 'الاثنين', 'الإثنين'], ['tuesday', 'الثلاثاء'], ['wednesday', 'الاربعاء', 'الأربعاء'], ['thursday', 'الخميس'], ['friday', 'الجمعة', 'الجمعه'], ['saturday', 'السبت']];
+function parseExamPost(text, at = Date.now()) {
+  const t = toLatinDigits(String(text || '')), sent = new Date(at), base = ymd(sent);
+  if (/\[from:\d+\]/.test(t)) return null;   // still waiting for "who are you?" in the bot
   let date = '';
   for (const [, d, m, y] of t.matchAll(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})(?:\s*[\/\-.]\s*(\d{2,4}))?/g)) {
     if (+m < 1 || +m > 12 || +d < 1 || +d > 31) continue;
-    const yr = y ? (+y < 100 ? 2000 + +y : +y) : new Date().getFullYear();
+    const yr = y ? (+y < 100 ? 2000 + +y : +y) : sent.getFullYear();
     date = `${yr}-${pad(+m)}-${pad(+d)}`;
-    if (!y && date < addDays(todayStr(), -60)) date = `${yr + 1}-${pad(+m)}-${pad(+d)}`;
+    if (!y && date < addDays(base, -60)) date = `${yr + 1}-${pad(+m)}-${pad(+d)}`;
     break;
   }
+  if (!date && /tomorrow|باجر|بكرة|بكره|غدا|غداً/i.test(t)) date = addDays(base, 1);
+  if (!date && /\btoday\b|اليوم/i.test(t)) date = base;
+  if (!date) { const low = t.toLowerCase(); const i = WEEKDAYS.findIndex(ws => ws.some(w => /^[a-z]/.test(w) ? new RegExp(`\\b${w}\\b`).test(low) : t.includes(w))); if (i >= 0) date = addDays(base, (i - sent.getDay() + 7) % 7); }
   if (!date) return null;
-  const groups = ['A1', 'A2'].filter(g => new RegExp(`\\b${g[0]}\\s*${g[1]}\\b`, 'i').test(t));
+  const a1 = /\bA\s*1\b/i.test(t), a2 = /\bA\s*2\b/i.test(t);
+  const groups = a1 && !a2 ? ['A1'] : a2 && !a1 ? ['A2'] : ['A1', 'A2'];
   const subj = normAr(t).split(/[\s,:،()\/\-]+/).map(w => canonSubj(w.replace(/^(ال|لل|بال)/, ''))).find(x => SUBJECTS.includes(x)) || '';   // العظام → عظام → Ortho
+  const practical = /practical|عملي/i.test(t);
   const type = /كويز|كوز|quiz/i.test(t) ? 'quiz' : /final|نهائي|فاينل/i.test(t) ? 'final' : /mid|ميد|منتصف/i.test(t) ? 'midterm' : 'exam';
-  return { date, groups: groups.length ? groups : ['A1', 'A2'], subj, name: `${subj || 'Exam'}${subj || type !== 'exam' ? ' ' + type : ''}`.trim() };
+  // lecture numbers: "#3", "lecture 3", "lectures 3, 4 and 6", "محاضرة 2"
+  const nums = new Set();
+  for (const [, n] of t.matchAll(/#\s*(\d{1,3})/g)) nums.add(+n);
+  for (const [, list] of t.matchAll(/(?:lec(?:ture)?s?|محاضر(?:ة|ه|ات))\s*((?:\d{1,3}\s*(?:,|،|and|&|و|-)?\s*)+)/gi))
+    for (const [, a, b] of list.matchAll(/(\d{1,3})(?:\s*-\s*(\d{1,3}))?/g)) for (let k = +a; k <= +(b || a) && k - a < 40; k++) nums.add(k);
+  return { date, groups, subj, practical, nums: [...nums], name: [subj || 'Exam', practical ? 'practical' : '', subj || practical || type !== 'exam' ? type : ''].filter(Boolean).join(' ') };
 }
 
 const Bot = {
@@ -1834,10 +1848,15 @@ const Bot = {
       for (const p of j.exams || []) {
         if (seenEx.includes(p.id)) continue;
         seenEx.push(p.id);
-        const x = parseExamPost(p.text);
-        if (!x || !x.groups.includes(myGroup)) continue;
+        const x = parseExamPost(p.text, p.at);
+        if (!x) { if (/\[from:\d+\]/.test(p.text)) seenEx.pop(); continue; }   // waiting on "who are you?": try again next time
+        if (!x.groups.includes(myGroup)) continue;
+        // link the lecture numbers it mentions (practical lectures for a practical exam, when there are any)
+        const pool = mine().filter(l => !x.subj || l.subject === x.subj), prac = pool.filter(isPractical);
+        const from = x.practical && prac.length ? prac : pool.filter(l => !isPractical(l));
+        const lectureIds = x.subj ? from.filter(l => x.nums.includes(seqMap.get(l.id))).map(l => l.id) : [];
         const id = 'tg_' + p.id.replace(/[^A-Za-z0-9]/g, '_') + '_' + S.me;
-        if (!Extra.exams.get(id)) { await Backend.put('exams', { id, owner: S.me, name: x.name, date: x.date, subj: x.subj, lectureIds: [], source: 'telegram', createdAt: Date.now() }); exams++; }
+        if (!Extra.exams.get(id)) { await Backend.put('exams', { id, owner: S.me, name: x.name, date: x.date, subj: x.subj, lectureIds, source: 'telegram', createdAt: Date.now() }); exams++; }
       }
       ls.set('sp.botExamSeen.' + S.me, seenEx.slice(-80));
       if (exams) toast(`${plural(exams, 'exam')} added from Telegram`);

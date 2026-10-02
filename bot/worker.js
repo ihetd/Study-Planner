@@ -27,9 +27,14 @@ export default {
       return new Response('ok');   // always 200, or Telegram keeps retrying the same update
     }
     if (url.pathname === '/setup') {
-      const hook = await tg(env, 'setWebhook', { url: `${url.origin}/telegram`, secret_token: secret, allowed_updates: ['channel_post', 'edited_channel_post', 'message'] });
+      const hook = await tg(env, 'setWebhook', { url: `${url.origin}/telegram`, secret_token: secret, allowed_updates: ['channel_post', 'edited_channel_post', 'message', 'callback_query'] });
       const me = await tg(env, 'getMe', {});
       return json({ webhook: hook.ok ? 'connected' : hook, bot: me.result ? '@' + me.result.username : me });
+    }
+    if (url.pathname === '/status') {   // delivery health from Telegram (no secrets)
+      const r = await tg(env, 'getWebhookInfo', {});
+      const w = r.result || {};
+      return json({ pending: w.pending_update_count, lastError: w.last_error_message || null, lastErrorAt: w.last_error_date ? new Date(w.last_error_date * 1000).toISOString() : null, allowed: w.allowed_updates });
     }
     if (url.pathname === '/inbox') {
       const names = {}, schedules = [];
@@ -44,13 +49,18 @@ export default {
 };
 
 async function handle(u, env) {
+  if (u.callback_query) return onButton(u.callback_query, env);
   const m = u.channel_post || u.edited_channel_post || u.message;
+  // short delivery log (last 30), to see what Telegram actually sends
+  await env.DB.prepare('INSERT INTO updlog (at, kind, chat, sample) VALUES (?, ?, ?, ?)').bind(Date.now(), Object.keys(u).filter(k => k !== 'update_id').join(','), m && m.chat ? m.chat.type : '', m ? String(m.text || m.caption || (m.document ? 'doc:' + m.document.file_name : '')).slice(0, 300) : '').run();
+  await env.DB.prepare('DELETE FROM updlog WHERE at < (SELECT min(at) FROM (SELECT at FROM updlog ORDER BY at DESC LIMIT 30))').run();
   if (!m || !m.chat) return;
   const now = Date.now(), db = env.DB;
   const text = m.text || m.caption || '';
   const isSchedule = /Group\s*A\s*[12]/i.test(text) && /المحاضرة/.test(text);
-  // an exam announcement: exam words plus a date, and not a lecture schedule
-  const isExam = !isSchedule && /امتحان|اختبار|امتحانات|كويز|كوز|\bexam|\bquiz|\btest\b|midterm|final/i.test(text) && /[\d٠-٩]{1,2}\s*[\/\-.]\s*[\d٠-٩]{1,2}/.test(text);
+  // an exam announcement: exam words plus a day (18/10, "sunday", "الاحد", "tomorrow"), and not a schedule
+  const examDay = isSchedule ? '' : examDate(text, now);
+  const isExam = !!examDay && /امتحان|اختبار|امتحانات|كويز|كوز|\bexam|\bquiz|\btest\b|midterm|final|practical|عملي/i.test(text);
   const name = (m.document && cleanName(m.document.file_name)) || '';
   let keys = [];
   if (m.chat.type === 'channel') {
@@ -62,7 +72,7 @@ async function handle(u, env) {
     if (!await isOwner(env, m.from && m.from.id)) return reply(env, m, 'This bot is private.');
     if (isSchedule || isExam) keys = [`dm/${m.chat.id}/${m.message_id}`];
     else if (m.forward_origin && m.forward_origin.type === 'channel' && name) keys = chatKeys(m.forward_origin.chat).map(c => `${c}/${m.forward_origin.message_id}`);
-    else return reply(env, m, 'Forward the daily schedule here and the lectures go straight to the app. Exam announcements (with the date and the group, A1 or A2) become exams. You can also forward a lecture PDF to save its name.');
+    else return reply(env, m, 'Forward the daily schedule here and the lectures go straight to the app. Exam messages ("I have an Ophtho exam on Sunday") become exams in your app. You can also forward a lecture PDF to save its name.');
   } else return;
 
   if (name) for (const k of keys) await db.prepare('INSERT OR REPLACE INTO names (key, name, at) VALUES (?, ?, ?)').bind(k, name, now).run();
@@ -71,17 +81,23 @@ async function handle(u, env) {
     await db.prepare('INSERT OR REPLACE INTO schedules (id, text, at) VALUES (?, ?, ?)').bind(keys[0], withLinks, now).run();
     await db.prepare('DELETE FROM schedules WHERE at < ?').bind(now - 30 * 864e5).run();
   }
+  let askWho = false, group = groupsIn(text);
   if (isExam) {
-    await db.prepare('INSERT OR REPLACE INTO exam_posts (id, text, at) VALUES (?, ?, ?)').bind(keys[0], text, now).run();
+    // No group written: in a private chat the exam belongs to whoever sent it.
+    let stored = text;
+    if (!group && m.chat.type === 'private') {
+      const who = await db.prepare('SELECT v FROM settings WHERE k = ?').bind('who:' + m.from.id).first();
+      if (who) { group = GROUPS[who.v]; stored += `\n[group:${group}]`; }
+      else { askWho = true; stored += `\n[from:${m.from.id}]`; }
+    }
+    await db.prepare('INSERT OR REPLACE INTO exam_posts (id, text, at) VALUES (?, ?, ?)').bind(keys[0], stored, now).run();
     await db.prepare('DELETE FROM exam_posts WHERE at < ?').bind(now - 60 * 864e5).run();
   }
   if (m.chat.type !== 'private') return;
-  if (isExam) {
-    const t = text.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-    const day = (t.match(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/) || [])[0];
-    const groups = ['A1', 'A2'].filter(g => new RegExp('\\b' + g[0] + '\\s*' + g[1] + '\\b', 'i').test(t));
-    return reply(env, m, `Exam saved${day ? ' for ' + day.replace(/\s/g, '') : ''}, ${groups.length === 1 ? 'group ' + groups[0] : 'both groups'}. It will show in the app.`);
-  }
+  if (askWho) return tg(env, 'sendMessage', { chat_id: m.chat.id, reply_to_message_id: m.message_id,
+    text: `Exam noted for ${prettyDay(examDay)}. Who are you? I'll remember it, so your exams go to your app.`,
+    reply_markup: { inline_keyboard: [[{ text: 'Hussein (A2)', callback_data: 'who:hussein' }, { text: 'زهرة (A1)', callback_data: 'who:zhra' }]] } });
+  if (isExam) return reply(env, m, `Exam saved for ${prettyDay(examDay)}, ${group ? 'group ' + group : 'both groups'}. It will show in the app.`);
   if (isSchedule) {
     const n = (text.match(/المحاضرة\s+\S+\s*:/g) || []).length, day = (text.match(/المصادف\s*([\d٠-٩]{1,2}\s*\/\s*[\d٠-٩]{1,2})/) || [])[1];
     const links = (withLinksCount(text, m.entities || m.caption_entities || []));
@@ -89,6 +105,36 @@ async function handle(u, env) {
   }
   return reply(env, m, `Saved: ${name}`);
 }
+const GROUPS = { hussein: 'A2', zhra: 'A1' };
+const groupsIn = text => { const t = String(text); const a1 = /\bA\s*1\b/i.test(t), a2 = /\bA\s*2\b/i.test(t); return a1 && !a2 ? 'A1' : a2 && !a1 ? 'A2' : ''; };
+// "Who are you?" buttons: link this Telegram account to Hussein or زهرة, then file any waiting exams.
+async function onButton(q, env) {
+  const user = (String(q.data || '').match(/^who:(hussein|zhra)$/) || [])[1];
+  if (!user || !await isOwner(env, q.from.id)) return tg(env, 'answerCallbackQuery', { callback_query_id: q.id });
+  await env.DB.prepare('INSERT OR REPLACE INTO settings (k, v) VALUES (?, ?)').bind('who:' + q.from.id, user).run();
+  await env.DB.prepare('UPDATE exam_posts SET text = replace(text, ?, ?)').bind(`[from:${q.from.id}]`, `[group:${GROUPS[user]}]`).run();
+  await tg(env, 'answerCallbackQuery', { callback_query_id: q.id, text: 'Saved' });
+  if (q.message) await tg(env, 'editMessageText', { chat_id: q.message.chat.id, message_id: q.message.message_id, text: `Got it, you're ${user === 'zhra' ? 'زهرة (A1)' : 'Hussein (A2)'}. Your exams go to your app from now on.` });
+}
+// The exam's day: a written date (18/10), today/tomorrow, or the next weekday named. Iraq time.
+const WEEKDAYS = [['sunday', 'الاحد', 'الأحد'], ['monday', 'الاثنين', 'الإثنين'], ['tuesday', 'الثلاثاء'], ['wednesday', 'الاربعاء', 'الأربعاء'], ['thursday', 'الخميس'], ['friday', 'الجمعة', 'الجمعه'], ['saturday', 'السبت']];
+function examDate(text, at) {
+  const t = String(text).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)), now = new Date(at + 3 * 36e5);   // UTC+3
+  const ymd = d => d.toISOString().slice(0, 10);
+  for (const [, d, m, y] of t.matchAll(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})(?:\s*[\/\-.]\s*(\d{2,4}))?/g)) {
+    if (+m < 1 || +m > 12 || +d < 1 || +d > 31) continue;
+    let yr = y ? (+y < 100 ? 2000 + +y : +y) : now.getUTCFullYear(), dt = new Date(Date.UTC(yr, m - 1, d));
+    if (!y && dt < now - 60 * 864e5) dt = new Date(Date.UTC(yr + 1, m - 1, d));
+    return ymd(dt);
+  }
+  const plus = n => ymd(new Date(now.getTime() + n * 864e5));
+  if (/tomorrow|باجر|بكرة|بكره|غدا|غداً/i.test(t)) return plus(1);
+  if (/\btoday\b|اليوم/i.test(t)) return plus(0);
+  const lower = t.toLowerCase();
+  for (let i = 0; i < 7; i++) if (WEEKDAYS[i].some(w => /^[a-z]/.test(w) ? new RegExp('\\b' + w + '\\b').test(lower) : t.includes(w))) return plus((i - now.getUTCDay() + 7) % 7);
+  return '';
+}
+const prettyDay = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 const withLinksCount = (text, entities) => entities.filter(e => e.type === 'text_link' || e.type === 'url').length;
 async function isOwner(env, id) {
   if (!id) return false;
@@ -134,7 +180,8 @@ async function schema(env) {
     env.DB.prepare('CREATE TABLE IF NOT EXISTS schedules (id TEXT PRIMARY KEY, text TEXT NOT NULL, at INTEGER)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS chats (key TEXT PRIMARY KEY)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT)'),
-    env.DB.prepare('CREATE TABLE IF NOT EXISTS exam_posts (id TEXT PRIMARY KEY, text TEXT NOT NULL, at INTEGER)')
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS exam_posts (id TEXT PRIMARY KEY, text TEXT NOT NULL, at INTEGER)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS updlog (at INTEGER, kind TEXT, chat TEXT, sample TEXT)')
   ]);
   ready = true;
 }
