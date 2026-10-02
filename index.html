@@ -438,8 +438,10 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .task-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--pc)}
 /* one-line add forms (tasks, exams): text, optional date, Add */
 .quick-add{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr) 150px auto;gap:8px;margin-bottom:10px;align-items:start}
-.quick-add .field{min-height:44px;font-size:15px}
-.quick-add .qa-name{min-height:40px;padding:8px 12px}
+.quick-add .field{height:46px;min-height:0;font-size:15px}
+.quick-add select.field{-webkit-appearance:none;appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.quick-add .btn{height:46px}
+.quick-add .qa-name{padding:8px 12px}
 .qa-label{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--muted);text-align:left;margin-bottom:-2px}
 .quick-add input[type=date]{width:150px}
 @media (max-width:640px){.quick-add{grid-template-columns:1fr 1fr}.quick-add .qa-name{grid-column:1/-1}.quick-add input[type=date]{width:100%}}
@@ -457,7 +459,11 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .task-row small.bits,.exam-row small.bits,.meta.bits{display:flex;flex-wrap:wrap;gap:0 12px}
 .task-row .late-t{color:var(--p-high);font-weight:700}
 .task-row b[data-task-pop],.exam-row b[data-exam-pop]{cursor:pointer}
-.pop-lecs{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:15px;text-align:left}
+.pop-lecs{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:2px;font-size:15px;text-align:left}
+.pop-lec{display:flex;gap:12px;align-items:center;padding:8px 6px;border-radius:12px;cursor:pointer}
+.pop-lec:hover{background:var(--tint)}
+.pop-lec input{width:22px;height:22px;flex:none;accent-color:var(--btn);margin:0}
+.pop-lec.done span{opacity:.6;text-decoration:line-through}
 /* theory / practical switch above the subject buttons */
 .kind-pick{border:0;margin:0;padding:3px;display:grid;grid-template-columns:1fr 1fr;background:var(--tint);border-radius:12px}
 .kind-pick label{position:relative;cursor:pointer}
@@ -1263,8 +1269,11 @@ function fillLecPicker(p) {
 const pickedLecs = p => [...$$('#' + p + 'Lecs input:checked')].map(i => i.value);
 const lecCount = x => (x.lectureIds || []).length;
 // "Ortho · 3 lectures"-style details for a task or exam, as separate spaced bits.
-const subjBits = x => (x.subj ? `<span dir="auto">${esc(x.subj)}</span>` : '') + (lecCount(x) ? `<span>${plural(lecCount(x), 'lecture')}</span>` : '');
-const lecNames = x => (x.lectureIds || []).map(id => Store.get(id)).filter(Boolean).map(l => `<li dir="auto"><b>${esc(lecLabel(l))}</b>${l.topic ? ' ' + esc(l.topic) : ''}${isDone(l) ? ' <span class="meta">(studied)</span>' : ''}</li>`).join('');
+const subjBits = x => (x.subj ? `<span dir="auto">${esc(x.subj)}</span>` : '') + (lecProgress(x) ? `<span>${lecProgress(x)}</span>` : '');
+const linkedLecs = x => (x.lectureIds || []).map(id => Store.get(id)).filter(Boolean);
+const lecNames = x => linkedLecs(x).map(l => `<li><label class="pop-lec${isDone(l) ? ' done' : ''}"><input type="checkbox" data-lec-done="${esc(l.id)}" ${isDone(l) ? 'checked' : ''} ${readOnly() ? 'disabled' : ''}><span dir="auto"><b>${esc(lecLabel(l))}</b>${l.topic ? ' ' + esc(l.topic) : ''}</span></label></li>`).join('');
+// "4/6 studied" once any linked lecture is done, otherwise "6 lectures"
+const lecProgress = x => { const ls_ = linkedLecs(x), d = ls_.filter(isDone).length; return ls_.length ? (d ? `${d}/${ls_.length} studied` : plural(ls_.length, 'lecture')) : ''; };
 
 function taskRow(k) {
   const ro = readOnly(), late = !k.done && k.due && k.due < todayStr();
@@ -1280,6 +1289,7 @@ function toggleTask(id) {
 }
 function openTaskPop(id) {
   const k = Extra.tasks.get(id); if (!k) return;
+  S.popAgain = () => openTaskPop(id);
   const ro = readOnly();
   showPop(`<h3 dir="auto">${esc(k.title)}</h3>
     <p class="meta bits"><span>${k.due ? esc(fmtDate(k.due)) : 'No date'}${k.done ? ', done' : ''}</span>${subjBits(k)}</p>
@@ -1311,6 +1321,7 @@ function examCard(ex) {
 
 function openExamPop(id) {
   const ex = Extra.exams.get(id); if (!ex) return;
+  S.popAgain = () => openExamPop(id);
   const left = daysBetween(todayStr(), ex.date);
   showPop(`<h3 dir="auto">${esc(ex.name)}</h3>
     <p class="meta bits"><span>${esc(fmtDate(ex.date))}, ${left < 0 ? 'done' : left === 0 ? 'today' : plural(left, 'day') + ' left'}</span>${subjBits(ex)}</p>
@@ -1637,7 +1648,7 @@ function showPop(html) {
   $('#gcPop').hidden = false;
 }
 function closePop() {
-  $('#gcPop').hidden = true;
+  $('#gcPop').hidden = true; S.popAgain = null;
   const a = document.activeElement; if (a && a.closest && a.closest('.pop-card')) a.blur();   // a hidden, focused field would otherwise pause re-rendering
   if (renderDeferred) setTimeout(render, 0);
 }
@@ -2043,6 +2054,7 @@ document.addEventListener('change', e => {
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'search') { S.search = t.value; renderChecklist(); }
+  if (t.dataset && t.dataset.lecDone) { const l = Store.get(t.dataset.lecDone); if (l && isDone(l) !== t.checked) toggleStudied(l.id); setTimeout(() => S.popAgain && !$('#gcPop').hidden && S.popAgain(), 0); return; }
   if (t.id === 'tkSubj' || t.id === 'exSubj') fillLecPicker(t.id.slice(0, 2));
   const lp = t.closest && t.closest('.lec-pick'); if (lp && t.type === 'checkbox') { const n = lp.querySelectorAll('input:checked').length; lp.querySelector('summary').textContent = n ? `Lectures (${n})` : 'Lectures'; }
   if (t.id === 'planTime') S.planTime = t.value;
