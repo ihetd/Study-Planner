@@ -46,30 +46,46 @@ async function handle(u, env) {
   const m = u.channel_post || u.edited_channel_post || u.message;
   if (!m || !m.chat) return;
   const now = Date.now(), db = env.DB;
+  const text = m.text || m.caption || '';
+  const isSchedule = /Group\s*A\s*[12]/i.test(text);
+  const name = (m.document && cleanName(m.document.file_name)) || '';
   let keys = [];
   if (m.chat.type === 'channel') {
     // remember the channel, so forwards from it can be trusted later
     for (const c of chatKeys(m.chat)) await db.prepare('INSERT OR IGNORE INTO chats (key) VALUES (?)').bind(c).run();
     keys = chatKeys(m.chat).map(c => `${c}/${m.message_id}`);
-  } else if (m.chat.type === 'private' && m.forward_origin && m.forward_origin.type === 'channel') {
-    // an older post forwarded to the bot by hand: only from a channel the bot is admin of
-    const origin = chatKeys(m.forward_origin.chat);
-    // trusted: a channel the bot is admin of, or a public channel the schedule's lecture links point to
-    const known = await db.prepare(`SELECT 1 FROM chats WHERE key IN (${origin.map(() => '?').join(',')})`).bind(...origin).first()
-      || (m.forward_origin.chat.username && await db.prepare('SELECT 1 FROM schedules WHERE lower(text) LIKE ?').bind(`%t.me/${m.forward_origin.chat.username.toLowerCase()}/%`).first());
-    if (!known) return reply(env, m, 'I only read lecture posts from the batch channels.');
-    keys = origin.map(c => `${c}/${m.forward_origin.message_id}`);
+  } else if (m.chat.type === 'private') {
+    // Private chat: only Hussein and زهرة. The first two people to message the bot become its owners.
+    if (!await isOwner(env, m.from && m.from.id)) return reply(env, m, 'This bot is private.');
+    if (isSchedule) keys = [`dm/${m.chat.id}/${m.message_id}`];
+    else if (m.forward_origin && m.forward_origin.type === 'channel' && name) keys = chatKeys(m.forward_origin.chat).map(c => `${c}/${m.forward_origin.message_id}`);
+    else return reply(env, m, 'Forward the daily schedule here and the lectures go straight to the app. You can also forward a lecture PDF to save its name.');
   } else return;
 
-  const text = m.text || m.caption || '';
-  const name = (m.document && cleanName(m.document.file_name)) || '';
   if (name) for (const k of keys) await db.prepare('INSERT OR REPLACE INTO names (key, name, at) VALUES (?, ?, ?)').bind(k, name, now).run();
-  if (/Group\s*A\s*[12]/i.test(text)) {
+  if (isSchedule) {
     const withLinks = inlineLinks(text, m.entities || m.caption_entities || []);
     await db.prepare('INSERT OR REPLACE INTO schedules (id, text, at) VALUES (?, ?, ?)').bind(keys[0], withLinks, now).run();
     await db.prepare('DELETE FROM schedules WHERE at < ?').bind(now - 30 * 864e5).run();
   }
-  if (m.chat.type === 'private') await reply(env, m, name ? `Saved: ${name} ✔` : 'Nothing to save in that post.');
+  if (m.chat.type !== 'private') return;
+  if (isSchedule) {
+    const n = (text.match(/المحاضرة\s+\S+\s*:/g) || []).length, day = (text.match(/المصادف\s*([\d٠-٩]{1,2}\s*\/\s*[\d٠-٩]{1,2})/) || [])[1];
+    const links = (withLinksCount(text, m.entities || m.caption_entities || []));
+    return reply(env, m, `Got it: ${n} lecture${n === 1 ? '' : 's'}${day ? ' for ' + day.replace(/\s/g, '') : ''}. They will show up in the app${links ? '' : ' (no lecture links were attached, so names stay empty; forward the message instead of copying it)'}.`);
+  }
+  return reply(env, m, `Saved: ${name}`);
+}
+const withLinksCount = (text, entities) => entities.filter(e => e.type === 'text_link' || e.type === 'url').length;
+async function isOwner(env, id) {
+  if (!id) return false;
+  const row = await env.DB.prepare("SELECT v FROM settings WHERE k = 'owners'").first();
+  const owners = row ? JSON.parse(row.v) : [];
+  if (owners.includes(id)) return true;
+  if (owners.length >= 2) return false;
+  owners.push(id);
+  await env.DB.prepare("INSERT OR REPLACE INTO settings (k, v) VALUES ('owners', ?)").bind(JSON.stringify(owners)).run();
+  return true;
 }
 
 // t.me link forms for a chat: public username and the private "c/<id>" form.
@@ -103,7 +119,8 @@ async function schema(env) {
   await env.DB.batch([
     env.DB.prepare('CREATE TABLE IF NOT EXISTS names (key TEXT PRIMARY KEY, name TEXT NOT NULL, at INTEGER)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS schedules (id TEXT PRIMARY KEY, text TEXT NOT NULL, at INTEGER)'),
-    env.DB.prepare('CREATE TABLE IF NOT EXISTS chats (key TEXT PRIMARY KEY)')
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS chats (key TEXT PRIMARY KEY)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT)')
   ]);
   ready = true;
 }
