@@ -1,7 +1,7 @@
 // Network-first service worker: always loads the newest version when online,
 // falls back to the cached copy so the installed app still opens offline.
 // Cross-origin requests (Firebase, fonts, Google) are left to the network.
-const CACHE = 'study-planner-v1';
+const CACHE = 'study-planner-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './assets/peony.png', './assets/icon-192.png', './assets/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
