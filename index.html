@@ -991,6 +991,7 @@ const CloudBackend = {
   // Writes resolve on the server ack, but the local cache fires onSnapshot
   // instantly, so the UI never waits on the network.
   upsert(list) {
+    list.forEach(l => Store.map.set(l.id, { ...(Store.get(l.id) || {}), ...l })); Store.emit();   // visible now, before the server answers
     const b = this.db.batch();
     list.forEach(l => b.set(this.db.collection('lectures').doc(l.id), l, { merge: true }));
     return b.commit().catch(e => toast('Not synced: ' + e.message));
@@ -999,6 +1000,7 @@ const CloudBackend = {
     return this.db.collection('lectures').doc(id).update(patch).catch(e => toast('Not synced: ' + e.message));
   },
   removeLectures(ids) {
+    ids.forEach(id => Store.map.delete(id)); Store.emit();
     const b = this.db.batch();
     ids.forEach(id => b.delete(this.db.collection('lectures').doc(id)));
     return b.commit().catch(e => toast('Not synced: ' + e.message));
@@ -1247,15 +1249,27 @@ async function dedupeLectures() {
     g.sort((a, b) => score(b) - score(a) || (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.createdAt || 0) - (b.createdAt || 0)));
     g.slice(1).forEach(l => { drop.push(l.id); moveTo[l.id] = g[0].id; });
   });
-  if (!drop.length) return;
+  // exams with the same name and date are one exam
+  const exGroups = {}, exDrop = [];
+  [...Extra.exams.values()].filter(e => e.owner === S.me).forEach(e => { const k = sameName(e.name) + '|' + e.date; (exGroups[k] = exGroups[k] || []).push(e); });
+  Object.values(exGroups).filter(g => g.length > 1).forEach(g => {
+    g.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const all = [...new Set(g.flatMap(e => e.lectureIds || []))];
+    g[0].lectureIds = all;   // merged below, together with the lecture moves
+    g.slice(1).forEach(e => exDrop.push(e.id));
+  });
+  if (!drop.length && !exDrop.length) return;
   dedupeBusy = true;
   try {
     for (const c of ['tasks', 'exams']) for (const x of Extra[c].values()) {
-      if (x.owner !== S.me || !(x.lectureIds || []).some(id => moveTo[id])) continue;
-      await Backend.patch(c, x.id, { lectureIds: [...new Set(x.lectureIds.map(id => moveTo[id] || id))] });
+      if (x.owner !== S.me || exDrop.includes(x.id)) continue;
+      const ids = [...new Set((x.lectureIds || []).map(id => moveTo[id] || id))];
+      if (ids.join() !== (x.lectureIds || []).join() || (c === 'exams' && Object.values(exGroups).some(g => g.length > 1 && g[0].id === x.id)))
+        await Backend.patch(c, x.id, { lectureIds: ids });
     }
-    await Backend.removeLectures(drop);
-    toast(`Removed ${plural(drop.length, 'duplicate lecture')}`);
+    for (const id of exDrop) await Backend.del('exams', id);
+    if (drop.length) await Backend.removeLectures(drop);
+    toast('Removed ' + [drop.length && plural(drop.length, 'duplicate lecture'), exDrop.length && plural(exDrop.length, 'duplicate exam')].filter(Boolean).join(' and '));
   } finally { dedupeBusy = false; }
 }
 
