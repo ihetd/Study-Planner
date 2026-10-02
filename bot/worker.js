@@ -35,7 +35,8 @@ export default {
       const names = {}, schedules = [];
       (await env.DB.prepare('SELECT key, name FROM names').all()).results.forEach(r => { names[r.key] = r.name; });
       (await env.DB.prepare('SELECT id, text, at FROM schedules ORDER BY at DESC LIMIT 10').all()).results.forEach(r => schedules.push(r));
-      return json({ names, schedules });
+      const exams = (await env.DB.prepare('SELECT id, text, at FROM exam_posts ORDER BY at DESC LIMIT 20').all()).results;
+      return json({ names, schedules, exams });
     }
     if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors, 'Access-Control-Allow-Methods': 'GET' } });
     return json({ ok: true, hint: 'Study Planner bot. Open /setup once after deploying.' });
@@ -47,7 +48,9 @@ async function handle(u, env) {
   if (!m || !m.chat) return;
   const now = Date.now(), db = env.DB;
   const text = m.text || m.caption || '';
-  const isSchedule = /Group\s*A\s*[12]/i.test(text);
+  const isSchedule = /Group\s*A\s*[12]/i.test(text) && /المحاضرة/.test(text);
+  // an exam announcement: exam words plus a date, and not a lecture schedule
+  const isExam = !isSchedule && /امتحان|اختبار|امتحانات|كويز|كوز|\bexam|\bquiz|\btest\b|midterm|final/i.test(text) && /[\d٠-٩]{1,2}\s*[\/\-.]\s*[\d٠-٩]{1,2}/.test(text);
   const name = (m.document && cleanName(m.document.file_name)) || '';
   let keys = [];
   if (m.chat.type === 'channel') {
@@ -57,9 +60,9 @@ async function handle(u, env) {
   } else if (m.chat.type === 'private') {
     // Private chat: only Hussein and زهرة. The first two people to message the bot become its owners.
     if (!await isOwner(env, m.from && m.from.id)) return reply(env, m, 'This bot is private.');
-    if (isSchedule) keys = [`dm/${m.chat.id}/${m.message_id}`];
+    if (isSchedule || isExam) keys = [`dm/${m.chat.id}/${m.message_id}`];
     else if (m.forward_origin && m.forward_origin.type === 'channel' && name) keys = chatKeys(m.forward_origin.chat).map(c => `${c}/${m.forward_origin.message_id}`);
-    else return reply(env, m, 'Forward the daily schedule here and the lectures go straight to the app. You can also forward a lecture PDF to save its name.');
+    else return reply(env, m, 'Forward the daily schedule here and the lectures go straight to the app. Exam announcements (with the date and the group, A1 or A2) become exams. You can also forward a lecture PDF to save its name.');
   } else return;
 
   if (name) for (const k of keys) await db.prepare('INSERT OR REPLACE INTO names (key, name, at) VALUES (?, ?, ?)').bind(k, name, now).run();
@@ -68,7 +71,17 @@ async function handle(u, env) {
     await db.prepare('INSERT OR REPLACE INTO schedules (id, text, at) VALUES (?, ?, ?)').bind(keys[0], withLinks, now).run();
     await db.prepare('DELETE FROM schedules WHERE at < ?').bind(now - 30 * 864e5).run();
   }
+  if (isExam) {
+    await db.prepare('INSERT OR REPLACE INTO exam_posts (id, text, at) VALUES (?, ?, ?)').bind(keys[0], text, now).run();
+    await db.prepare('DELETE FROM exam_posts WHERE at < ?').bind(now - 60 * 864e5).run();
+  }
   if (m.chat.type !== 'private') return;
+  if (isExam) {
+    const t = text.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    const day = (t.match(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/) || [])[0];
+    const groups = ['A1', 'A2'].filter(g => new RegExp('\\b' + g[0] + '\\s*' + g[1] + '\\b', 'i').test(t));
+    return reply(env, m, `Exam saved${day ? ' for ' + day.replace(/\s/g, '') : ''}, ${groups.length === 1 ? 'group ' + groups[0] : 'both groups'}. It will show in the app.`);
+  }
   if (isSchedule) {
     const n = (text.match(/المحاضرة\s+\S+\s*:/g) || []).length, day = (text.match(/المصادف\s*([\d٠-٩]{1,2}\s*\/\s*[\d٠-٩]{1,2})/) || [])[1];
     const links = (withLinksCount(text, m.entities || m.caption_entities || []));
@@ -120,7 +133,8 @@ async function schema(env) {
     env.DB.prepare('CREATE TABLE IF NOT EXISTS names (key TEXT PRIMARY KEY, name TEXT NOT NULL, at INTEGER)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS schedules (id TEXT PRIMARY KEY, text TEXT NOT NULL, at INTEGER)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS chats (key TEXT PRIMARY KEY)'),
-    env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT)')
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS exam_posts (id TEXT PRIMARY KEY, text TEXT NOT NULL, at INTEGER)')
   ]);
   ready = true;
 }

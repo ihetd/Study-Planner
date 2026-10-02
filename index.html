@@ -202,6 +202,7 @@ h2.sec .sp{flex:1}
 .tag.rev{background:var(--ok-tint);color:var(--ok)}
 .tag.late{background:var(--warn-tint);color:var(--warn)}
 .tag.plan{background:var(--tint);color:var(--muted)}
+.tag.prac{background:var(--ok-tint);color:var(--ok)}
 .topic{width:100%;border:0;border-bottom:1.5px solid transparent;background:transparent;padding:3px 0;margin:2px 0 0;font-size:15px;border-radius:0}
 .lec:hover .topic,.topic:placeholder-shown{border-bottom-color:var(--line)}
 .topic:focus{outline:none;border-bottom-color:var(--brand-3)}
@@ -435,13 +436,35 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .task-row{position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--surface);border-radius:16px;padding:10px 10px 10px 16px;box-shadow:var(--shadow)}
 .task-row{--pc:var(--brand-3)}
 .task-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--pc)}
-.task-row.late small{color:var(--p-high);font-weight:700}
 /* one-line add forms (tasks, exams): text, optional date, Add */
-.quick-add{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-bottom:10px}
-.quick-add .field{min-height:46px}
+.quick-add{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr) 150px auto;gap:8px;margin-bottom:10px;align-items:start}
+.quick-add .field{min-height:44px;font-size:15px}
+.quick-add .qa-name{min-height:40px;padding:8px 12px}
 .qa-label{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--muted);text-align:left;margin-bottom:-2px}
 .quick-add input[type=date]{width:150px}
-@media (max-width:480px){.quick-add{grid-template-columns:1fr auto}.quick-add .qa-label+.field{grid-column:1/-1}.quick-add input[type=date]{width:100%}}
+@media (max-width:640px){.quick-add{grid-template-columns:1fr 1fr}.quick-add .qa-name{grid-column:1/-1}.quick-add input[type=date]{width:100%}}
+/* lectures picker: a dropdown list of the chosen subject's lectures */
+.lec-pick{position:relative;min-width:0}
+.lec-pick summary{list-style:none;cursor:pointer;display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lec-pick summary::-webkit-details-marker{display:none}
+.lec-pick summary::after{content:"";margin-left:auto;width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);flex:none}
+.lp-list{position:absolute;z-index:30;top:calc(100% + 6px);right:0;width:max(100%,260px);max-height:280px;overflow:auto;background:var(--surface);border-radius:12px;box-shadow:var(--lift);padding:6px;border:1px solid var(--line)}
+@media (max-width:640px){.lp-list{width:min(320px,calc(100vw - 32px))}.quick-add .lec-pick:nth-of-type(n){grid-column:auto}}
+.lp-list .meta{margin:8px;font-size:14px}
+.lp-item{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:9px;cursor:pointer;font-size:14px;text-align:left}
+.lp-item:hover{background:var(--tint)}
+.lp-item input{width:18px;height:18px;margin-top:1px;accent-color:var(--btn);flex:none}
+.task-row small.bits,.exam-row small.bits,.meta.bits{display:flex;flex-wrap:wrap;gap:0 12px}
+.task-row .late-t{color:var(--p-high);font-weight:700}
+.task-row b[data-task-pop],.exam-row b[data-exam-pop]{cursor:pointer}
+.pop-lecs{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:15px;text-align:left}
+/* theory / practical switch above the subject buttons */
+.kind-pick{border:0;margin:0;padding:3px;display:grid;grid-template-columns:1fr 1fr;background:var(--tint);border-radius:12px}
+.kind-pick label{position:relative;cursor:pointer}
+.kind-pick input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.kind-pick span{display:flex;justify-content:center;align-items:center;min-height:40px;border-radius:9px;font-weight:700;font-size:15px;color:var(--muted)}
+.kind-pick input:checked+span{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+.kind-pick input:focus-visible+span{outline:3px solid var(--brand-4);outline-offset:2px}
 .exam-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 10px 10px 12px}
 .exam-row b{display:block;font-size:16px;text-align:left}
 .exam-row small{display:block;color:var(--muted);font-size:13px;text-align:left}
@@ -653,6 +676,11 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
       </div>
       <form class="manual" id="manualForm">
         <h2 class="sec" style="margin:0">Add a lecture by hand</h2>
+        <fieldset class="kind-pick">
+          <legend class="sr-only">Lecture type</legend>
+          <label><input type="radio" name="mKind" value="theory" checked><span>Theory</span></label>
+          <label><input type="radio" name="mKind" value="practical"><span>Practical</span></label>
+        </fieldset>
         <fieldset class="subj-pick">
           <legend>Subject</legend>
           <label class="s1"><input type="radio" name="mSubj" value="Ortho" checked><span>Ortho</span></label>
@@ -1112,7 +1140,7 @@ function computeSeq() {
   Store.all().sort(byDateOrder).forEach(l => slot(l.subject));
   [...Extra.exams.values()].forEach(e => slot(e.subj)); [...Extra.tasks.values()].forEach(t => slot(t.subj));
   Store.all().sort(byDateOrder).forEach(l => {
-    const k = l.group + '|' + l.subject.trim().toLowerCase();
+    const k = l.group + '|' + l.subject.trim().toLowerCase() + (l.kind === 'practical' ? '|p' : '');
     counters[k] = (counters[k] || 0) + 1;
     seqMap.set(l.id, counters[k]);
   });
@@ -1164,6 +1192,7 @@ function card(l, opts = {}) {
   const late = !done && eff(l) < t;
   const tags = [
     (() => { const rs = reviewsOf(l), n = rs.filter(r => r.done).length; return rs.length ? `<span class="tag rev" title="Spaced-repetition reviews done">${ic('arrows-clockwise')}${n}/${rs.length}</span>` : ''; })(),
+    isPractical(l) ? '<span class="tag prac">Practical</span>' : '',
     late ? (opts.catchUp ? `<span class="tag plan">from ${esc(relDate(eff(l)))}</span>` : `<span class="tag late">overdue</span>`) : '',
     l.planDate && l.planDate !== l.date && !opts.unplan && !late ? `<span class="tag plan">${l.planDate === t && l.date < t ? `from ${esc(relDate(l.date))}` : `planned ${esc(relDate(l.planDate))}`}</span>` : '',
     l.planTime ? `<span class="tag time"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${esc(l.planTime)}</span>` : ''
@@ -1220,11 +1249,28 @@ function revRow(r) {
 const myTasks = () => [...Extra.tasks.values()].filter(t => t.owner === S.viewing);
 const byDue = (a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (a.createdAt || 0) - (b.createdAt || 0);
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// Lectures picker for tasks and exams: lists only the chosen subject's lectures.
+const lecPicker = p => `<details class="lec-pick" id="${p}Lecs"><summary class="field">Lectures</summary><div class="lp-list"><p class="meta">Choose a subject first.</p></div></details>`;
+function fillLecPicker(p) {
+  const subj = $('#' + p + 'Subj').value, box = $('#' + p + 'Lecs');
+  if (!box) return;
+  const list = subj ? mine().filter(l => l.subject === subj).sort(byDateOrder) : [];
+  box.querySelector('.lp-list').innerHTML = !subj ? '<p class="meta">Choose a subject first.</p>' : list.length
+    ? list.map(l => `<label class="lp-item"><input type="checkbox" value="${esc(l.id)}"><span dir="auto"><b>${esc(lecLabel(l))}</b>${l.topic ? ' ' + esc(l.topic) : ''}</span></label>`).join('')
+    : `<p class="meta">No ${esc(subj)} lectures yet.</p>`;
+  box.querySelector('summary').textContent = 'Lectures';
+}
+const pickedLecs = p => [...$$('#' + p + 'Lecs input:checked')].map(i => i.value);
+const lecCount = x => (x.lectureIds || []).length;
+// "Ortho · 3 lectures"-style details for a task or exam, as separate spaced bits.
+const subjBits = x => (x.subj ? `<span dir="auto">${esc(x.subj)}</span>` : '') + (lecCount(x) ? `<span>${plural(lecCount(x), 'lecture')}</span>` : '');
+const lecNames = x => (x.lectureIds || []).map(id => Store.get(id)).filter(Boolean).map(l => `<li dir="auto"><b>${esc(lecLabel(l))}</b>${l.topic ? ' ' + esc(l.topic) : ''}${isDone(l) ? ' <span class="meta">(studied)</span>' : ''}</li>`).join('');
+
 function taskRow(k) {
   const ro = readOnly(), late = !k.done && k.due && k.due < todayStr();
   return `<div class="task-row${k.done ? ' done' : ''}${late ? ' late' : ''}" data-task="${esc(k.id)}">
     <button class="tcheck" type="button" data-task-check="${esc(k.id)}" aria-pressed="${!!k.done}" aria-label="Mark ${esc(k.title)} ${k.done ? 'not done' : 'done'}" ${ro ? 'disabled' : ''}>${CHECK_SVG}</button>
-    <div><b dir="auto">${esc(k.title)}</b>${k.due ? `<small>${late ? 'overdue, ' : ''}${esc(relDate(k.due))}</small>` : ''}</div>
+    <div><b dir="auto" data-task-pop="${esc(k.id)}">${esc(k.title)}</b>${k.due || k.subj || lecCount(k) ? `<small class="bits">${k.due ? `<span class="${late ? 'late-t' : ''}">${late ? 'overdue, ' : ''}${esc(relDate(k.due))}</span>` : ''}${subjBits(k)}</small>` : ''}</div>
     ${ro ? '<span></span>' : `<button class="icon-btn" type="button" data-task-del="${esc(k.id)}" aria-label="Delete task">${ic('x')}</button>`}</div>`;
 }
 function toggleTask(id) {
@@ -1236,7 +1282,8 @@ function openTaskPop(id) {
   const k = Extra.tasks.get(id); if (!k) return;
   const ro = readOnly();
   showPop(`<h3 dir="auto">${esc(k.title)}</h3>
-    <p class="meta">${k.due ? esc(fmtDate(k.due)) : 'No date'}${k.done ? ', done' : ''}</p>
+    <p class="meta bits"><span>${k.due ? esc(fmtDate(k.due)) : 'No date'}${k.done ? ', done' : ''}</span>${subjBits(k)}</p>
+    ${lecCount(k) ? `<ul class="pop-lecs">${lecNames(k)}</ul>` : ''}
     ${ro ? '' : `<div class="pop-btns"><button class="btn" type="button" data-task-check="${esc(k.id)}" data-close-pop>${k.done ? 'Mark not done' : `${ic('check')}Mark done`}</button>
       <button class="btn ghost" type="button" data-task-del="${esc(k.id)}" data-close-pop>Delete</button></div>`}`);
 }
@@ -1258,10 +1305,17 @@ function examCard(ex) {
   const left = daysBetween(todayStr(), ex.date), ro = readOnly() || ex.owner !== S.me;
   return `<div class="exam-row">
     <div class="exam-count"><b>${left <= 0 ? ic('check') : left}</b><small>${left < 0 ? 'done' : left === 0 ? 'today' : left === 1 ? 'day left' : 'days left'}</small></div>
-    <div><b dir="auto">${esc(ex.name)}</b><small>${esc(fmtDate(ex.date))}</small></div>
+    <div><b dir="auto" data-exam-pop="${esc(ex.id)}">${esc(ex.name)}</b><small class="bits"><span>${esc(fmtDate(ex.date))}</span>${subjBits(ex)}</small></div>
     ${ro ? '<span></span>' : `<button class="icon-btn" type="button" data-exam-del="${esc(ex.id)}" aria-label="Delete exam ${esc(ex.name)}">${ic('x')}</button>`}</div>`;
 }
 
+function openExamPop(id) {
+  const ex = Extra.exams.get(id); if (!ex) return;
+  const left = daysBetween(todayStr(), ex.date);
+  showPop(`<h3 dir="auto">${esc(ex.name)}</h3>
+    <p class="meta bits"><span>${esc(fmtDate(ex.date))}, ${left < 0 ? 'done' : left === 0 ? 'today' : plural(left, 'day') + ' left'}</span>${subjBits(ex)}</p>
+    ${lecCount(ex) ? `<ul class="pop-lecs">${lecNames(ex)}</ul>` : '<p class="meta">No lectures linked.</p>'}`);
+}
 function renderTasks() {
   const t = todayStr(), ro = readOnly(), all = myTasks(), exams = myExams().filter(e => e.date >= t);
   const open = all.filter(k => !k.done).sort(byDue);
@@ -1270,7 +1324,9 @@ function renderTasks() {
     <h2 class="sec">Tasks <span class="count">${open.length}</span></h2>
     ${ro ? '' : `<form class="quick-add" id="taskForm">
       <label class="qa-label" for="tkTitle">New task</label>
-      <input class="field" id="tkTitle" dir="auto" required maxlength="120">
+      <input class="field qa-name" id="tkTitle" dir="auto" required maxlength="120">
+      <select class="field" id="tkSubj" aria-label="Subject">${subjOptions('', 'Subject')}</select>
+      ${lecPicker('tk')}
       <input class="field" id="tkDue" type="date" aria-label="Date (optional)">
       <button class="btn" type="submit">${ic('plus')}Add</button></form>`}
     ${open.length ? `<div class="list">${open.map(taskRow).join('')}</div>` : `<div class="empty"><span class="em">${ic('check-square')}</span>${all.length ? 'All tasks done.' : 'No tasks yet.'}</div>`}
@@ -1278,7 +1334,9 @@ function renderTasks() {
     <h2 class="sec">Exams <span class="count">${exams.length}</span></h2>
     ${ro ? '' : `<form class="quick-add" id="examForm">
       <label class="qa-label" for="exName">New exam</label>
-      <input class="field" id="exName" dir="auto" required maxlength="80">
+      <input class="field qa-name" id="exName" dir="auto" required maxlength="80">
+      <select class="field" id="exSubj" aria-label="Subject">${subjOptions('', 'Subject')}</select>
+      ${lecPicker('ex')}
       <input class="field" id="exDate" type="date" min="${t}" required aria-label="Exam date">
       <button class="btn" type="submit">${ic('plus')}Add</button></form>`}
     ${exams.length ? `<div class="list">${exams.map(examCard).join('')}</div>` : `<div class="empty"><span class="em">${ic('graduation-cap')}</span>No exams coming up.</div>`}`;
@@ -1434,13 +1492,14 @@ const GC = { H0: 6, H1: 24, ROW: 48 };
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const fromMin = m => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
-const lecLabel = l => `${l.subject} #${seqMap.get(l.id) || 1}`;
+const isPractical = l => l.kind === 'practical';
+const lecLabel = l => `${l.subject}${isPractical(l) ? ' Practical' : ''} #${seqMap.get(l.id) || 1}`;
 // Planned lectures that share a day + time form one study block (one event).
 // Tasks, pending reviews and exams for a day, as calendar chips.
 // Calendar chips carry a full label and a short one ("Or 3") for narrow phone cells.
 const subjShort = s => { const w = s.trim(); return /^[A-Z]{2,3}$/.test(w) ? w : w.slice(0, 2); };
 const chipTxt = (full, short) => `<span class="cf">${full}</span><span class="cs" aria-hidden="true">${short}</span>`;
-const lecChip = (l, d, t) => `<span tabindex="0" role="button" class="gc-chip${isDone(l) ? ' done' : d < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${chipTxt(esc(lecLabel(l)), esc(subjShort(l.subject) + ' ' + (seqMap.get(l.id) || 1)))}</span>`;
+const lecChip = (l, d, t) => `<span tabindex="0" role="button" class="gc-chip${isDone(l) ? ' done' : d < t ? ' late' : ''}" data-gc-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}">${chipTxt(esc(lecLabel(l)), esc(subjShort(l.subject) + (isPractical(l) ? ' P' : ' ') + (seqMap.get(l.id) || 1)))}</span>`;
 function extraChips(d) {
   return [
     ...myExams().filter(e => e.date === d).map(e => `<span tabindex="0" role="button" class="gc-chip gc-exam" data-go="tasks" style="--sc:${subjColor(e.subj || e.name)}">${chipTxt(ic('graduation-cap') + esc(e.name), ic('graduation-cap'))}</span>`),
@@ -1728,6 +1787,25 @@ function scheduleDocs(p) {
 /* ---------------------------- Telegram bot ---------------------------- */
 // t.me/<channel>/<post> and t.me/c/<id>/[<thread>/]<post> → "channel/post", the bot's key.
 const linkKey = u => { const m = String(u || '').match(/^https?:\/\/(?:t|telegram)\.me\/(?:s\/)?(c\/\d+|[A-Za-z0-9_]{4,})(?:\/\d+)*\/(\d+)/i); return m ? `${m[1].toLowerCase()}/${m[2]}` : ''; };
+// An exam announcement → { date, groups, subj, name }. Needs a day/month date; the group
+// (A1/A2) decides whose app adds it, and no group means both. Returns null if there's no date.
+function parseExamPost(text) {
+  const t = toLatinDigits(String(text || ''));
+  let date = '';
+  for (const [, d, m, y] of t.matchAll(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})(?:\s*[\/\-.]\s*(\d{2,4}))?/g)) {
+    if (+m < 1 || +m > 12 || +d < 1 || +d > 31) continue;
+    const yr = y ? (+y < 100 ? 2000 + +y : +y) : new Date().getFullYear();
+    date = `${yr}-${pad(+m)}-${pad(+d)}`;
+    if (!y && date < addDays(todayStr(), -60)) date = `${yr + 1}-${pad(+m)}-${pad(+d)}`;
+    break;
+  }
+  if (!date) return null;
+  const groups = ['A1', 'A2'].filter(g => new RegExp(`\\b${g[0]}\\s*${g[1]}\\b`, 'i').test(t));
+  const subj = normAr(t).split(/[\s,:،()\/\-]+/).map(w => canonSubj(w.replace(/^(ال|لل|بال)/, ''))).find(x => SUBJECTS.includes(x)) || '';   // العظام → عظام → Ortho
+  const type = /كويز|كوز|quiz/i.test(t) ? 'quiz' : /final|نهائي|فاينل/i.test(t) ? 'final' : /mid|ميد|منتصف/i.test(t) ? 'midterm' : 'exam';
+  return { date, groups: groups.length ? groups : ['A1', 'A2'], subj, name: `${subj || 'Exam'}${subj || type !== 'exam' ? ' ' + type : ''}`.trim() };
+}
+
 const Bot = {
   names: {}, busy: false, at: 0,
   nameFor(link) { const n = this.names[linkKey(link)]; return n ? pdfToTopic(n) : ''; },
@@ -1750,6 +1828,19 @@ const Bot = {
         seen.push(sc.id);
       }
       ls.set('sp.botSeen', seen.slice(-60));
+      // Exam announcements: each person's app adds the ones for their own group.
+      const seenEx = ls.get('sp.botExamSeen.' + S.me, []), myGroup = USERS[S.me].group;
+      let exams = 0;
+      for (const p of j.exams || []) {
+        if (seenEx.includes(p.id)) continue;
+        seenEx.push(p.id);
+        const x = parseExamPost(p.text);
+        if (!x || !x.groups.includes(myGroup)) continue;
+        const id = 'tg_' + p.id.replace(/[^A-Za-z0-9]/g, '_') + '_' + S.me;
+        if (!Extra.exams.get(id)) { await Backend.put('exams', { id, owner: S.me, name: x.name, date: x.date, subj: x.subj, lectureIds: [], source: 'telegram', createdAt: Date.now() }); exams++; }
+      }
+      ls.set('sp.botExamSeen.' + S.me, seenEx.slice(-80));
+      if (exams) toast(`${plural(exams, 'exam')} added from Telegram`);
       for (const l of Store.all()) {
         if (l.topic || !l.link) continue;
         const n = this.nameFor(l.link);
@@ -1768,14 +1859,14 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'taskForm') {
     e.preventDefault(); if (readOnly()) return;
     const title = $('#tkTitle').value.trim(); if (!title) return;
-    Backend.put('tasks', { id: newId('t'), owner: S.me, title, due: $('#tkDue').value || null, done: false, doneAt: null, createdAt: Date.now() });
+    Backend.put('tasks', { id: newId('t'), owner: S.me, title, due: $('#tkDue').value || null, subj: $('#tkSubj').value, lectureIds: pickedLecs('tk'), done: false, doneAt: null, createdAt: Date.now() });
     $('#tkTitle').value = ''; document.activeElement.blur();
     toast('Task added'); renderTasks();
   }
   if (e.target.id === 'examForm') {
     e.preventDefault(); if (readOnly()) return;
     const name = $('#exName').value.trim(), date = $('#exDate').value; if (!name || !date) return;
-    Backend.put('exams', { id: newId('e'), owner: S.me, name, date, createdAt: Date.now() });
+    Backend.put('exams', { id: newId('e'), owner: S.me, name, date, subj: $('#exSubj').value, lectureIds: pickedLecs('ex'), createdAt: Date.now() });
     document.activeElement.blur();
     toast(`${name} added, ${daysBetween(todayStr(), date)} days to go`); renderTasks();
   }
@@ -1786,13 +1877,14 @@ document.addEventListener('submit', e => {
   if (e.target.id !== 'manualForm') return;
   e.preventDefault();
   const subject = canonSubj(($('input[name=mSubj]:checked') || {}).value); if (!subject) return;
+  const practical = ($('input[name=mKind]:checked') || {}).value === 'practical';
   if (!S.me) return;
   const owner = S.me, group = USERS[owner].group, date = todayStr();
   const order = Math.max(0, ...Store.all().filter(l => l.date === date && l.group === group).map(l => l.order)) + 1;
   Backend.upsert([{ id: `${date}_${group}_m${Date.now().toString(36)}`, date, group, owner, order, subject, topic: $('#mTopic').value.trim(),
-    link: '', status: 'pending', studiedAt: null, planDate: null, planTime: null, createdAt: Date.now(), manual: true }]);
+    link: '', status: 'pending', studiedAt: null, planDate: null, planTime: null, createdAt: Date.now(), manual: true, ...(practical ? { kind: 'practical' } : {}) }]);
   $('#mTopic').value = '';
-  toast(`Added ${subject}`);
+  toast(`Added ${subject}${practical ? ' practical' : ''}`);
 });
 
 /* ============================ EVENTS ============================ */
@@ -1816,6 +1908,8 @@ document.addEventListener('click', e => {
   const td = t.closest('[data-task-del]');
   if (td) { if (t.closest('[data-close-pop]')) closePop(); const k = Extra.tasks.get(td.dataset.taskDel); if (k && !readOnly() && confirm(`Delete "${k.title}"?`)) Backend.del('tasks', k.id); return; }
   const tp = t.closest('[data-task-pop]'); if (tp) return openTaskPop(tp.dataset.taskPop);
+  const xp = t.closest('[data-exam-pop]'); if (xp) return openExamPop(xp.dataset.examPop);
+  if (!t.closest('.lec-pick')) $$('.lec-pick[open]').forEach(d => d.open = false);   // tap outside closes the lectures list
   const rv = t.closest('[data-review]'); if (rv) { if (t.closest('[data-close-pop]')) closePop(); const [id, n] = rv.dataset.review.split('|'); return markReviewed(id, +n); }
   const rp = t.closest('[data-rev-pop]'); if (rp) { const [id, n] = rp.dataset.revPop.split('|'); return openRevPop(id, n); }
   const ed = t.closest('[data-exam-del]');
@@ -1907,6 +2001,8 @@ document.addEventListener('change', e => {
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'search') { S.search = t.value; renderChecklist(); }
+  if (t.id === 'tkSubj' || t.id === 'exSubj') fillLecPicker(t.id.slice(0, 2));
+  const lp = t.closest && t.closest('.lec-pick'); if (lp && t.type === 'checkbox') { const n = lp.querySelectorAll('input:checked').length; lp.querySelector('summary').textContent = n ? `Lectures (${n})` : 'Lectures'; }
   if (t.id === 'planTime') S.planTime = t.value;
   if (t.id === 'planDur') S.planDur = +t.value;
 });
