@@ -462,6 +462,11 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .task-row small.bits,.exam-row small.bits,.meta.bits{display:flex;flex-wrap:wrap;gap:0 12px}
 .task-row .late-t{color:var(--p-high);font-weight:700}
 .task-row b[data-task-pop],.exam-row b[data-exam-pop]{cursor:pointer}
+.pick-list{display:grid;gap:6px;margin:10px 0;max-height:50vh;overflow:auto}
+.pick-done{display:grid;gap:2px;text-align:left;border:0;border-left:4px solid var(--sc);background:var(--tint);border-radius:12px;padding:10px 12px;color:var(--text);font-size:15px;cursor:pointer}
+.pick-done span{font-size:14px;color:var(--muted)}
+.pick-done:hover{background:var(--tint-2)}
+.pick-list details summary{cursor:pointer;margin:6px 0}
 .pop-lecs{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:2px;font-size:15px;text-align:left}
 .pop-lec{display:flex;gap:12px;align-items:center;padding:8px 6px;border-radius:12px;cursor:pointer}
 .pop-lec:hover{background:var(--tint)}
@@ -1107,11 +1112,37 @@ function openFreeSheet() {
 function stopSession(markDone, quiet) {
   const x = Sessions.live[S.me]; if (!x || !x.startedAt) return;
   const end = x.pausedAt || Date.now(), mins = Math.round(elapsed(x) / 60000);
-  if (mins >= 1) Backend.addLog({ user: S.me, lectureId: x.lectureId || null, subject: x.seq ? `${x.subject} #${x.seq}` : x.subject || '', subj: x.subject || 'Free session',
-    mode: x.mode || 'watch', pomos: x.pomos || 0, start: x.startedAt, end, mins, day: ymd(new Date(x.startedAt)) });
+  const entry = { user: S.me, lectureId: x.lectureId || null, subject: x.seq ? `${x.subject} #${x.seq}` : x.subject || '', subj: x.subject || 'Free session',
+    mode: x.mode || 'watch', pomos: x.pomos || 0, start: x.startedAt, end, mins, day: ymd(new Date(x.startedAt)) };
   Backend.setLive(S.me, { lectureId: null, subject: '', seq: null, startedAt: null, pausedAt: null, pausedMs: 0, mode: null, pomos: 0, brkUntil: null, brkOver: false });
-  if (markDone && x.lectureId) { const l = Store.get(x.lectureId); if (l && !isDone(l)) toggleStudied(x.lectureId); }
+  // Done on a timer with no lecture: ask which lecture was finished, then save the time to it.
+  if (markDone && !x.lectureId) return pickFinished(entry);
+  if (mins >= 1) Backend.addLog(entry);
+  // Done: the lecture counts as studied, and that's the message you see ("Ophtho #1 studied, 49 min")
+  if (markDone && x.lectureId) { const l = Store.get(x.lectureId); if (l && !isDone(l)) { S.lastMins = mins; toggleStudied(x.lectureId); return; } }
   if (!quiet) toast(mins >= 1 ? `Session saved · ${fmtMins(mins)}` : 'Session cancelled (under 1 min)');
+}
+function pickFinished(entry) {
+  if (Focus.open) Focus.hide();
+  S.pendingLog = entry;
+  const subj = canonSubj(entry.subj === 'Free session' ? '' : entry.subj);
+  const open = mine().filter(l => !isDone(l)), list = (subj ? open.filter(l => l.subject === subj) : open).sort(byDateOrder);
+  const others = subj ? open.filter(l => l.subject !== subj).sort(byDateOrder) : [];
+  const row = l => `<button class="pick-done" type="button" data-finish-lec="${esc(l.id)}" style="--sc:${subjColor(l.subject)}"><b dir="auto">${esc(lecLabel(l))}</b>${l.topic ? `<span dir="auto">${esc(l.topic)}</span>` : ''}</button>`;
+  showPop(`<h3>Which lecture did you finish?</h3>
+    <p class="meta">${entry.mins >= 1 ? fmtMins(entry.mins) + ' will count for it, and it' : 'It'} will be marked studied.</p>
+    <div class="pick-list">${list.map(row).join('') || '<p class="meta">No unstudied lectures here.</p>'}
+      ${others.length ? `<details><summary class="meta">Other subjects (${others.length})</summary>${others.map(row).join('')}</details>` : ''}</div>
+    <div class="pop-btns"><button class="btn ghost" type="button" data-finish-lec="">Just save the time</button></div>`);
+}
+function finishPicked(id) {
+  const entry = S.pendingLog; S.pendingLog = null; closePop();
+  if (!entry) return;
+  const l = id && Store.get(id);
+  if (l) Object.assign(entry, { lectureId: l.id, subject: lecLabel(l), subj: l.subject });
+  if (entry.mins >= 1) Backend.addLog(entry);
+  if (l && !isDone(l)) { S.lastMins = entry.mins; toggleStudied(l.id); }
+  else toast(entry.mins >= 1 ? `Session saved · ${fmtMins(entry.mins)}` : 'Session cancelled (under 1 min)');
 }
 function togglePause() {
   const x = liveOf(S.me); if (!x) return;
@@ -1136,7 +1167,7 @@ function renderSessionBars() {
       ${S.me === 'zhra' ? `<button class="btn open-focus" id="openFocus" type="button" aria-label="Open study mode">${ic('flower')}</button>` : ''}
       <button class="btn pomo-toggle${m.mode === 'pomo' ? ' on' : ''}" id="pomoToggle" type="button" aria-pressed="${m.mode === 'pomo'}" title="Pomodoro 25/5" aria-label="Pomodoro mode">${ic('hourglass-medium')}</button>
       <button class="btn" id="sessPause" type="button">${(m.brkUntil ? `${ic('play-fill')}Skip break` : m.brkOver ? `${ic('play-fill')}Next round` : m.pausedAt ? `${ic('play-fill')}Resume` : `${ic('pause-fill')}Pause`)}</button>
-      ${mineLive.lectureId ? `<button class="btn main" id="sessDone" type="button">${ic('check')}Done</button>` : ''}
+      <button class="btn main" id="sessDone" type="button">${ic('check')}Done</button>
       <button class="btn" id="sessStop" type="button">${ic('stop-fill')}Stop</button>
     </div>`;
   const lb = $('#liveBar');
@@ -1237,7 +1268,7 @@ function card(l, opts = {}) {
     </div>
     <div class="acts">
       ${readOnly() ? '' : `<button class="icon-btn sess" type="button" data-sess="${esc(l.id)}" title="${isLive ? 'Stop session' : 'Start study session'}" aria-label="${isLive ? 'Stop study session' : `Start studying ${esc(lecLabel(l))}`}">${isLive ? ic('stop-fill') : ic('play-fill')}</button>`}
-      ${done && !isHard(l) && !readOnly() ? `<button class="icon-btn rev-sw${l.review ? ' on' : ''}" type="button" data-review-sw="${esc(l.id)}" aria-pressed="${!!l.review}" title="${l.review ? 'Stop reviewing this lecture' : 'Review this lecture later'}" aria-label="${l.review ? 'Stop reviewing' : 'Review'} ${esc(lecLabel(l))}">${ic('arrows-clockwise')}</button>` : ''}
+      ${done && !autoReview(l) && !readOnly() ? `<button class="icon-btn rev-sw${l.review ? ' on' : ''}" type="button" data-review-sw="${esc(l.id)}" aria-pressed="${!!l.review}" title="${l.review ? 'Stop reviewing this lecture' : 'Review this lecture later'}" aria-label="${l.review ? 'Stop reviewing' : 'Review'} ${esc(lecLabel(l))}">${ic('arrows-clockwise')}</button>` : ''}
       ${link ? `<a class="icon-btn" href="${esc(link)}" target="_blank" rel="noopener" title="Open lecture link" aria-label="Open lecture link">${ic('link')}</a>` : ''}
       ${opts.unplan && l.planDate && !readOnly() ? `<button class="icon-btn unplan" type="button" data-unplan="${esc(l.id)}" title="Remove from this day" aria-label="Remove ${esc(lecLabel(l))} from this day">${ic('x')}</button>` : ''}
     </div>
@@ -1303,14 +1334,18 @@ function lectureTime() {
 }
 const minsOn = l => lectureTime().mins.get(l.id) || 0;
 const isHard = l => minsOn(l) >= HARD_MINS;
-const daysFor = l => isHard(l) ? HARD_DAYS : REVIEW_DAYS;
+const daysFor = l => autoReview(l) ? HARD_DAYS : REVIEW_DAYS;
 
 // Reviews exist only for lectures that took 2 hours or more, or that you chose to review.
 // A chosen review starts counting from the day you chose it.
-const wantsReview = l => isDone(l) && !!l.studiedAt && (isHard(l) || !!l.review);
+// Everything scheduled before this moment was cleared (3 Oct 2026); only 2h+ lectures studied
+// after it review by themselves.
+const REVIEWS_FROM = 1791026023000;
+const autoReview = l => isHard(l) && (l.studiedAt || 0) >= REVIEWS_FROM;
+const wantsReview = l => isDone(l) && !!l.studiedAt && (autoReview(l) || !!l.review);
 function reviewsOf(l) {
   if (!wantsReview(l)) return [];
-  const base = ymd(new Date(l.review && !isHard(l) && l.reviewFrom ? l.reviewFrom : l.studiedAt)), done = l.revDone || {};
+  const base = ymd(new Date(l.review && !autoReview(l) && l.reviewFrom ? l.reviewFrom : l.studiedAt)), done = l.revDone || {};
   return daysFor(l).map((n, i, all) => ({ l, n, step: i + 1, of: all.length, due: addDays(base, n), done: !!done[n] }));
 }
 // The latest review that's due for each lecture; missed earlier ones fold into
@@ -1746,6 +1781,7 @@ function showPop(html) {
 }
 function closePop() {
   $('#gcPop').hidden = true; S.popAgain = null;
+  if (S.pendingLog) { const e = S.pendingLog; S.pendingLog = null; if (e.mins >= 1) { Backend.addLog(e); toast(`Session saved · ${fmtMins(e.mins)}`); } }   // closed without picking: keep the time
   const a = document.activeElement; if (a && a.closest && a.closest('.pop-card')) a.blur();   // a hidden, focused field would otherwise pause re-rendering
   if (renderDeferred) setTimeout(render, 0);
 }
@@ -1872,7 +1908,8 @@ function toggleStudied(id) {
 function offerReview(l) {
   if (readOnly()) return;
   if (isHard(l)) return toast(`${lecLabel(l)} took ${fmtMins(minsOn(l))}, so it gets reviews`);
-  toast(`${lecLabel(l)} studied`, { label: 'Review it later', fn: () => setReview(l.id, true) });
+  const m = S.lastMins; S.lastMins = 0;
+  toast(`${lecLabel(l)} studied${m >= 1 ? ', ' + fmtMins(m) : ''}`, { label: 'Review it later', fn: () => setReview(l.id, true) });
 }
 function setReview(id, on) {
   const l = Store.get(id); if (!l || readOnly() || !isDone(l)) return;
@@ -2076,6 +2113,7 @@ document.addEventListener('click', e => {
   if (td) { if (t.closest('[data-close-pop]')) closePop(); const k = Extra.tasks.get(td.dataset.taskDel); if (k && !readOnly() && confirm(`Delete "${k.title}"?`)) Backend.del('tasks', k.id); return; }
   const tp = t.closest('[data-task-pop]'); if (tp) return openTaskPop(tp.dataset.taskPop);
   const xp = t.closest('[data-exam-pop]'); if (xp) return openExamPop(xp.dataset.examPop);
+  const fl = t.closest('[data-finish-lec]'); if (fl) return finishPicked(fl.dataset.finishLec);
   const rs = t.closest('[data-review-sw]'); if (rs) { const l = Store.get(rs.dataset.reviewSw); return setReview(l.id, !l.review); }
   if (!t.closest('.lec-pick')) $$('.lec-pick[open]').forEach(d => d.open = false);   // tap outside closes the lectures list
   const rv = t.closest('[data-review]'); if (rv) { if (t.closest('[data-close-pop]')) closePop(); const [id, n] = rv.dataset.review.split('|'); return markReviewed(id, +n); }
@@ -2324,7 +2362,6 @@ const Focus = {
     $('#focus').classList.toggle('paused', !!x.pausedAt);
     $('#fxSubj').textContent = (x.mode === 'pomo' ? `Round ${(x.pomos || 0) + 1} · ` : '') + sessLabel(x);
     $('#fxPause').innerHTML = (x.brkUntil ? `${ic('play-fill')}Skip break` : x.brkOver ? `${ic('play-fill')}Next round` : x.pausedAt ? `${ic('play-fill')}Resume` : `${ic('pause-fill')}Pause`);
-    $('#fxDone').hidden = !x.lectureId;
     if (x.brkUntil) $('#fxMsg').innerHTML = `Break time ☕ <span data-countdown="${x.brkUntil}"></span>`;
     else if (x.brkOver) $('#fxMsg').textContent = 'Break over! Ready for the next 🍅?';
     else if (x.pausedAt) $('#fxMsg').textContent = 'Paused… I’ll wait for you 😴';
