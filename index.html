@@ -463,6 +463,27 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 .task-row .late-t{color:var(--p-high);font-weight:700}
 .task-row b[data-task-pop],.exam-row b[data-exam-pop]{cursor:pointer}
 .pick-list{display:grid;gap:6px;margin:10px 0;max-height:50vh;overflow:auto}
+/* By subject follow-up under the calendar */
+.follow{margin-top:26px;display:grid;gap:10px}
+.follow .sec{margin:0}
+.follow-subj{display:flex;width:100%}.follow-subj button{flex:1}
+.follow-subj button[aria-pressed=true]{color:var(--text);box-shadow:inset 0 -3px 0 var(--sc),var(--shadow)}
+.follow-head{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+.follow-head .bar{flex:1;height:8px}
+.follow-head .bar i{background:var(--sc)}
+.follow-head b{color:var(--text)}
+.follow .seg:not(.follow-subj){display:flex;width:100%}.follow .seg:not(.follow-subj) button{flex:1;padding:7px 4px;font-size:13px}
+.fu-list{display:grid;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.fu-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}
+.fu-row:first-child{border-top:0}
+.fu-row b{font-size:15px}
+.fu-row .tag{margin-left:6px;vertical-align:1px}
+.fu-topic{display:block;font-size:14px;color:var(--muted);text-align:left}
+.fu-row small{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.fu-row.done b,.fu-row.done .fu-topic{text-decoration:line-through;opacity:.6}
+.fu-list .meta{margin:14px}
+.check.sm{width:28px;height:28px;margin:0}
+.check.sm svg{width:15px;height:15px}
 .pick-done{display:grid;gap:2px;text-align:left;border:0;border-left:4px solid var(--sc);background:var(--tint);border-radius:12px;padding:10px 12px;color:var(--text);font-size:15px;cursor:pointer}
 .pick-done span{font-size:14px;color:var(--muted)}
 .pick-done:hover{background:var(--tint-2)}
@@ -1029,7 +1050,7 @@ const S = {
   me: null, viewing: null, tab: 'today',
   calSel: todayStr(),
   filter: 'pending', search: '', pick: new Set(), planTime: '', planDur: 60, calView: 'month', lastBlock: null, gcScrolled: false,
-  preview: null, wk: null, statRange: 'week', showAllOverdue: false
+  preview: null, wk: null, statRange: 'week', showAllOverdue: false, followSubj: ls.get('sp.followSubj', 'Ortho'), followShow: 'all'
 };
 const readOnly = () => S.viewing !== S.me;
 const eff = l => l.planDate || l.date;          // the day a lecture is planned for
@@ -1677,6 +1698,28 @@ function blockStyle(b, raw) {
   return raw ? css : css ? `style="${css}"` : '';
 }
 
+// Follow-up by subject, under the calendar: every lecture of one subject, studied or not.
+function followUp() {
+  const subs = subjectsList().filter(x => SUBJECTS.includes(x) || mine().some(l => l.subject === x));
+  const subj = subs.includes(S.followSubj) ? S.followSubj : subs[0];
+  const all = mine().filter(l => l.subject === subj).sort(byDateOrder);
+  const done = all.filter(isDone).length, show = S.followShow;
+  const list = all.filter(l => show === 'all' || (show === 'done' ? isDone(l) : !isDone(l)));
+  const row = l => `<div class="fu-row${isDone(l) ? ' done' : ''}">
+      <button class="check sm" type="button" data-follow-done="${esc(l.id)}" aria-pressed="${isDone(l)}" aria-label="Mark ${esc(lecLabel(l))} as ${isDone(l) ? 'not studied' : 'studied'}" ${readOnly() ? 'disabled' : ''}>${CHECK_SVG}</button>
+      <div><b dir="auto">${esc(lecLabel(l))}</b>${isPractical(l) ? '<span class="tag prac">Practical</span>' : ''}${l.topic ? `<span class="fu-topic" dir="auto">${esc(l.topic)}</span>` : ''}</div>
+      <small>${isDone(l) ? 'studied ' + esc(relDate(ymd(new Date(l.studiedAt || Date.now())))) : esc(relDate(l.date))}</small></div>`;
+  return `<section class="follow" id="followUp">
+    <h2 class="sec">By subject</h2>
+    <div class="seg follow-subj" role="group" aria-label="Subject">${subs.map(x => `<button type="button" data-follow-subj="${esc(x)}" aria-pressed="${x === subj}" style="--sc:${subjColor(x)}">${esc(x)}</button>`).join('')}</div>
+    <div class="follow-head" style="--sc:${subjColor(subj)}">
+      <div class="bar" role="progressbar" aria-valuenow="${done}" aria-valuemax="${all.length}" aria-label="${esc(subj)} studied"><i style="width:${all.length ? done / all.length * 100 : 0}%"></i></div>
+      <span><b>${done}/${all.length}</b> studied</span></div>
+    <div class="seg" role="group" aria-label="Show">${[['all', `All (${all.length})`], ['todo', `Not studied (${all.length - done})`], ['done', `Studied (${done})`]].map(([k, v]) => `<button type="button" data-follow-show="${k}" aria-pressed="${show === k}">${v}</button>`).join('')}</div>
+    <div class="fu-list">${list.map(row).join('') || `<p class="meta">${all.length ? 'Nothing here.' : `No ${esc(subj)} lectures yet.`}</p>`}</div>
+  </section>`;
+}
+
 function renderCalendar() {
   const t = todayStr(), sel = S.calSel, view = S.calView, sd = parseYmd(sel);
   const title = view === 'list' ? 'All lectures' : view === 'day' ? parseYmd(sel).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -1754,7 +1797,7 @@ function renderCalendar() {
     (view === 'month' ? `<h2 class="sec">${esc(relDate(sel))} <span class="count">${selList.length}</span></h2>${listHtml(selList, `<span class="em">${ic('calendar-blank')}</span>Nothing on this day yet.`, { unplan: true })}
       ${(() => { const k = myTasks().filter(x => x.due === sel).sort(byDue), r = mine().flatMap(l => reviewsOf(l).filter(x => !x.done && x.due === sel));
         return (k.length ? `<h2 class="sec">Tasks <span class="count">${k.length}</span></h2><div class="list">${k.map(taskRow).join('')}</div>` : '')
-          + (r.length ? `<h2 class="sec">Reviews <span class="count">${r.length}</span></h2><div class="list">${r.map(revRow).join('')}</div>` : ''); })()}` : '') + planner;
+          + (r.length ? `<h2 class="sec">Reviews <span class="count">${r.length}</span></h2><div class="list">${r.map(revRow).join('')}</div>` : ''); })()}` : '') + planner + followUp();
   const wrap = $('#gcWrap');
   const ch = wrap && wrap.querySelector('.gc-colhead'); if (ch) wrap.style.setProperty('--hh', ch.offsetHeight + 'px');
   if (wrap && !S.gcScrolled) { wrap.scrollTop = Math.max(0, ((new Date().getHours() - 1) - GC.H0) * GC.ROW); S.gcScrolled = true; }
@@ -2109,12 +2152,15 @@ document.addEventListener('click', e => {
   const t = e.target;
   const tab = t.closest('nav.tabs button'); if (tab) return switchTab(tab.dataset.tab);
   const go = t.closest('[data-go]'); if (go) return switchTab(go.dataset.go);
-  const chk = t.closest('.check'); if (chk) return toggleStudied(chk.closest('.lec').dataset.id);
+  const chk = t.closest('.lec .check'); if (chk) return toggleStudied(chk.closest('.lec').dataset.id);
   const tc = t.closest('[data-task-check]'); if (tc) { if (t.closest('[data-close-pop]')) closePop(); return toggleTask(tc.dataset.taskCheck); }
   const td = t.closest('[data-task-del]');
   if (td) { if (t.closest('[data-close-pop]')) closePop(); const k = Extra.tasks.get(td.dataset.taskDel); if (k && !readOnly() && confirm(`Delete "${k.title}"?`)) Backend.del('tasks', k.id); return; }
   const tp = t.closest('[data-task-pop]'); if (tp) return openTaskPop(tp.dataset.taskPop);
   const xp = t.closest('[data-exam-pop]'); if (xp) return openExamPop(xp.dataset.examPop);
+  const fs = t.closest('[data-follow-subj]'); if (fs) { S.followSubj = fs.dataset.followSubj; ls.set('sp.followSubj', S.followSubj); return renderCalendar(); }
+  const fw = t.closest('[data-follow-show]'); if (fw) { S.followShow = fw.dataset.followShow; return renderCalendar(); }
+  const fd = t.closest('[data-follow-done]'); if (fd) return toggleStudied(fd.dataset.followDone);
   const fl = t.closest('[data-finish-lec]'); if (fl) return finishPicked(fl.dataset.finishLec);
   const rs = t.closest('[data-review-sw]'); if (rs) { const l = Store.get(rs.dataset.reviewSw); return setReview(l.id, !l.review); }
   if (!t.closest('.lec-pick')) $$('.lec-pick[open]').forEach(d => d.open = false);   // tap outside closes the lectures list
