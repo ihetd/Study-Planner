@@ -204,6 +204,8 @@ h2.sec .sp{flex:1}
 .tag.plan{background:var(--tint);color:var(--muted)}
 .tag.prac{background:var(--ok-tint);color:var(--ok)}
 .tag.hard{background:var(--warn-tint);color:var(--warn)}
+.icon-btn.rev-sw{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1.5px var(--line)}
+.icon-btn.rev-sw.on{background:var(--tint);color:var(--accent);box-shadow:none}
 .topic{width:100%;border:0;border-bottom:1.5px solid transparent;background:transparent;padding:3px 0;margin:2px 0 0;font-size:15px;border-radius:0}
 .lec:hover .topic,.topic:placeholder-shown{border-bottom-color:var(--line)}
 .topic:focus{outline:none;border-bottom-color:var(--brand-3)}
@@ -549,6 +551,8 @@ textarea.field{min-height:200px;resize:vertical;direction:auto;unicode-bidi:plai
 #toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-12px);background:#1f0f33;color:#fdfbff;padding:10px 16px;border-radius:12px;font-weight:600;z-index:60;
   max-width:calc(100vw - 32px);box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;visibility:hidden;pointer-events:none;transition:transform .25s,opacity .25s,visibility 0s linear .25s}
 #toast.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+#toast.has-act{pointer-events:auto;display:flex;align-items:center;gap:12px;width:max-content;white-space:nowrap}
+.toast-act{border:0;background:#fdfbff;color:var(--brand);font-weight:800;font-size:14px;padding:6px 12px;border-radius:9px;white-space:nowrap}
 
 /* ---------- peony mascot ---------- */
 /* docked: in زهرة's hero on Today, in the header avatar elsewhere */
@@ -817,10 +821,17 @@ const ls = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 let toastTimer;
-function toast(msg) {
-  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+let toastAct = null;
+function toast(msg, action) {
+  const t = $('#toast'); t.textContent = msg; toastAct = action || null;
+  if (action) { const b = document.createElement('button'); b.type = 'button'; b.className = 'toast-act'; b.textContent = action.label; t.append(b); }
+  t.classList.toggle('has-act', !!action); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? 6000 : 2600);
 }
+document.addEventListener('click', e => {
+  if (!e.target.closest || !e.target.closest('.toast-act') || !toastAct) return;
+  const f = toastAct.fn; toastAct = null; $('#toast').classList.remove('show'); f();
+});
 
 /* ======================= TELEGRAM PARSER (pure) ======================= */
 const ORDINALS = { 'اولي': 1, 'ثانيه': 2, 'ثالثه': 3, 'رابعه': 4, 'خامسه': 5, 'سادسه': 6, 'سابعه': 7, 'ثامنه': 8, 'تاسعه': 9, 'عاشره': 10 };
@@ -1226,6 +1237,7 @@ function card(l, opts = {}) {
     </div>
     <div class="acts">
       ${readOnly() ? '' : `<button class="icon-btn sess" type="button" data-sess="${esc(l.id)}" title="${isLive ? 'Stop session' : 'Start study session'}" aria-label="${isLive ? 'Stop study session' : `Start studying ${esc(lecLabel(l))}`}">${isLive ? ic('stop-fill') : ic('play-fill')}</button>`}
+      ${done && !isHard(l) && !readOnly() ? `<button class="icon-btn rev-sw${l.review ? ' on' : ''}" type="button" data-review-sw="${esc(l.id)}" aria-pressed="${!!l.review}" title="${l.review ? 'Stop reviewing this lecture' : 'Review this lecture later'}" aria-label="${l.review ? 'Stop reviewing' : 'Review'} ${esc(lecLabel(l))}">${ic('arrows-clockwise')}</button>` : ''}
       ${link ? `<a class="icon-btn" href="${esc(link)}" target="_blank" rel="noopener" title="Open lecture link" aria-label="Open lecture link">${ic('link')}</a>` : ''}
       ${opts.unplan && l.planDate && !readOnly() ? `<button class="icon-btn unplan" type="button" data-unplan="${esc(l.id)}" title="Remove from this day" aria-label="Remove ${esc(lecLabel(l))} from this day">${ic('x')}</button>` : ''}
     </div>
@@ -1293,9 +1305,12 @@ const minsOn = l => lectureTime().mins.get(l.id) || 0;
 const isHard = l => minsOn(l) >= HARD_MINS;
 const daysFor = l => isHard(l) ? HARD_DAYS : REVIEW_DAYS;
 
+// Reviews exist only for lectures that took 2 hours or more, or that you chose to review.
+// A chosen review starts counting from the day you chose it.
+const wantsReview = l => isDone(l) && !!l.studiedAt && (isHard(l) || !!l.review);
 function reviewsOf(l) {
-  if (!isDone(l) || !l.studiedAt) return [];
-  const base = ymd(new Date(l.studiedAt)), done = l.revDone || {};
+  if (!wantsReview(l)) return [];
+  const base = ymd(new Date(l.review && !isHard(l) && l.reviewFrom ? l.reviewFrom : l.studiedAt)), done = l.revDone || {};
   return daysFor(l).map((n, i, all) => ({ l, n, step: i + 1, of: all.length, due: addDays(base, n), done: !!done[n] }));
 }
 // The latest review that's due for each lecture; missed earlier ones fold into
@@ -1506,7 +1521,7 @@ function renderStats() {
       if (!timed.length) return '';
       const top = minsOn(timed[0]);
       return `<div class="chart">
-        <h3>Took longest to study</h3><p class="sub">2 hours or more counts as hard: extra reviews (days ${HARD_DAYS.join(', ')}), first in Reviews due</p>
+        <h3>Took longest to study</h3><p class="sub">2 hours or more counts as hard and gets reviews by itself (days ${HARD_DAYS.join(', ')}). Other lectures are reviewed only if you turn it on.</p>
         ${timed.map(l => { const rs = reviewsOf(l), d = rs.filter(r => r.done).length; return `<div class="hbar" style="--sc:${subjColor(l.subject)}"><span dir="auto">${esc(lecLabel(l))}</span>
           <span class="track" data-tip="${esc(lecLabel(l))}${l.topic ? ': ' + esc(l.topic) : ''}, ${fmtMins(minsOn(l))}${rs.length ? `, ${d}/${rs.length} reviews` : ''}" tabindex="0"><i style="width:${minsOn(l) / top * 100}%"></i></span>
           <b>${fmtMins(minsOn(l))}<small>${isHard(l) ? 'hard' : ''}</small></b></div>`; }).join('')}
@@ -1839,17 +1854,30 @@ Store.onChange(render);
 function toggleStudied(id) {
   const l = Store.get(id); if (!l || readOnly()) return;
   const nowDone = !isDone(l);
-  // ticking (or unticking) restarts the 1-3-7-14 day review schedule
-  Backend.update(id, nowDone ? { status: 'studied', studiedAt: Date.now(), revDone: {} } : { status: 'pending', studiedAt: null, revDone: {} });
+  // ticking (or unticking) starts reviews afresh; ordinary lectures only get reviews if you ask
+  Backend.update(id, nowDone ? { status: 'studied', studiedAt: Date.now(), revDone: {} } : { status: 'pending', studiedAt: null, revDone: {}, review: false, reviewFrom: null });
   if (nowDone && S.me === 'zhra') {
     // count from the pre-update state: with Firestore the snapshot may not have arrived yet
     const st_ = stats(), left = [...st_.today.filter(x => !isDone(x)), ...st_.overdue, ...st_.later].filter(x => x.id !== id).length;
     Peony.celebrate(left, l.subject);
+    setTimeout(() => offerReview(l), left ? 900 : 2800);
   } else if (nowDone) {
     const st_ = stats(), left = [...st_.today.filter(x => !isDone(x)), ...st_.overdue, ...st_.later].filter(x => x.id !== id).length;
-    if (left || !st_.total) toast(`${l.subject} studied${left && l.date < todayStr() ? `, ${left} to go` : ''}`);
-    else zeroBacklog();
+    if (left || !st_.total) offerReview(l);   // "Ortho #3 studied  [Review it later]"
+    else { zeroBacklog(); setTimeout(() => offerReview(l), 2800); }
   }
+}
+
+// After a lecture is done: hard ones get reviews by themselves; for the rest, offer them.
+function offerReview(l) {
+  if (readOnly()) return;
+  if (isHard(l)) return toast(`${lecLabel(l)} took ${fmtMins(minsOn(l))}, so it gets reviews`);
+  toast(`${lecLabel(l)} studied`, { label: 'Review it later', fn: () => setReview(l.id, true) });
+}
+function setReview(id, on) {
+  const l = Store.get(id); if (!l || readOnly() || !isDone(l)) return;
+  Backend.update(id, on ? { review: true, reviewFrom: Date.now(), revDone: {} } : { review: false });
+  toast(on ? `Reviews on: ${REVIEW_DAYS.map(d => 'day ' + d).join(', ')}` : 'Reviews off for this lecture');
 }
 
 const pdfToTopic = name => name.replace(/\.pdf$/i, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -2048,6 +2076,7 @@ document.addEventListener('click', e => {
   if (td) { if (t.closest('[data-close-pop]')) closePop(); const k = Extra.tasks.get(td.dataset.taskDel); if (k && !readOnly() && confirm(`Delete "${k.title}"?`)) Backend.del('tasks', k.id); return; }
   const tp = t.closest('[data-task-pop]'); if (tp) return openTaskPop(tp.dataset.taskPop);
   const xp = t.closest('[data-exam-pop]'); if (xp) return openExamPop(xp.dataset.examPop);
+  const rs = t.closest('[data-review-sw]'); if (rs) { const l = Store.get(rs.dataset.reviewSw); return setReview(l.id, !l.review); }
   if (!t.closest('.lec-pick')) $$('.lec-pick[open]').forEach(d => d.open = false);   // tap outside closes the lectures list
   const rv = t.closest('[data-review]'); if (rv) { if (t.closest('[data-close-pop]')) closePop(); const [id, n] = rv.dataset.review.split('|'); return markReviewed(id, +n); }
   const rp = t.closest('[data-rev-pop]'); if (rp) { const [id, n] = rp.dataset.revPop.split('|'); return openRevPop(id, n); }
