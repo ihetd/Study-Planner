@@ -1618,6 +1618,8 @@ function renderToday() {
       ${behind > 3 ? `<button class="btn sm ghost more-btn" type="button" data-more-overdue>${S.showAllOverdue ? 'Show fewer' : `Show ${behind - 3} more`}</button>` : ''}` : ''}
     <h2 class="sec">Today's plan <span class="count">${st.today.length}</span></h2>
     ${listHtml(todayList, `<span class="em">${ic('cloud-sun')}</span>Nothing planned for today.${ro ? '' : '<br><button class="btn sm" data-go="calendar" type="button">Plan in the Calendar</button> <button class="btn sm ghost" data-go="paste" type="button">Add lectures</button>'}`)}
+    ${(() => { const done = mine().filter(l => isDone(l) && l.studiedAt && ymd(new Date(l.studiedAt)) === t && eff(l) !== t).sort((a, b) => b.studiedAt - a.studiedAt);
+      return done.length ? `<h2 class="sec">Studied today <span class="count">${done.length}</span></h2>${listHtml(done, '')}` : ''; })()}
     ${(() => { const r = dueReviews(); return r.length ? `<h2 class="sec">Reviews due <span class="count">${r.length}</span></h2><div class="list">${r.map(revRow).join('')}</div>` : ''; })()}
     ${(() => { const k = myTasks().filter(x => !x.done && x.due && x.due <= t).sort(byDue); return k.length ? `<h2 class="sec">Tasks due <span class="count">${k.length}</span><span class="sp"></span><button class="btn sm ghost" type="button" data-go="tasks">All tasks</button></h2><div class="list">${k.map(taskRow).join('')}</div>` : ''; })()}
     ${(() => { const ex = myExams().filter(e => e.date >= t).slice(0, 2); return ex.length ? `<h2 class="sec">Exams</h2><div class="list">${ex.map(examCard).join('')}</div>` : ''; })()}
